@@ -35,24 +35,12 @@ html,body{
 .screen.active{display:flex;}
 .grid-bg{display:none;} /* Hides the old broken grid box */
 
-/* HAMBURGER & CUBE AI TEXT */
+/* HAMBURGER */
 #hamburger{position:fixed;top:16px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
 #hamburger span{display:block;height:2px;background:var(--w);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
 #hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
 #hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
 #hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
-
-#hamburger::after {
-  content: 'CUBE AI';
-  position: absolute;
-  left: 45px; /* Puts it beside the hamburger */
-  font-family: var(--fd);
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--w);
-  letter-spacing: 3px;
-  white-space: nowrap;
-}
 
 /* DRAWER */
 #drawer{position:fixed;inset:0;z-index:999;pointer-events:none;}
@@ -77,9 +65,22 @@ html,body{
 /* ═══ TIMER SCREEN LAYOUT (The fix!) ═══ */
 #screen-timer {
   padding-top: 60px; /* Leaves space for the Hamburger & Logo */
-  display: flex;
-  flex-direction: column;
   justify-content: space-between; /* Stacks everything neatly */
+}
+
+/* Adds the CUBE AI Logo ONLY to the Timer screen */
+#screen-timer::before {
+  content: 'CUBE AI';
+  position: absolute;
+  top: 26px;
+  left: 64px; 
+  font-family: var(--fd);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--w);
+  letter-spacing: 3px;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .timer-scramble {
@@ -221,6 +222,7 @@ html,body{
 
 @media(max-width:380px){#timer-display{font-size:48px;}.stat-value{font-size:11px;}.stat-label{font-size:8px;}}
 </style>
+
 </head>
 <body>
 <div class="grid-bg"></div>
