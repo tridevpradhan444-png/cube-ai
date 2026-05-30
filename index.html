@@ -21,31 +21,41 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 
-/* 1. MASTER CHECKERBOARD BACKGROUND */
+/* 1. MASTER GRID (Your original subtle lines!) */
 html,body{
   width:100%;height:100%;
-  background-color:#080808;
-  background-image: 
-    linear-gradient(45deg, #151515 25%, transparent 25%, transparent 75%, #151515 75%, #151515),
-    linear-gradient(45deg, #151515 25%, transparent 25%, transparent 75%, #151515 75%, #151515);
-  background-size:60px 60px;
-  background-position:0 0, 30px 30px;
+  background-color:var(--bg);
+  background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
+  background-size:40px 40px;
   color:var(--w);font-family:var(--fb);overflow:hidden;user-select:none;
 }
 
 #app{width:100%;height:100%;position:relative;}
-.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;background:transparent;}
 .screen.active{display:flex;}
 
-/* Disabled old grid to prevent clashing with the new checkerboard */
+/* Disabled old grid container so it doesn't double up */
 .grid-bg{display:none;}
 
-/* HAMBURGER */
+/* HAMBURGER & CUBE AI TEXT */
 #hamburger{position:fixed;top:16px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
 #hamburger span{display:block;height:2px;background:var(--w);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
 #hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
 #hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
 #hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg);}
+
+/* 2. ADDED "CUBE AI" TEXT HERE */
+#hamburger::after {
+  content: 'CUBE AI';
+  position: absolute;
+  left: 45px; /* Puts it beside the hamburger */
+  font-family: var(--fd); /* Matches the timer font */
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--w);
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
 
 /* DRAWER */
 #drawer{position:fixed;inset:0;z-index:999;pointer-events:none;}
@@ -68,12 +78,27 @@ html,body{
 .header-action:hover{color:var(--w);border-color:var(--w);}
 
 /* ═══ TIMER ═══ */
-/* 2. Made background transparent to show grid */
 #screen-timer{background:transparent;align-items:center;justify-content:center;position:relative;}
-.timer-scramble{position:absolute;top:0;left:0;right:0;padding:14px 60px;text-align:center;font-family:var(--fb);font-size:13px;font-weight:500;letter-spacing:1.5px;color:var(--g2);border-bottom:var(--border);background:transparent;min-height:48px;display:flex;align-items:center;justify-content:center;}
 
-/* 3. Lowered the timer layout with 25vh padding */
-.timer-center{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;padding-top:25vh;padding-bottom:100px;}
+/* 3. SCRAMBLE TEXT (Moved to sit right above the timer) */
+.timer-scramble{
+  position:absolute;
+  top: 18vh; /* Pushes it down slightly above the center */
+  left:0;right:0;
+  padding:14px 40px;
+  text-align:center;font-family:var(--fb);font-size:15px;font-weight:600;letter-spacing:1.5px;
+  color:var(--g1);
+  background:transparent; /* Removed background */
+  border-bottom:none; /* Removed bottom line for a cleaner look */
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* 4. TIMER DISPLAY (Perfectly Centered) */
+.timer-center{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;width:100%; height:100%;
+  padding-bottom: 60px; /* Counter-balances the stats bar so it centers visually */
+}
 #timer-display{font-family:var(--fd);font-size:clamp(52px,14vw,88px);font-weight:900;letter-spacing:-2px;color:var(--w);transition:color 0.15s ease;position:relative;cursor:default;}
 #timer-display.holding{color:#444;}
 #timer-display.ready{color:var(--w);}
@@ -85,8 +110,14 @@ html,body{
 #bin-btn.visible{opacity:1;pointer-events:all;}
 #bin-btn:hover{border-color:var(--w);}
 
-/* 4. Made stats bar slightly transparent with a glass effect */
-#stats-bar{position:absolute;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);border-top:var(--border);background:rgba(17,17,17,0.7);backdrop-filter:blur(5px);}
+/* 5. AVERAGES & STATS (Pinned exactly to bottom) */
+#stats-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border-top:var(--border);
+  background:rgba(8,8,8,0.7); /* Slightly see-through black */
+  backdrop-filter:blur(3px); /* Glass effect so the grid peeks through */
+}
 .stat-cell{padding:12px 6px;display:flex;flex-direction:column;align-items:center;border-right:var(--border);}
 .stat-cell:last-child{border-right:none;}
 .stat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:4px;}
@@ -114,23 +145,17 @@ html,body{
 .practice-body{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 #cube-wrap{width:100%;height:220px;flex-shrink:0;background:transparent;position:relative;}
 #practice-canvas{width:100%;height:100%;display:block;}
-/* move display overlay */
 #move-overlay{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:var(--fd);font-size:18px;font-weight:700;letter-spacing:3px;color:var(--w);background:rgba(0,0,0,0.6);padding:4px 16px;opacity:0;transition:opacity 0.2s;pointer-events:none;}
 #move-overlay.show{opacity:1;}
-
 .practice-scroll{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
 .practice-scroll::-webkit-scrollbar{width:2px;}
 .stage-card{background:var(--bg2);border:var(--border);padding:14px;}
 .stage-card-title{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:6px;}
 .stage-card-desc{font-size:12px;color:var(--g2);line-height:1.6;}
-
-/* scramble input row */
 .sinput-row{display:flex;gap:8px;}
 .sinput{flex:1;background:var(--bg3);border:var(--border);padding:11px 12px;color:var(--w);font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;}
 .sinput:focus{border-color:var(--g2);}
 .sinput::placeholder{color:var(--g3);}
-
-/* buttons */
 .btn{background:var(--w);color:var(--bg);border:none;padding:11px 16px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
 .btn:hover{background:var(--g1);}
 .btn:disabled{opacity:0.4;cursor:not-allowed;}
@@ -138,17 +163,11 @@ html,body{
 .btn-o:hover{background:var(--w);color:var(--bg);}
 .btn-row{display:flex;gap:8px;}
 .btn-row .btn,.btn-row .btn-o{flex:1;text-align:center;}
-
-/* section label */
 .slabel{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:6px;}
-
-/* color palette */
 .cpalette{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .cswatch{width:30px;height:30px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
 .cswatch.sel{border-color:var(--w);transform:scale(1.15);box-shadow:0 0 8px rgba(255,255,255,0.3);}
 .plabel{font-size:11px;letter-spacing:1px;color:var(--g3);}
-
-/* 2D net */
 #net-wrap{background:var(--bg2);border:var(--border);padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;}
 .net-label{font-size:10px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;align-self:flex-start;}
 #cube-net{display:inline-block;}
@@ -156,12 +175,8 @@ html,body{
 .net-row{display:flex;gap:6px;align-items:center;justify-content:center;}
 .net-cell{width:18px;height:18px;cursor:pointer;transition:all 0.1s;}
 .net-cell:hover{opacity:0.8;transform:scale(1.1);}
-
-/* mismatch warning */
 #mismatch-warn{display:none;background:rgba(244,67,54,0.15);border:1px solid rgba(244,67,54,0.4);padding:8px 12px;font-size:11px;color:#ff6b6b;letter-spacing:1px;}
 #mismatch-warn.show{display:block;}
-
-/* solution panel */
 #solution-panel{display:none;background:var(--bg2);border:var(--border);padding:12px;}
 #solution-panel.show{display:block;}
 .sol-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:8px;}
