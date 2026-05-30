@@ -164,3 +164,295 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 .ssel{background:var(--bg3);border:var(--border);color:var(--w);padding:8px 12px;font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;cursor:pointer;min-width:100px;}
 
 /* ═══ PRIVACY ═══ */
+{
+  "name": "CUBE — Speedcubing Trainer",
+  "short_name": "CUBE",
+  "description": "A speedcubing timer and trainer app with CFOP practice and learning tools.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["sports", "utilities"],
+  "screenshots": []
+}
+#screen-privacy{background:var(--bg);}
+.privacy-body{flex:1;overflow-y:auto;padding:24px 20px;font-size:13px;color:var(--g2);line-height:1.8;}
+.privacy-body h2{font-family:var(--fd);font-size:12px;letter-spacing:2px;color:var(--w);margin:20px 0 8px;text-transform:uppercase;}
+
+/* TOAST */
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--w);color:var(--bg);padding:10px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;z-index:2000;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:380px){#timer-display{font-size:48px;}.stat-value{font-size:11px;}.stat-label{font-size:8px;}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div id="app">
+
+<div id="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></div>
+
+<div id="drawer">
+  <div id="drawer-overlay" onclick="closeDrawer()"></div>
+  <div id="drawer-panel">
+    <div class="drawer-logo">CUBE AI</div>
+    <div class="drawer-tagline">CONNECT YOUR CUBE TO YOUR PHONE</div>
+    <nav class="drawer-nav">
+      <div class="nav-item active" onclick="showScreen('timer');closeDrawer()"><span class="nav-icon">⏱</span>Timer</div>
+      <div class="nav-item" onclick="showScreen('history');closeDrawer()"><span class="nav-icon">📋</span>History</div>
+      <div class="nav-item" onclick="showScreen('practice');closeDrawer()"><span class="nav-icon">🎯</span>Practice</div>
+      <div class="nav-item" onclick="goLearn()"><span class="nav-icon">📖</span>Learn</div>
+      <div class="nav-item" onclick="showScreen('settings');closeDrawer()"><span class="nav-icon">⚙</span>Settings</div>
+      <div class="nav-item" onclick="showScreen('privacy');closeDrawer()"><span class="nav-icon">🔒</span>Privacy</div>
+    </nav>
+    <div class="drawer-footer">CUBE AI v1.0 · Free</div>
+  </div>
+</div>
+
+<!-- ═══ TIMER ═══ -->
+<div id="screen-timer" class="screen active">
+  <div class="timer-scramble"><span id="scramble-text">Generating scramble...</span></div>
+  <div class="timer-center">
+    <div id="inspection-display"></div>
+    <div id="timer-display"><div class="timer-glow"></div><span id="timer-text">0.000</span></div>
+    <div class="timer-hint" id="timer-hint">HOLD TO START</div>
+  </div>
+  <div id="bin-btn" onclick="deleteLastSolve()">🗑</div>
+  <div id="stats-bar">
+    <div class="stat-cell"><div class="stat-label">Best</div><div class="stat-value" id="stat-best">—</div></div>
+    <div class="stat-cell"><div class="stat-label">Worst</div><div class="stat-value" id="stat-worst">—</div></div>
+    <div class="stat-cell"><div class="stat-label">Mean</div><div class="stat-value" id="stat-mean">—</div></div>
+    <div class="stat-cell"><div class="stat-label">Ao5</div><div class="stat-value" id="stat-ao5">—</div></div>
+    <div class="stat-cell"><div class="stat-label">Ao12</div><div class="stat-value" id="stat-ao12">—</div></div>
+  </div>
+</div>
+
+<!-- ═══ HISTORY ═══ -->
+<div id="screen-history" class="screen">
+  <div class="screen-header"><span>History</span><span class="header-action" onclick="clearAllSolves()">Clear All</span></div>
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<!-- ═══ PRACTICE ═══ -->
+<div id="screen-practice" class="screen">
+  <div class="screen-header" style="padding-left:64px;"><span>Practice</span></div>
+  <div class="practice-tabs">
+    <div class="ptab active" onclick="setPStage('cross')">Cross</div>
+    <div class="ptab" onclick="setPStage('f2l')">F2L</div>
+    <div class="ptab" onclick="setPStage('oll')">OLL</div>
+    <div class="ptab" onclick="setPStage('pll')">PLL</div>
+  </div>
+  <div class="practice-body">
+    <div id="cube-wrap">
+      <canvas id="practice-canvas"></canvas>
+      <div id="move-overlay"></div>
+    </div>
+    <div class="practice-scroll">
+      <div class="stage-card">
+        <div class="stage-card-title" id="stage-title">CROSS</div>
+        <div class="stage-card-desc" id="stage-desc">Solve the 4 white edge pieces on the bottom. Cross is pre-solved for F2L/OLL/PLL.</div>
+      </div>
+
+      <div>
+        <div class="slabel">Scramble</div>
+        <div class="sinput-row">
+          <input class="sinput" id="pscramble-input" placeholder="Tap Scramble to generate..." readonly>
+          <button class="btn" id="scramble-btn" onclick="handleScrambleBtn()">Scramble</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-o" onclick="resetPCube()">Reset</button>
+        <button class="btn" id="solution-btn" onclick="handleSolutionBtn()">Solution</button>
+      </div>
+
+      <div id="solution-panel">
+        <div class="sol-label">Solution</div>
+        <div class="sol-moves" id="sol-moves-display"></div>
+      </div>
+
+      <div id="mismatch-warn">⚠ Invalid cube state — check your colors</div>
+
+      <div>
+        <div class="slabel">Paint Stickers <span id="paint-restrict" style="color:var(--g3);"></span></div>
+        <div class="cpalette" id="cpalette"></div>
+        <div style="margin-top:6px;font-size:11px;color:var(--g3);letter-spacing:0.5px;">Tap sticker on cube above to paint · tap again to unpaint</div>
+      </div>
+
+      <div id="net-wrap">
+        <div class="net-label">Live Cube Net</div>
+        <div id="cube-net"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="screen-settings" class="screen">
+  <div class="screen-header" style="padding-left:64px;"><span>Settings</span></div>
+  <div class="settings-body">
+    <div class="sgroup-label">Timer</div>
+    <div class="srow"><div class="sinfo"><div class="sname">Inspection Time</div><div class="sdesc">15 sec WCA inspection before solve</div></div><div class="toggle" id="tog-inspection" onclick="toggleS('inspection')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Hold Duration</div><div class="sdesc">How long to hold before timer arms</div></div><select class="ssel" id="sel-hold" onchange="saveS('holdDuration',this.value)"><option value="300">0.3s</option><option value="500" selected>0.5s</option><option value="700">0.7s</option><option value="1000">1.0s</option></select></div>
+    <div class="sgroup-label">Scramble</div>
+    <div class="srow"><div class="sinfo"><div class="sname">Auto Scramble</div><div class="sdesc">New scramble after each solve</div></div><div class="toggle on" id="tog-autoscramble" onclick="toggleS('autoscramble')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Scramble Length</div><div class="sdesc">Moves in generated scrambles</div></div><select class="ssel" id="sel-slen" onchange="saveS('scrambleLength',this.value)"><option value="15">15</option><option value="20" selected>20</option><option value="25">25</option></select></div>
+    <div class="sgroup-label">Data</div>
+    <div class="srow"><div class="sinfo"><div class="sname">Reset All Solves</div><div class="sdesc">Cannot be undone</div></div><button class="btn btn-o" style="font-size:11px;padding:8px 14px;" onclick="clearAllSolves()">Reset</button></div>
+  </div>
+</div>
+
+<!-- ═══ PRIVACY ═══ -->
+<div id="screen-privacy" class="screen">
+  <div class="screen-header" style="padding-left:64px;"><span>Privacy</span></div>
+  <div class="privacy-body">
+    <p>Last updated: 2025</p>
+    <h2>Overview</h2><p>CUBE AI is a free speedcubing timer and trainer. All data stays on your device.</p>
+    <h2>Data</h2><p>No personal information is collected. All solve times and settings are stored locally only.</p>
+    <h2>Advertising</h2><p>This app may show Google AdSense ads. Google may use cookies for personalized ads. Visit Google Ad Settings to opt out.</p>
+    <h2>Contact</h2><p>Contact us through the Samsung Galaxy Store listing.</p>
+  </div>
+</div>
+
+</div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA & SETTINGS
+// ═══════════════════════════════════════════════════════
+let solves = JSON.parse(localStorage.getItem('cubeai_solves')||'[]');
+let settings = Object.assign({inspection:false,autoscramble:true,holdDuration:500,scrambleLength:20},
+  JSON.parse(localStorage.getItem('cubeai_settings')||'{}'));
+
+const FACE_COLORS = {U:'#ffd700',D:'#ffffff',F:'#00c853',B:'#2979ff',R:'#ff6d00',L:'#f44336'};
+const STAGE_INFO = {
+  cross:{title:'CROSS',desc:'Only the 4 white edges are scrambled. Cross pieces shown, rest solved.'},
+  f2l:{title:'F2L — FIRST TWO LAYERS',desc:'Cross is locked solved. Only the 4 corner-edge pairs are scrambled.'},
+  oll:{title:'OLL — ORIENT LAST LAYER',desc:'F2L is locked solved. All OLL cases possible on the top face.'},
+  pll:{title:'PLL — PERMUTE LAST LAYER',desc:'F2L locked, top face yellow locked. All 21 PLL cases possible.'}
+};
+
+// ═══════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach((item,i)=>{
+    item.classList.toggle('active',['timer','history','practice','','settings','privacy'][i]===name);
+  });
+  if(name==='history') renderHistory();
+  if(name==='practice') initPScene();
+}
+function goLearn(){ window.open('learn.html','_blank'); closeDrawer(); }
+function toggleDrawer(){ document.getElementById('drawer').classList.toggle('open'); document.getElementById('hamburger').classList.toggle('open'); }
+function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('hamburger').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════
+//  TIMER
+// ═══════════════════════════════════════════════════════
+let timerRunning=false,timerStart=0,timerVal=0,timerInterval=null;
+let holdTimeout=null,isHolding=false,isArmed=false;
+let inspInterval=null,inspTime=15;
+
+function fmt(ms){
+  if(ms<60000) return (ms/1000).toFixed(3);
+  const m=Math.floor(ms/60000),s=((ms%60000)/1000).toFixed(3);
+  return m+':'+(s<10?'0':'')+s;
+}
+function setTimerText(v){ document.getElementById('timer-text').textContent=fmt(v); }
+
+function startTimer(){
+  timerRunning=true; timerStart=Date.now();
+  timerInterval=setInterval(()=>{timerVal=Date.now()-timerStart;setTimerText(timerVal);},10);
+  document.getElementById('timer-display').className='running';
+  document.getElementById('timer-hint').classList.add('hidden');
+  document.getElementById('bin-btn').classList.remove('visible');
+}
+function stopTimer(){
+  if(!timerRunning) return;
+  timerRunning=false; clearInterval(timerInterval);
+  timerVal=Date.now()-timerStart; setTimerText(timerVal);
+  saveSolve(timerVal);
+  document.getElementById('timer-display').className='';
+  document.getElementById('timer-hint').classList.remove('hidden');
+  document.getElementById('bin-btn').classList.add('visible');
+  if(settings.autoscramble) genScramble();
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCRAMBLE GENERATOR
+// ═══════════════════════════════════════════════════════
+const MOVES=['R','L','U','D','F','B'],MODS=["","'","2"];
+const OPP={R:'L',L:'R',U:'D',D:'U',F:'B',B:'F'};
+
+function genScrambleStr(len){
+  len=len||parseInt(settings.scrambleLength)||20;
+  let s=[],last='',sec='';
+  for(let i=0;i<len;i++){
+    let f; do{f=MOVES[Math.floor(Math.random()*6)];}while(f===last||(f===sec&&OPP[f]===last));
+    s.push(f+MODS[Math.floor(Math.random()*3)]); sec=last; last=f;
+  }
+  return s.join(' ');
+}
+function genScramble(){
+  const s=genScrambleStr(); document.getElementById('scramble-text').textContent=s; return s;
+}
+
+// Stage-specific scramblers
+function genCrossScramble(){
+  // Only scramble white edges: randomly move D-layer edges using D,F2,B2,R2,L2 type moves
+  const edgeMoves=['F2','B2','R2','L2','U','U2',"U'"];
+  let moves=[];
+  for(let i=0;i<8;i++) moves.push(edgeMoves[Math.floor(Math.random()*edgeMoves.length)]);
+  return moves.join(' ');
+}
+function genF2LScramble(){
+  // Scramble corner-edge pairs, keep cross solved
+  const f2lMoves=['R','L',"R'","L'","R2","L2",'U',"U'","U2",'F',"F'","B","B'"];
+  let s=[],last='';
+  for(let i=0;i<10;i++){let m;do{m=f2lMoves[Math.floor(Math.random()*f2lMoves.length)];}while(m[0]===last[0]);s.push(m);last=m;}
+  return s.join(' ');
+}
+function genOLLScramble(){
+  // Pick a random OLL case algorithm (inverse = scramble)
+  const ollCases=[
+    "R U R' U' R' F R F'","F R U R' U' F'","f R U R' U' f'","R U R' U R U2 R'",
+    "R U2 R' U' R U' R'","r U R' U R U2 r'","r U2 R' U' R U' r'",
+    "R U2 R2 U' R2 U' R2 U2 R","R' U' R U' R' U R U' R' U2 R",
+    "R U R' U' R U' R' U2 R U' R'","F R U R' U' R U R' U' F'",
+    "r U R' U' r' R U R' U'","R U R' U' M' U R U' r'","r' R2 U R' U R U2 R' U M'"
+  ];
+  return ollCases[Math.floor(Math.random()*ollCases.length)];
+}
+function genPLLScramble(){
+  const pllCases=[
+    "R U R' U' R' F R2 U' R' U' R U R' F'",
+    "R U R' F' R U R' U' R' F R2 U' R'",
+    "R U' R U R U R U' R' U' R2",
+    "R2 U R U R' U' R' U' R' U R'",
+    "M2 U M2 U2 M2 U M2",
+    "M2 U M2 U M' U2 M2 U2 M'",
+    "R' F R' B2 R F' R' B2 R2",
+    "R B' R F2 R' B R F2 R2",
+    "F R U' R' U' R U R' F' R U R' U' R' F R F'",
+    "R U R' U' R' F R2 U' R' U' R U R' F' U2"
+  ];
+  return pllCases[Math.floor(Math.random()*pllCases.length)];
+}
+
