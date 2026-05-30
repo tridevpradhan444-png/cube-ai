@@ -129,7 +129,7 @@ html,body{
 
 /* This is the new rule */
 #bin-btn.visible {
-  display: block; 
+  visibility:visible; 
 }
   
 
@@ -140,7 +140,7 @@ html,body{
 .timer-hint{margin-top:20px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);transition:opacity 0.3s ease;}
 .timer-hint.hidden{opacity:0;}
 #inspection-display{position:absolute;top:64px;font-family:var(--fd);font-size:28px;font-weight:700;letter-spacing:2px;color:var(--g2);display:none;}
-#bin-btn{position:static;right:20px;top:50%;transform:translateY(-60%);width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:var(--border);background:var(--bg2);cursor:pointer;font-size:22px;opacity:0;pointer-events:none;transition:all 0.25s ease;}
+#bin-btn{position: absolute;right:20px;top:50%;transform:translateY(-60%);width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:var(--border);background:var(--bg2);cursor:pointer;font-size:22px;opacity:0;pointer-events:none;transition:all 0.25s ease;}
 #bin-btn.visible{display:block;opacity:1;pointer-events:all;}
 #bin-btn:hover{border-color:var(--w);}
 
@@ -279,10 +279,12 @@ html,body{
     <div class="timer-hint" id="timer-hint">HOLD TO START</div>
   </div>
   <div id="bin-btn" onclick="deleteLastSolve()">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-  </svg>
+    <svg class="trash-icon" viewBox="0 0 24 24" fill="black" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 6H5H21" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" fill="#111" stroke="#111" stroke-width="1.5"/>
+      <path d="M10 11V17" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M14 11V17" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
   </div>
   
   <div id="stats-bar">
