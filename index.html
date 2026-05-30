@@ -109,14 +109,20 @@ html,body{
   justify-content: center;
   position: relative;
 }
+
   #bin-btn {
-  display: none; /* This ensures it's invisible when you open the app */
+  display: none; /* Hidden by default */
   font-size: 24px;
   text-align: center;
   margin: 15px auto;
   cursor: pointer;
   opacity: 0.6;
-  }
+}
+
+/* This is the new rule */
+#bin-btn.visible {
+  display: block; 
+}
   
 
 #timer-display{font-family:var(--fd);font-size:clamp(52px,14vw,88px);font-weight:900;letter-spacing:-2px;color:var(--w);transition:color 0.15s ease;position:relative;cursor:default;}
