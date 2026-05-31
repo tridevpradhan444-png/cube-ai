@@ -329,6 +329,7 @@ function isStickerVisible(stage,face,x,y,z){
     // Only show edge pieces — and only if they contain white OR their corresponding side
     if(ptype==='corner') return false; // no corners in cross
     if(ptype==='edge'){
+      if(!cubeState) return false;
       // Show if this edge piece has white on any face
       return edgeHasColor(x,y,z,'#ffffff');
     }
