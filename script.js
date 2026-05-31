@@ -97,7 +97,7 @@ function onHoldStart(e){
   if(timerRunning){stopTimer();return;}
   isHolding=true;
   document.getElementById('timer-display').classList.add('holding');
-  document.getElementById('bin-btn').classList.remove('visible');
+  
   holdTimeout=setTimeout(()=>{if(isHolding){isArmed=true;document.getElementById('timer-display').classList.remove('holding');document.getElementById('timer-display').classList.add('ready');}},settings.holdDuration);
 }
 function onHoldEnd(e){
