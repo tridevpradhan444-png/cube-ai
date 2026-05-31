@@ -7,14 +7,14 @@ let settings = Object.assign({inspection:false,autoscramble:true,holdDuration:50
 
 const FACE_COLORS = {U:'#ffd700',D:'#ffffff',F:'#00c853',B:'#2979ff',R:'#ff6d00',L:'#f44336'};
 const STAGE_INFO = {
-  cross:{title:'CROSS',desc:'Only the 4 white edges are scrambled. Paint white + side color on edges only.'},
+  cross:{title:'CROSS',desc:'Only the 4 white edges are scrambled. Paint white on D face, side color on edge sides.'},
   f2l:{title:'F2L — FIRST TWO LAYERS',desc:'Cross locked solved. Scramble or paint the 4 corner-edge pairs.'},
   oll:{title:'OLL — ORIENT LAST LAYER',desc:'F2L locked. All OLL cases possible on top face.'},
   pll:{title:'PLL — PERMUTE LAST LAYER',desc:'F2L locked, yellow top locked. All 21 PLL cases possible.'}
 };
 
-// Animation speed: ms per move
-let animSpeed = 300; // default normal
+// Animation speed ms per move — default Normal = 600ms
+let animSpeed = 600;
 
 // ═══════════════════════════════════════════════════════
 //  NAV
@@ -154,9 +154,8 @@ function genScramble(){
   document.getElementById('scramble-text').textContent=s;
   return s;
 }
-
 function genCrossScramble(){
-  const moves=['F2','B2','R2','L2',"U","U'","U2","D","D'","D2"];
+  const moves=['F2','B2','R2','L2','U',"U'","U2",'D',"D'","D2"];
   let s=[],last='';
   for(let i=0;i<10;i++){
     let m; do{m=moves[Math.floor(Math.random()*moves.length)];}while(m[0]===last[0]);
@@ -215,7 +214,6 @@ function initCubeState(){
   cubeState={};
   for(const [f,c] of Object.entries(FACE_COLORS)) cubeState[f]=Array(9).fill(c);
 }
-
 function cloneState(s){ const c={}; for(const f of Object.keys(s)) c[f]=[...s[f]]; return c; }
 
 function rotateFaceCW(s,f){
@@ -228,52 +226,52 @@ function rotateFaceCW(s,f){
 function applyMoveCW(s,base){
   if(base==='U'){
     rotateFaceCW(s,'U');
-    const tmp=[s.F[0],s.F[1],s.F[2]];
+    const t=[s.F[0],s.F[1],s.F[2]];
     s.F[0]=s.R[0];s.F[1]=s.R[1];s.F[2]=s.R[2];
     s.R[0]=s.B[0];s.R[1]=s.B[1];s.R[2]=s.B[2];
     s.B[0]=s.L[0];s.B[1]=s.L[1];s.B[2]=s.L[2];
-    s.L[0]=tmp[0];s.L[1]=tmp[1];s.L[2]=tmp[2];
+    s.L[0]=t[0];s.L[1]=t[1];s.L[2]=t[2];
   } else if(base==='D'){
     rotateFaceCW(s,'D');
-    const tmp=[s.F[6],s.F[7],s.F[8]];
+    const t=[s.F[6],s.F[7],s.F[8]];
     s.F[6]=s.L[6];s.F[7]=s.L[7];s.F[8]=s.L[8];
     s.L[6]=s.B[6];s.L[7]=s.B[7];s.L[8]=s.B[8];
     s.B[6]=s.R[6];s.B[7]=s.R[7];s.B[8]=s.R[8];
-    s.R[6]=tmp[0];s.R[7]=tmp[1];s.R[8]=tmp[2];
+    s.R[6]=t[0];s.R[7]=t[1];s.R[8]=t[2];
   } else if(base==='R'){
     rotateFaceCW(s,'R');
-    const tmp=[s.U[2],s.U[5],s.U[8]];
+    const t=[s.U[2],s.U[5],s.U[8]];
     s.U[2]=s.F[2];s.U[5]=s.F[5];s.U[8]=s.F[8];
     s.F[2]=s.D[2];s.F[5]=s.D[5];s.F[8]=s.D[8];
     s.D[2]=s.B[6];s.D[5]=s.B[3];s.D[8]=s.B[0];
-    s.B[6]=tmp[0];s.B[3]=tmp[1];s.B[0]=tmp[2];
+    s.B[6]=t[0];s.B[3]=t[1];s.B[0]=t[2];
   } else if(base==='L'){
     rotateFaceCW(s,'L');
-    const tmp=[s.U[0],s.U[3],s.U[6]];
+    const t=[s.U[0],s.U[3],s.U[6]];
     s.U[0]=s.B[8];s.U[3]=s.B[5];s.U[6]=s.B[2];
     s.B[8]=s.D[0];s.B[5]=s.D[3];s.B[2]=s.D[6];
     s.D[0]=s.F[0];s.D[3]=s.F[3];s.D[6]=s.F[6];
-    s.F[0]=tmp[0];s.F[3]=tmp[1];s.F[6]=tmp[2];
+    s.F[0]=t[0];s.F[3]=t[1];s.F[6]=t[2];
   } else if(base==='F'){
     rotateFaceCW(s,'F');
-    const tmp=[s.U[6],s.U[7],s.U[8]];
+    const t=[s.U[6],s.U[7],s.U[8]];
     s.U[6]=s.L[8];s.U[7]=s.L[5];s.U[8]=s.L[2];
     s.L[2]=s.D[0];s.L[5]=s.D[1];s.L[8]=s.D[2];
     s.D[0]=s.R[6];s.D[1]=s.R[3];s.D[2]=s.R[0];
-    s.R[0]=tmp[2];s.R[3]=tmp[1];s.R[6]=tmp[0];
+    s.R[0]=t[2];s.R[3]=t[1];s.R[6]=t[0];
   } else if(base==='B'){
     rotateFaceCW(s,'B');
-    const tmp=[s.U[0],s.U[1],s.U[2]];
+    const t=[s.U[0],s.U[1],s.U[2]];
     s.U[0]=s.R[2];s.U[1]=s.R[5];s.U[2]=s.R[8];
     s.R[2]=s.D[8];s.R[5]=s.D[7];s.R[8]=s.D[6];
     s.D[6]=s.L[0];s.D[7]=s.L[3];s.D[8]=s.L[6];
-    s.L[0]=tmp[2];s.L[3]=tmp[1];s.L[6]=tmp[0];
+    s.L[0]=t[2];s.L[3]=t[1];s.L[6]=t[0];
   } else if(base==='M'){
-    const tmp=[s.U[1],s.U[4],s.U[7]];
+    const t=[s.U[1],s.U[4],s.U[7]];
     s.U[1]=s.B[7];s.U[4]=s.B[4];s.U[7]=s.B[1];
     s.B[7]=s.D[1];s.B[4]=s.D[4];s.B[1]=s.D[7];
     s.D[1]=s.F[1];s.D[4]=s.F[4];s.D[7]=s.F[7];
-    s.F[1]=tmp[0];s.F[4]=tmp[1];s.F[7]=tmp[2];
+    s.F[1]=t[0];s.F[4]=t[1];s.F[7]=t[2];
   }
 }
 
@@ -286,14 +284,12 @@ function applyMove(state,move){
   for(let t=0;t<times;t++) applyMoveCW(s,base);
   return s;
 }
-
 function applyMoves(state,movesStr){
   if(!movesStr||!movesStr.trim()) return cloneState(state);
   let s=cloneState(state);
   for(const m of movesStr.trim().split(/\s+/)) if(m) s=applyMove(s,m);
   return s;
 }
-
 function invertMoves(movesStr){
   if(!movesStr||!movesStr.trim()) return '';
   return movesStr.trim().split(/\s+/).reverse().map(m=>{
@@ -313,65 +309,57 @@ let currentSolution='';
 let selectedColor='#ffffff';
 let isAnimating=false;
 let pSceneInit=false;
-
-// Three.js vars
 let scene,camera,renderer,cubeGroup;
 let isDragging=false,prevMouse={x:0,y:0},dragMoved=false;
-
-// Default quaternion (nice angle to view cube)
-const DEFAULT_ROT = {x:0.4, y:-0.6};
+let touchStartPos={x:0,y:0};
+const DRAG_SPEED=0.007;
 
 function initPScene(){
   if(pSceneInit) return; pSceneInit=true;
   const container=document.getElementById('cube-wrap');
   const canvas=document.getElementById('practice-canvas');
   const w=container.clientWidth,h=container.clientHeight;
-
-  scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x080808);
-
+  scene=new THREE.Scene(); scene.background=new THREE.Color(0x080808);
   camera=new THREE.PerspectiveCamera(42,w/h,0.1,100);
-  camera.position.set(4.5,4,5.5);
-  camera.lookAt(0,0,0);
-
+  camera.position.set(4.5,4,5.5); camera.lookAt(0,0,0);
   renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-  renderer.setSize(w,h);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.shadowMap.enabled=true;
-
-  // Lights
-  scene.add(new THREE.AmbientLight(0xffffff,0.6));
-  const dl=new THREE.DirectionalLight(0xffffff,0.9);
-  dl.position.set(6,10,6); scene.add(dl);
-  const dl2=new THREE.DirectionalLight(0xffffff,0.3);
-  dl2.position.set(-4,-2,-4); scene.add(dl2);
-
+  renderer.setSize(w,h); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  scene.add(new THREE.AmbientLight(0xffffff,0.65));
+  const dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(6,10,6); scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0xffffff,0.25); dl2.position.set(-4,-2,-4); scene.add(dl2);
   cubeGroup=new THREE.Group(); scene.add(cubeGroup);
-
-  initCubeState();
-  applyStageDefaults(pStage);
-  buildMesh();
+  initCubeState(); applyStageDefaults(pStage); buildMesh();
   resetCubeAngle();
-  setupDrag();
-  setupCanvasTap();
-
+  setupDrag(); setupCanvasTap();
   requestAnimationFrame(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);});
-
   window.addEventListener('resize',()=>{
     const w2=container.clientWidth,h2=container.clientHeight;
     camera.aspect=w2/h2; camera.updateProjectionMatrix(); renderer.setSize(w2,h2);
   });
-
-  setupPalette();
-  renderNet();
+  setupPalette(); renderNet();
 }
 
 function resetCubeAngle(){
   if(!cubeGroup) return;
-  // Set to a nice default viewing angle using quaternion
-  const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),DEFAULT_ROT.y);
-  const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),DEFAULT_ROT.x);
+  const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-0.6);
+  const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),0.4);
   cubeGroup.quaternion.copy(qY).multiply(qX);
+}
+
+function rotateCube90(){
+  if(isAnimating||!cubeGroup) return;
+  // Smoothly rotate 90° around Y axis
+  const startQ=cubeGroup.quaternion.clone();
+  const deltaQ=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
+  const endQ=startQ.clone().multiply(deltaQ);
+  const duration=400,start=Date.now();
+  function step(){
+    const p=Math.min((Date.now()-start)/duration,1);
+    const e=p<0.5?2*p*p:(1-Math.pow(-2*p+2,2)/2);
+    cubeGroup.quaternion.slerpQuaternions(startQ,endQ,e);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -393,14 +381,11 @@ function buildMesh(){
       const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
       if(cv!==fm.val) return new THREE.MeshLambertMaterial({color:0x0a0a0a});
       const visible=isStickerVisible(pStage,fm.face,x,y,z);
-      const col=visible
-        ? parseInt(getStickerColor(fm.face,x,y,z).replace('#',''),16)
-        : 0x1c1c1c;
+      const col=visible?parseInt(getStickerColor(fm.face,x,y,z).replace('#',''),16):0x1c1c1c;
       return new THREE.MeshLambertMaterial({color:col});
     });
     const mesh=new THREE.Mesh(geo,mats);
-    mesh.position.set(x,y,z);
-    mesh.userData={x,y,z};
+    mesh.position.set(x,y,z); mesh.userData={x,y,z};
     cubeGroup.add(mesh);
   }
 }
@@ -413,8 +398,7 @@ function getStickerColor(face,x,y,z){
   else if(face==='B'){row=1-y;col=1-x;}
   else if(face==='R'){row=1-y;col=1-z;}
   else{row=1-y;col=z+1;}
-  const idx=row*3+col;
-  if(idx<0||idx>8) return '#111111';
+  const idx=Math.max(0,Math.min(8,row*3+col));
   return cubeState[face][idx]||'#111111';
 }
 
@@ -426,27 +410,21 @@ function getStickerIndex(face,x,y,z){
   else if(face==='B'){row=1-y;col=1-x;}
   else if(face==='R'){row=1-y;col=1-z;}
   else{row=1-y;col=z+1;}
-  return row*3+col;
+  return Math.max(0,Math.min(8,row*3+col));
 }
 
-// Is this a corner piece?
-function isCorner(x,y,z){ return Math.abs(x)===1&&Math.abs(y)===1&&Math.abs(z)===1; }
-// Is this an edge piece?
-function isEdge(x,y,z){
-  const a=Math.abs(x)+Math.abs(y)+Math.abs(z);
-  return a===2;
-}
-// Is this a center piece?
-function isCenter(x,y,z){ return Math.abs(x)+Math.abs(y)+Math.abs(z)===1; }
+function isCornerPiece(x,y,z){ return Math.abs(x)===1&&Math.abs(y)===1&&Math.abs(z)===1; }
+function isEdgePiece(x,y,z){ return (Math.abs(x)+Math.abs(y)+Math.abs(z))===2; }
+function isCenterPiece(x,y,z){ return (Math.abs(x)+Math.abs(y)+Math.abs(z))===1; }
 
 function isStickerVisible(stage,face,x,y,z){
   if(stage==='cross'){
-    // Only: bottom face (D), 4 side edges at y=-1 (not corners), all centers
-    if(face==='D') return true;
-    // Side centers
-    if(isCenter(x,y,z)) return true;
-    // Only edge pieces (not corners) at y=-1
-    if(y===-1 && isEdge(x,y,z)){
+    // ONLY show: D face edges (not corners), all 6 centers
+    if(isCenterPiece(x,y,z)) return true;
+    // D face: only edge pieces (no corners)
+    if(face==='D' && y===-1 && isEdgePiece(x,y,z)) return true;
+    // Side stickers of cross edges at y=-1
+    if(y===-1 && isEdgePiece(x,y,z)){
       if(face==='F'&&x===0) return true;
       if(face==='B'&&x===0) return true;
       if(face==='R'&&z===0) return true;
@@ -455,54 +433,46 @@ function isStickerVisible(stage,face,x,y,z){
     return false;
   }
   if(stage==='f2l'){
-    // Bottom 2 layers fully visible
     if(y<1) return true;
-    // Top center only
-    if(isCenter(x,y,z)) return true;
+    if(isCenterPiece(x,y,z)) return true;
     return false;
   }
   if(stage==='oll'){
     if(face==='U') return true;
     if(y===1) return true;
-    if(isCenter(x,y,z)) return true;
+    if(isCenterPiece(x,y,z)) return true;
     return false;
   }
   if(stage==='pll'){
     if(y===1) return true;
-    if(isCenter(x,y,z)) return true;
+    if(isCenterPiece(x,y,z)) return true;
     return false;
   }
   return true;
 }
 
-// Is this sticker paintable?
 function isPaintable(stage,face,x,y,z){
   if(stage==='cross'){
-    // Only 4 white edges on D face + their side sticker
-    if(face==='D'&&y===-1&&isEdge(x,y,z)) return true;
-    // Side sticker of those edges
-    if(y===-1&&isEdge(x,y,z)){
-      if(face==='F'&&x===0) return true;
-      if(face==='B'&&x===0) return true;
-      if(face==='R'&&z===0) return true;
-      if(face==='L'&&z===0) return true;
-    }
+    // Only 4 edge pieces: D face sticker + side sticker
+    if(!isEdgePiece(x,y,z)) return false;
+    if(y!==-1) return false;
+    if(face==='D') return true;
+    if(face==='F'&&x===0) return true;
+    if(face==='B'&&x===0) return true;
+    if(face==='R'&&z===0) return true;
+    if(face==='L'&&z===0) return true;
     return false;
   }
   if(stage==='f2l'){
-    // Edges and corners in bottom 2 layers (not cross centers/edges that are solved)
-    if(y<1&&!isCenter(x,y,z)) return true;
+    if(isCenterPiece(x,y,z)) return false;
+    if(y<1) return true;
     return false;
   }
   if(stage==='oll'){
-    // Only top face stickers
-    if(face==='U') return true;
-    return false;
+    return face==='U';
   }
   if(stage==='pll'){
-    // Top layer stickers (U face + sides of top layer)
-    if(y===1) return true;
-    return false;
+    return y===1;
   }
   return true;
 }
@@ -510,8 +480,7 @@ function isPaintable(stage,face,x,y,z){
 function isColorAllowedForStage(stage,face,color){
   if(stage==='cross'){
     if(face==='D') return color==='#ffffff';
-    // Side stickers of cross edges can be any non-white color
-    return color!=='#ffffff';
+    return color!=='#ffffff'; // side of edge = any non-white
   }
   if(stage==='oll') return color==='#ffd700';
   return true;
@@ -523,37 +492,32 @@ function applyStageDefaults(stage){
 }
 
 // ═══════════════════════════════════════════════════════
-//  DRAG — World space, no inversion, slower speed
+//  DRAG — world space, no inversion
 // ═══════════════════════════════════════════════════════
-const DRAG_SPEED = 0.007; // Slower drag
-
 function setupDrag(){
   const canvas=document.getElementById('practice-canvas');
-
   canvas.addEventListener('touchstart',e=>{
     isDragging=true; dragMoved=false;
+    touchStartPos={x:e.touches[0].clientX,y:e.touches[0].clientY};
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
   },{passive:true});
-
   canvas.addEventListener('touchmove',e=>{
     if(!isDragging||isAnimating) return;
-    dragMoved=true;
-    const dx=e.touches[0].clientX-prevMouse.x;
-    const dy=e.touches[0].clientY-prevMouse.y;
-    // Rotate around WORLD Y axis (horizontal drag) and WORLD X axis (vertical drag)
-    // This prevents inversion regardless of cube orientation
+    const dx=e.touches[0].clientX-prevMouse.x,dy=e.touches[0].clientY-prevMouse.y;
+    const dist=Math.sqrt(Math.pow(e.touches[0].clientX-touchStartPos.x,2)+Math.pow(e.touches[0].clientY-touchStartPos.y,2));
+    if(dist>8) dragMoved=true;
+    if(!dragMoved) return;
     const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*DRAG_SPEED);
     const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
     cubeGroup.quaternion.premultiply(qY).premultiply(qX);
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
   },{passive:true});
-
-  canvas.addEventListener('touchend',()=>{ isDragging=false; });
-
-  canvas.addEventListener('mousedown',e=>{
-    isDragging=true; dragMoved=false;
-    prevMouse={x:e.clientX,y:e.clientY};
+  canvas.addEventListener('touchend',e=>{
+    const dist=Math.sqrt(Math.pow(e.changedTouches[0].clientX-touchStartPos.x,2)+Math.pow(e.changedTouches[0].clientY-touchStartPos.y,2));
+    if(dist<8) handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+    isDragging=false; dragMoved=false;
   });
+  canvas.addEventListener('mousedown',e=>{isDragging=true;dragMoved=false;prevMouse={x:e.clientX,y:e.clientY};touchStartPos={x:e.clientX,y:e.clientY};});
   canvas.addEventListener('mousemove',e=>{
     if(!isDragging||isAnimating) return;
     dragMoved=true;
@@ -563,106 +527,78 @@ function setupDrag(){
     cubeGroup.quaternion.premultiply(qY).premultiply(qX);
     prevMouse={x:e.clientX,y:e.clientY};
   });
-  canvas.addEventListener('mouseup',()=>{ isDragging=false; });
+  canvas.addEventListener('mouseup',e=>{
+    const dist=Math.sqrt(Math.pow(e.clientX-touchStartPos.x,2)+Math.pow(e.clientY-touchStartPos.y,2));
+    if(dist<5) handleTap(e.clientX,e.clientY);
+    isDragging=false; dragMoved=false;
+  });
 }
 
 // ═══════════════════════════════════════════════════════
-//  TAP TO PAINT
+//  TAP TO PAINT — separate from drag
 // ═══════════════════════════════════════════════════════
 function setupCanvasTap(){
+  // Handled inside setupDrag touchend/mouseup now
+}
+
+function handleTap(clientX,clientY){
+  if(isAnimating) return;
   const canvas=document.getElementById('practice-canvas');
   const raycaster=new THREE.Raycaster();
-
-  function handleTap(clientX,clientY){
-    if(dragMoved||isAnimating) return;
-    const rect=canvas.getBoundingClientRect();
-    const mouse=new THREE.Vector2(
-      ((clientX-rect.left)/rect.width)*2-1,
-      -((clientY-rect.top)/rect.height)*2+1
-    );
-    raycaster.setFromCamera(mouse,camera);
-    const hits=raycaster.intersectObjects(cubeGroup.children);
-    if(!hits.length) return;
-
-    const hit=hits[0];
-    const fi=hit.face.materialIndex;
-    const faceNames=['R','L','U','D','F','B'];
-    const faceName=faceNames[fi];
-    const {x,y,z}=hit.object.userData;
-
-    // Check paintable
-    if(!isPaintable(pStage,faceName,x,y,z)){
-      showToast('Not paintable here');
-      return;
-    }
-    // Check color allowed
-    if(!isColorAllowedForStage(pStage,faceName,selectedColor)){
-      showToast('Wrong color for this stage');
-      return;
-    }
-
-    const idx=getStickerIndex(faceName,x,y,z);
-    const current=cubeState[faceName][idx];
-    const defaultColor=FACE_COLORS[faceName];
-
-    // Toggle: painted → default, default/other → selected color
-    if(current===selectedColor){
-      cubeState[faceName][idx]=defaultColor;
-    } else {
-      cubeState[faceName][idx]=selectedColor;
-    }
-
-    buildMesh();
-    renderNet();
-    checkMismatch();
-    // Painting counts as manual scramble — compute solution
-    currentScrambleStr='';
-    currentSolution='';
-    document.getElementById('solution-panel').classList.remove('show');
+  const rect=canvas.getBoundingClientRect();
+  const mouse=new THREE.Vector2(
+    ((clientX-rect.left)/rect.width)*2-1,
+    -((clientY-rect.top)/rect.height)*2+1
+  );
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(cubeGroup.children);
+  if(!hits.length) return;
+  const hit=hits[0];
+  const fi=hit.face.materialIndex;
+  const faceNames=['R','L','U','D','F','B'];
+  const faceName=faceNames[fi];
+  const {x,y,z}=hit.object.userData;
+  if(!isPaintable(pStage,faceName,x,y,z)){
+    showToast('Not paintable here');
+    return;
   }
-
-  canvas.addEventListener('touchend',e=>{
-    if(!dragMoved) handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
-    dragMoved=false;
-  });
-  canvas.addEventListener('click',e=>{
-    if(!dragMoved) handleTap(e.clientX,e.clientY);
-  });
+  if(!isColorAllowedForStage(pStage,faceName,selectedColor)){
+    showToast('Wrong color for this face');
+    return;
+  }
+  const idx=getStickerIndex(faceName,x,y,z);
+  const current=cubeState[faceName][idx];
+  // Toggle
+  if(current===selectedColor){
+    cubeState[faceName][idx]=FACE_COLORS[faceName];
+  } else {
+    cubeState[faceName][idx]=selectedColor;
+  }
+  buildMesh(); renderNet(); checkMismatch();
+  // Painting = manual scramble
+  currentScrambleStr='';
+  currentSolution='';
+  document.getElementById('solution-panel').classList.remove('show');
 }
 
 // ═══════════════════════════════════════════════════════
 //  COLOR PALETTE
 // ═══════════════════════════════════════════════════════
 const STAGE_COLORS={
-  cross:[
-    {c:'#ffffff',l:'White (D face)'},
-    {c:'#00c853',l:'Green'},
-    {c:'#ff6d00',l:'Orange'},
-    {c:'#2979ff',l:'Blue'},
-    {c:'#f44336',l:'Red'}
-  ],
-  f2l:[
-    {c:'#ffffff',l:'W'},{c:'#ffd700',l:'Y'},
-    {c:'#00c853',l:'G'},{c:'#ff6d00',l:'O'},
-    {c:'#2979ff',l:'B'},{c:'#f44336',l:'R'}
-  ],
+  cross:[{c:'#ffffff',l:'White (D)'},{c:'#00c853',l:'Green'},{c:'#ff6d00',l:'Orange'},{c:'#2979ff',l:'Blue'},{c:'#f44336',l:'Red'}],
+  f2l:[{c:'#ffffff',l:'W'},{c:'#ffd700',l:'Y'},{c:'#00c853',l:'G'},{c:'#ff6d00',l:'O'},{c:'#2979ff',l:'B'},{c:'#f44336',l:'R'}],
   oll:[{c:'#ffd700',l:'Yellow'}],
-  pll:[
-    {c:'#ffd700',l:'Y'},{c:'#00c853',l:'G'},
-    {c:'#ff6d00',l:'O'},{c:'#2979ff',l:'B'},
-    {c:'#f44336',l:'R'},{c:'#ffffff',l:'W'}
-  ]
+  pll:[{c:'#ffd700',l:'Y'},{c:'#00c853',l:'G'},{c:'#ff6d00',l:'O'},{c:'#2979ff',l:'B'},{c:'#f44336',l:'R'},{c:'#ffffff',l:'W'}]
 };
 
 function setupPalette(){
   const colors=STAGE_COLORS[pStage];
   selectedColor=colors[0].c;
-  const hint={cross:'D face = white only · Side of edge = any color',f2l:'All colors',oll:'Yellow only',pll:'All colors'};
+  const hint={cross:'D face = white · Edge side = any color',f2l:'All colors',oll:'Yellow only',pll:'All colors'};
   document.getElementById('paint-restrict').textContent='— '+hint[pStage];
   document.getElementById('cpalette').innerHTML=
     colors.map(c=>`<div class="cswatch${c.c===selectedColor?' sel':''}" style="background:${c.c}" onclick="selColor('${c.c}')" title="${c.l}"></div>`).join('');
 }
-
 function selColor(c){
   selectedColor=c;
   document.querySelectorAll('.cswatch').forEach(s=>{
@@ -671,36 +607,60 @@ function selColor(c){
 }
 
 // ═══════════════════════════════════════════════════════
-//  2D NET
+//  2D NET — Fixed mapping
 // ═══════════════════════════════════════════════════════
-const NET_LAYOUT=[
-  {face:'U',row:0,col:1},
-  {face:'L',row:1,col:0},{face:'F',row:1,col:1},{face:'R',row:1,col:2},{face:'B',row:1,col:3},
-  {face:'D',row:2,col:1}
-];
-
 function renderNet(){
   const net=document.getElementById('cube-net');
-  const cs=16,gap=2,fs=cs*3+gap*2,cols=4,rows=3;
-  const tw=cols*(fs+gap)-gap,th=rows*(fs+gap)-gap;
+  if(!net||!cubeState) return;
+  const cs=16,gap=2,fs=cs*3+gap*2;
+  const tw=4*(fs+gap)-gap, th=3*(fs+gap)-gap;
+  // Layout: U at row0col1, L/F/R/B at row1, D at row2col1
+  const layout=[
+    {face:'U',ro:0,co:1},{face:'L',ro:1,co:0},{face:'F',ro:1,co:1},
+    {face:'R',ro:1,co:2},{face:'B',ro:1,co:3},{face:'D',ro:2,co:1}
+  ];
   let html=`<svg width="${tw}" height="${th}" viewBox="0 0 ${tw} ${th}">`;
-  for(const {face,row,col} of NET_LAYOUT){
-    const ox=col*(fs+gap),oy=row*(fs+gap);
+  for(const {face,ro,co} of layout){
+    const ox=co*(fs+gap), oy=ro*(fs+gap);
     for(let i=0;i<9;i++){
       const r=Math.floor(i/3),c=i%3;
-      const sx=ox+c*(cs+gap),sy=oy+r*(cs+gap);
-      const color=cubeState?cubeState[face][i]:FACE_COLORS[face];
-      // Determine if this sticker is visible/paintable in current stage
-      // Approximate position from index
-      const cx=c-1,cy=face==='U'?1:face==='D'?-1:0,cz=face==='F'||face==='B'?0:1-c;
-      const vis=isStickerVisible(pStage,face,cx,cy,cz);
-      const fill=vis?color:'#1a1a1a';
-      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${fill}" rx="1" stroke="#080808" stroke-width="0.5"/>`;
+      const sx=ox+c*(cs+gap), sy=oy+r*(cs+gap);
+      const color=cubeState[face][i]||FACE_COLORS[face];
+      // Simple visibility: use face default color if not visible in stage
+      const show=isStickerVisibleByIndex(pStage,face,i);
+      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${show?color:'#1a1a1a'}" rx="1" stroke="#080808" stroke-width="0.5"/>`;
     }
-    html+=`<text x="${ox+fs/2}" y="${oy-3}" fill="#333" font-size="8" text-anchor="middle" font-family="Rajdhani,sans-serif">${face}</text>`;
+    html+=`<text x="${ox+fs/2}" y="${oy-2}" fill="#444" font-size="8" text-anchor="middle" font-family="Rajdhani,sans-serif">${face}</text>`;
   }
   html+='</svg>';
   net.innerHTML=html;
+}
+
+// Simplified net visibility by face + sticker index
+function isStickerVisibleByIndex(stage,face,idx){
+  const isEdgeIdx=[1,3,5,7]; // center cross edge positions
+  const isCenterIdx=4;
+  if(stage==='cross'){
+    if(isCenterIdx===idx) return true; // center
+    if(face==='D' && isEdgeIdx.includes(idx)) return true;
+    if(['F','B','R','L'].includes(face) && idx>=6) return true; // bottom row of side faces (edge stickers)
+    return false;
+  }
+  if(stage==='f2l'){
+    if(face==='U') return idx===4; // only U center
+    return true;
+  }
+  if(stage==='oll'){
+    if(face==='U') return true;
+    if(['F','B','R','L'].includes(face) && idx<=2) return true; // top row
+    return idx===4; // centers
+  }
+  if(stage==='pll'){
+    if(face==='U') return true;
+    if(['F','B','R','L'].includes(face) && idx<=2) return true;
+    return idx===4;
+  }
+  return true;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -708,19 +668,17 @@ function renderNet(){
 // ═══════════════════════════════════════════════════════
 function checkMismatch(){
   if(!cubeState){document.getElementById('mismatch-warn').classList.remove('show');return;}
-  const warn=document.getElementById('mismatch-warn');
   const counts={};
   for(const f of ['U','D','F','B','R','L']){
     for(const c of cubeState[f]){
-      if(c&&c!=='#1c1c1c'&&c!=='#1a1a1a') counts[c]=(counts[c]||0)+1;
+      if(c) counts[c]=(counts[c]||0)+1;
     }
   }
-  // Each color should have at most 9 stickers
   let bad=false;
-  for(const [c,n] of Object.entries(counts)){
+  for(const n of Object.values(counts)){
     if(n>9){bad=true;break;}
   }
-  warn.classList.toggle('show',bad);
+  document.getElementById('mismatch-warn').classList.toggle('show',bad);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -730,27 +688,22 @@ function handleScrambleBtn(){
   if(isAnimating) return;
   const btn=document.getElementById('scramble-btn');
   const input=document.getElementById('pscramble-input');
-
   if(!scrambleGenerated){
-    // First tap: generate
     let s='';
     if(pStage==='cross') s=genCrossScramble();
     else if(pStage==='f2l') s=genF2LScramble();
     else if(pStage==='oll') s=genOLLScramble();
     else s=genPLLScramble();
-    currentScrambleStr=s;
-    input.value=s;
-    scrambleGenerated=true;
-    btn.textContent='Apply';
+    currentScrambleStr=s; input.value=s;
+    scrambleGenerated=true; btn.textContent='Apply';
     showToast('Tap Apply to animate');
   } else {
-    // Second tap: apply + animate
-    scrambleGenerated=false;
-    btn.textContent='Scramble';
+    scrambleGenerated=false; btn.textContent='Scramble';
     applyStageDefaults(pStage);
-    // Animate the scramble
+    // Apply to logical state
+    cubeState=applyMoves(cubeState,currentScrambleStr);
+    // Animate visually
     animateMoves(currentScrambleStr,()=>{
-      cubeState=applyMoves(cubeState,currentScrambleStr);
       buildMesh(); renderNet(); checkMismatch();
       currentSolution=invertMoves(currentScrambleStr);
     });
@@ -775,7 +728,7 @@ function setPStage(stage){
   document.getElementById('stage-title').textContent=STAGE_INFO[stage].title;
   document.getElementById('stage-desc').textContent=STAGE_INFO[stage].desc;
   resetPCube();
-  if(pSceneInit){ setupPalette(); }
+  if(pSceneInit) setupPalette();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -786,15 +739,12 @@ function handleSolutionBtn(){
   const sol=currentSolution||invertMoves(currentScrambleStr);
   if(!sol||!sol.trim()){showToast('Scramble first!');return;}
   showSolutionMoves(sol);
-  // Apply moves to logical state first
   const targetState=applyMoves(cubeState,sol);
   animateMoves(sol,()=>{
     cubeState=cloneState(targetState);
     buildMesh(); renderNet();
     currentSolution=''; currentScrambleStr='';
-    setTimeout(()=>{
-      document.getElementById('solution-panel').classList.remove('show');
-    },1000);
+    setTimeout(()=>document.getElementById('solution-panel').classList.remove('show'),1200);
   });
 }
 
@@ -807,33 +757,29 @@ function showSolutionMoves(movesStr){
 }
 
 // ═══════════════════════════════════════════════════════
-//  ANIMATION ENGINE — Animates in current orientation
+//  ANIMATION ENGINE — current orientation
 // ═══════════════════════════════════════════════════════
 function animateMoves(movesStr,onDone){
   if(isAnimating){if(onDone)onDone();return;}
   isAnimating=true;
   const moves=movesStr.trim().split(/\s+/).filter(m=>m);
   let idx=0;
-
   function doNext(){
     if(idx>=moves.length){
       isAnimating=false;
       document.getElementById('move-overlay').classList.remove('show');
-      document.getElementById('move-overlay').textContent='';
       document.querySelectorAll('.sol-move-item').forEach(el=>el.classList.add('done'));
       if(onDone) onDone();
       return;
     }
     const move=moves[idx];
-    // Highlight current move in solution panel
     document.querySelectorAll('.sol-move-item').forEach((el,i)=>{
-      el.classList.remove('current');
-      el.classList.toggle('done',i<idx);
+      el.classList.remove('current'); el.classList.toggle('done',i<idx);
       if(i===idx) el.classList.add('current');
     });
-    const overlay=document.getElementById('move-overlay');
-    overlay.textContent=move; overlay.classList.add('show');
-    animateSingleMove(move,()=>{ idx++; setTimeout(doNext,40); });
+    const ov=document.getElementById('move-overlay');
+    ov.textContent=move; ov.classList.add('show');
+    animateSingleMove(move,()=>{ idx++; setTimeout(doNext,30); });
   }
   doNext();
 }
@@ -844,87 +790,52 @@ function animateSingleMove(move,onDone){
   const double=move.includes("2");
   const times=double?2:1;
   let t=0;
-
   function doOnce(cb){
-    const axisLocal=getMoveAxis(base);    // axis in CUBE's LOCAL space
-    const cwAngle = prime ? Math.PI/2 : -Math.PI/2;
-
-    // Transform local axis to WORLD space using cube's current quaternion
-    const worldAxis=axisLocal.clone().applyQuaternion(cubeGroup.quaternion).normalize();
-
+    // Axis in cube LOCAL space
+    const localAxis=getMoveAxis(base);
     const layerVal=getMoveLayerVal(base);
-
-    // Collect cubies in this layer (based on LOCAL position)
+    const cwAngle=prime?Math.PI/2:-Math.PI/2;
+    // Transform local axis to world space
+    const worldAxis=localAxis.clone().applyQuaternion(cubeGroup.quaternion).normalize();
+    // Find cubies in this layer by their LOCAL position dot with local axis
     const moving=[];
     for(const c of cubeGroup.children){
-      const localPos=c.position.clone();
-      // Get position along the local axis
-      const dot=localPos.dot(axisLocal);
-      if(Math.abs(Math.round(dot)-layerVal)<0.1){
-        moving.push(c);
-      }
+      const dot=c.position.dot(localAxis);
+      if(Math.abs(Math.round(dot)-layerVal)<0.15) moving.push(c);
     }
-
     if(!moving.length){cb();return;}
-
-    // Create pivot at world origin
-    const pivot=new THREE.Object3D();
-    scene.add(pivot);
-
-    // Temporarily parent cubies to pivot
-    const savedWorldPositions=[];
-    const savedWorldQuats=[];
-    for(const m of moving){
+    const pivot=new THREE.Object3D(); scene.add(pivot);
+    // Save world transforms
+    const worldData=moving.map(m=>{
       cubeGroup.updateMatrixWorld(true);
       const wp=new THREE.Vector3(); m.getWorldPosition(wp);
       const wq=new THREE.Quaternion(); m.getWorldQuaternion(wq);
-      savedWorldPositions.push(wp);
-      savedWorldQuats.push(wq);
       cubeGroup.remove(m);
-      m.position.copy(wp);
-      m.quaternion.copy(wq);
+      m.position.copy(wp); m.quaternion.copy(wq);
       pivot.add(m);
-    }
-
-    const duration=animSpeed;
-    const start=Date.now();
-
+      return {wp,wq};
+    });
+    const duration=animSpeed,start=Date.now();
     function step(){
       const elapsed=Date.now()-start;
       const progress=Math.min(elapsed/duration,1);
-      // Ease in-out
       const eased=progress<0.5?2*progress*progress:(1-Math.pow(-2*progress+2,2)/2);
-      const currentAngle=cwAngle*eased;
-
-      // Rotate pivot around world axis
-      const q=new THREE.Quaternion().setFromAxisAngle(worldAxis,currentAngle);
-      pivot.quaternion.copy(q);
-
-      if(progress<1){
-        requestAnimationFrame(step);
-      } else {
-        // Snap to final angle
+      pivot.quaternion.setFromAxisAngle(worldAxis,cwAngle*eased);
+      if(progress<1){requestAnimationFrame(step);}
+      else{
         pivot.quaternion.setFromAxisAngle(worldAxis,cwAngle);
         pivot.updateMatrixWorld(true);
-
-        // Re-parent back to cubeGroup
         for(const m of moving){
           m.updateMatrixWorld(true);
           const wp=new THREE.Vector3(); m.getWorldPosition(wp);
           const wq=new THREE.Quaternion(); m.getWorldQuaternion(wq);
-          pivot.remove(m);
-          cubeGroup.add(m);
-          // Convert world position to cubeGroup local space
-          const localPos=wp.clone();
-          cubeGroup.worldToLocal(localPos);
-          m.position.copy(localPos);
+          pivot.remove(m); cubeGroup.add(m);
+          cubeGroup.worldToLocal(wp); m.position.copy(wp);
           m.position.x=Math.round(m.position.x);
           m.position.y=Math.round(m.position.y);
           m.position.z=Math.round(m.position.z);
-          // Convert world quaternion to local
-          const cubeWorldQ=new THREE.Quaternion();
-          cubeGroup.getWorldQuaternion(cubeWorldQ);
-          m.quaternion.copy(cubeWorldQ.invert().multiply(wq));
+          const cq=new THREE.Quaternion(); cubeGroup.getWorldQuaternion(cq);
+          m.quaternion.copy(cq.invert().multiply(wq));
         }
         scene.remove(pivot);
         cb();
@@ -932,30 +843,19 @@ function animateSingleMove(move,onDone){
     }
     requestAnimationFrame(step);
   }
-
-  function run(){
-    if(t>=times){onDone();return;}
-    t++;
-    doOnce(run);
-  }
+  function run(){ if(t>=times){onDone();return;} t++; doOnce(run); }
   run();
 }
 
-// Returns axis in CUBE LOCAL space for each move
 function getMoveAxis(base){
   if(base==='R'||base==='L'||base==='M') return new THREE.Vector3(1,0,0);
   if(base==='U'||base==='D') return new THREE.Vector3(0,1,0);
   return new THREE.Vector3(0,0,1);
 }
-
-// Returns which layer value (in local space) this move affects
 function getMoveLayerVal(base){
-  if(base==='R') return 1;
-  if(base==='L'||base==='M') return -1;
-  if(base==='U') return 1;
-  if(base==='D') return -1;
-  if(base==='F') return 1;
-  if(base==='B') return -1;
+  if(base==='R') return 1; if(base==='L'||base==='M') return -1;
+  if(base==='U') return 1; if(base==='D') return -1;
+  if(base==='F') return 1; if(base==='B') return -1;
   return 0;
 }
 
@@ -963,14 +863,13 @@ function getMoveLayerVal(base){
 //  SPEED CONTROL
 // ═══════════════════════════════════════════════════════
 function setSpeed(speed){
-  if(speed==='slow') animSpeed=600;
-  else if(speed==='normal') animSpeed=300;
-  else if(speed==='fast') animSpeed=120;
-  // Update active button
+  if(speed==='slow') animSpeed=900;
+  else if(speed==='normal') animSpeed=600;
+  else if(speed==='fast') animSpeed=300;
   document.querySelectorAll('.speed-btn').forEach(b=>{
-    b.classList.toggle('active',b.dataset.speed===speed);
+    b.classList.toggle('active-speed',b.dataset.speed===speed);
   });
-  showToast(speed.charAt(0).toUpperCase()+speed.slice(1)+' speed');
+  showToast(speed.charAt(0).toUpperCase()+speed.slice(1));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1003,7 +902,6 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
-genScramble();
-updateStats();
-loadSettings();
+genScramble(); updateStats(); loadSettings();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+JSEOF
