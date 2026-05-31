@@ -262,6 +262,7 @@ html,body{
     <div id="inspection-display"></div>
     <div id="timer-display"><div class="timer-glow"></div><span id="timer-text">0.000</span></div>
     <div class="timer-hint" id="timer-hint">HOLD TO START</div>
+<div id="bin-btn" onclick="deleteLastSolve()"><!-- your bin svg --></div>
   </div>
   <div id="bin-btn" onclick="deleteLastSolve()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 6h18v2H3zm2 3h14l-1.5 12h-11zm5-6h4v2h-4z"/></svg></div>
   <div id="stats-bar">
@@ -289,9 +290,13 @@ html,body{
     <div class="ptab" onclick="setPStage('pll')">PLL</div>
   </div>
   <div class="practice-body">
-    <div id="cube-wrap">
-      <canvas id="practice-canvas"></canvas>
-      <div id="move-overlay"></div>
+      <div id="cube-wrap">
+  <canvas id="practice-canvas"></canvas>
+  <div id="move-overlay"></div>
+  <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.5;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+  </div>
+      </div>
     </div>
     <div class="practice-scroll">
       <div class="stage-card">
@@ -309,9 +314,9 @@ html,body{
 
       <div class="btn-row">
   <button class="btn btn-o" onclick="resetPCube()">Reset</button>
-  <button class="btn btn-o" onclick="resetCubeAngle()">⟳ View</button>
-  <button class="btn" id="solution-btn" onclick="handleSolutionBtn()">Solution</button>
-</div>
+  <button class="btn btn-o" onclick="rotateCube90()">90°</button>
+  <button class="btn" onclick="handleSolutionBtn()">Solution</button>
+      </div>
 
 <div style="display:flex;gap:6px;align-items:center;">
   <span style="font-size:10px;letter-spacing:2px;color:var(--g3);">SPEED</span>
@@ -326,6 +331,7 @@ html,body{
       </div>
 
       <div id="mismatch-warn">⚠ Invalid cube state — check your colors</div>
+      <div id="missing-warn" style="display:none;background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.4);padding:8px 12px;font-size:11px;color:#ffaa44;letter-spacing:1px;"></div>
 
       <div>
         <div class="slabel">Paint Stickers <span id="paint-restrict" style="color:var(--g3);"></span></div>
