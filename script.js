@@ -864,5 +864,3 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════
 genScramble(); updateStats(); loadSettings();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
-JSEOF
-echo "done"
