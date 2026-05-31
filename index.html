@@ -308,9 +308,17 @@ html,body{
       </div>
 
       <div class="btn-row">
-        <button class="btn btn-o" onclick="resetPCube()">Reset</button>
-        <button class="btn" id="solution-btn" onclick="handleSolutionBtn()">Solution</button>
-      </div>
+  <button class="btn btn-o" onclick="resetPCube()">Reset</button>
+  <button class="btn btn-o" onclick="resetCubeAngle()">⟳ View</button>
+  <button class="btn" id="solution-btn" onclick="handleSolutionBtn()">Solution</button>
+</div>
+
+<div style="display:flex;gap:6px;align-items:center;">
+  <span style="font-size:10px;letter-spacing:2px;color:var(--g3);">SPEED</span>
+  <button class="btn btn-o speed-btn active" data-speed="slow" onclick="setSpeed('slow')" style="padding:6px 10px;font-size:10px;">Slow</button>
+  <button class="btn speed-btn" data-speed="normal" onclick="setSpeed('normal')" style="padding:6px 10px;font-size:10px;">Normal</button>
+  <button class="btn btn-o speed-btn" data-speed="fast" onclick="setSpeed('fast')" style="padding:6px 10px;font-size:10px;">Fast</button>
+</div>
 
       <div id="solution-panel">
         <div class="sol-label">Solution</div>
