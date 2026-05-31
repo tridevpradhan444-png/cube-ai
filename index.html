@@ -17,11 +17,8 @@
   --w:#ffffff;--g1:#e0e0e0;--g2:#888888;--g3:#444444;--g4:#2a2a2a;
   --border:1px solid #2a2a2a;--border-w:1px solid #ffffff;
   --fd:'Orbitron',monospace;--fb:'Rajdhani',sans-serif;
-  --cW:#ffffff;--cY:#ffd700;--cG:#00c853;--cB:#2979ff;--cR:#f44336;--cO:#ff6d00;--cX:#1e1e1e;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-
-/* 1. MASTER GRID (Stretches across the whole screen) */
 html,body{
   width:100%;height:100%;
   background-color:var(--bg);
@@ -29,11 +26,9 @@ html,body{
   background-size:40px 40px;
   color:var(--w);font-family:var(--fb);overflow:hidden;user-select:none;
 }
-
 #app{width:100%;height:100%;position:relative;}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;background:transparent;}
 .screen.active{display:flex;}
-.grid-bg{display:none;} /* Hides the old broken grid box */
 
 /* HAMBURGER */
 #hamburger{position:fixed;top:16px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
@@ -57,69 +52,16 @@ html,body{
 .nav-icon{font-size:16px;width:22px;text-align:center;}
 .drawer-footer{padding:20px 28px 0;border-top:var(--border);font-size:10px;letter-spacing:1px;color:var(--g3);text-transform:uppercase;}
 
-/* SCREEN HEADER (For other pages) */
+/* SCREEN HEADER */
 .screen-header{padding:16px 20px 16px 64px;border-bottom:var(--border);font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;min-height:56px;flex-shrink:0;}
 .header-action{font-family:var(--fb);font-size:11px;letter-spacing:2px;color:var(--g2);cursor:pointer;text-transform:uppercase;padding:6px 12px;border:var(--border);}
 .header-action:hover{color:var(--w);border-color:var(--w);}
 
-/* ═══ TIMER SCREEN LAYOUT (The fix!) ═══ */
-#screen-timer {
-  padding-top: 60px; /* Leaves space for the Hamburger & Logo */
-  justify-content: space-between; /* Stacks everything neatly */
-}
-
-/* Adds the CUBE AI Logo ONLY to the Timer screen */
-#screen-timer::before {
-  content: 'CUBE AI';
-  position: absolute;
-  top: 26px;
-  left: 64px; 
-  font-family: var(--fd);
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--w);
-  letter-spacing: 3px;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.timer-scramble {
-  /* Naturally sits right below the logo/menu */
-  padding: 10px 30px;
-  text-align: center;
-  font-family: var(--fb);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  color: var(--g1);
-  background: transparent;
-  border-bottom: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 60px;
-}
-
-.timer-center {
-  /* Fills all available middle space, perfectly centering the timer */
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-#bin-btn{position:relative;margin-top:16px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
-
-/* Make it visible when .visible class is added */
-#bin-btn.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-#bin-btn:hover{opacity:0.7;}
-
+/* TIMER */
+#screen-timer{padding-top:60px;}
+#screen-timer::before{content:'CUBE AI';position:absolute;top:26px;left:64px;font-family:var(--fd);font-size:18px;font-weight:900;color:var(--w);letter-spacing:3px;pointer-events:none;z-index:10;}
+.timer-scramble{padding:10px 30px;text-align:center;font-family:var(--fb);font-size:15px;font-weight:600;letter-spacing:1.5px;color:var(--g1);display:flex;align-items:center;justify-content:center;min-height:60px;flex-shrink:0;}
+.timer-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
 #timer-display{font-family:var(--fd);font-size:clamp(52px,14vw,88px);font-weight:900;letter-spacing:-2px;color:var(--w);transition:color 0.15s ease;position:relative;cursor:default;}
 #timer-display.holding{color:#444;}
 #timer-display.ready{color:var(--w);}
@@ -127,23 +69,16 @@ html,body{
 .timer-hint{margin-top:20px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);transition:opacity 0.3s ease;}
 .timer-hint.hidden{opacity:0;}
 #inspection-display{position:absolute;top:64px;font-family:var(--fd);font-size:28px;font-weight:700;letter-spacing:2px;color:var(--g2);display:none;}
-
-
-/* ═══ AVERAGES (Exactly at bottom) ═══ */
-#stats-bar {
-  width: 100%;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  border-top: var(--border);
-  background: rgba(8,8,8,0.7);
-  backdrop-filter: blur(3px);
-}
+#bin-btn{margin-top:16px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
+#bin-btn.visible{opacity:1;pointer-events:auto;}
+#bin-btn:hover{opacity:0.6;}
+#stats-bar{width:100%;display:grid;grid-template-columns:repeat(5,1fr);border-top:var(--border);background:rgba(8,8,8,0.9);flex-shrink:0;}
 .stat-cell{padding:12px 6px;display:flex;flex-direction:column;align-items:center;border-right:var(--border);}
 .stat-cell:last-child{border-right:none;}
 .stat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:4px;}
 .stat-value{font-family:var(--fd);font-size:13px;font-weight:700;color:var(--g1);}
 
-/* ═══ HISTORY ═══ */
+/* HISTORY */
 #screen-history{background:transparent;}
 .history-list{flex:1;overflow-y:auto;}
 .history-list::-webkit-scrollbar{width:2px;}
@@ -157,7 +92,7 @@ html,body{
 .solve-del:hover{color:var(--w);}
 .history-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--g3);}
 
-/* ═══ PRACTICE ═══ */
+/* PRACTICE */
 #screen-practice{background:transparent;}
 .practice-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:var(--border);flex-shrink:0;}
 .ptab{padding:13px 4px;text-align:center;font-family:var(--fb);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
@@ -187,14 +122,9 @@ html,body{
 .cpalette{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .cswatch{width:30px;height:30px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
 .cswatch.sel{border-color:var(--w);transform:scale(1.15);box-shadow:0 0 8px rgba(255,255,255,0.3);}
-.plabel{font-size:11px;letter-spacing:1px;color:var(--g3);}
 #net-wrap{background:var(--bg2);border:var(--border);padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;}
 .net-label{font-size:10px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;align-self:flex-start;}
 #cube-net{display:inline-block;}
-.net-face{display:inline-grid;grid-template-columns:repeat(3,1fr);gap:2px;}
-.net-row{display:flex;gap:6px;align-items:center;justify-content:center;}
-.net-cell{width:18px;height:18px;cursor:pointer;transition:all 0.1s;}
-.net-cell:hover{opacity:0.8;transform:scale(1.1);}
 #mismatch-warn{display:none;background:rgba(244,67,54,0.15);border:1px solid rgba(244,67,54,0.4);padding:8px 12px;font-size:11px;color:#ff6b6b;letter-spacing:1px;}
 #mismatch-warn.show{display:block;}
 #solution-panel{display:none;background:var(--bg2);border:var(--border);padding:12px;}
@@ -205,7 +135,7 @@ html,body{
 .sol-move-item.current{background:var(--w);color:var(--bg);}
 .sol-move-item.done{color:var(--g3);border-color:var(--g4);}
 
-/* ═══ SETTINGS ═══ */
+/* SETTINGS */
 #screen-settings{background:transparent;}
 .settings-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:2px;}
 .sgroup-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);padding:16px 0 8px;margin-top:8px;}
@@ -219,7 +149,7 @@ html,body{
 .toggle.on .tknob{transform:translateX(20px);background:var(--bg);}
 .ssel{background:var(--bg3);border:var(--border);color:var(--w);padding:8px 12px;font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;cursor:pointer;min-width:100px;}
 
-/* ═══ PRIVACY ═══ */
+/* PRIVACY */
 #screen-privacy{background:transparent;}
 .privacy-body{flex:1;overflow-y:auto;padding:24px 20px;font-size:13px;color:var(--g2);line-height:1.8;}
 .privacy-body h2{font-family:var(--fd);font-size:12px;letter-spacing:2px;color:var(--w);margin:20px 0 8px;text-transform:uppercase;}
@@ -230,14 +160,14 @@ html,body{
 
 @media(max-width:380px){#timer-display{font-size:48px;}.stat-value{font-size:11px;}.stat-label{font-size:8px;}}
 </style>
-
 </head>
 <body>
-<div class="grid-bg"></div>
 <div id="app">
 
+<!-- HAMBURGER -->
 <div id="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></div>
 
+<!-- DRAWER -->
 <div id="drawer">
   <div id="drawer-overlay" onclick="closeDrawer()"></div>
   <div id="drawer-panel">
@@ -247,7 +177,7 @@ html,body{
       <div class="nav-item active" onclick="showScreen('timer');closeDrawer()"><span class="nav-icon">⏱</span>Timer</div>
       <div class="nav-item" onclick="showScreen('history');closeDrawer()"><span class="nav-icon">📋</span>History</div>
       <div class="nav-item" onclick="showScreen('practice');closeDrawer()"><span class="nav-icon">🎯</span>Practice</div>
-     <div class="nav-item" onclick="showScreen('learn');closeDrawer()"><span class="nav-icon">📖</span>Learn</div>
+      <div class="nav-item" onclick="showScreen('learn');closeDrawer()"><span class="nav-icon">📖</span>Learn</div>
       <div class="nav-item" onclick="showScreen('settings');closeDrawer()"><span class="nav-icon">⚙</span>Settings</div>
       <div class="nav-item" onclick="showScreen('privacy');closeDrawer()"><span class="nav-icon">🔒</span>Privacy</div>
     </nav>
@@ -255,14 +185,17 @@ html,body{
   </div>
 </div>
 
-<!-- ═══ TIMER ═══ -->
+<!-- TIMER -->
 <div id="screen-timer" class="screen active">
   <div class="timer-scramble"><span id="scramble-text">Generating scramble...</span></div>
   <div class="timer-center">
     <div id="inspection-display"></div>
     <div id="timer-display"><div class="timer-glow"></div><span id="timer-text">0.000</span></div>
     <div class="timer-hint" id="timer-hint">HOLD TO START</div>
-  <div id="bin-btn" onclick="deleteLastSolve()"><svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M3 6h18v2H3zm2 3h14l-1.5 12h-11zm5-6h4v2h-4z"/></svg></div>
+    <div id="bin-btn" onclick="deleteLastSolve()">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M3 6h18v2H3zm2 3h14l-1.5 12h-11zm5-6h4v2h-4z"/></svg>
+    </div>
+  </div>
   <div id="stats-bar">
     <div class="stat-cell"><div class="stat-label">Best</div><div class="stat-value" id="stat-best">—</div></div>
     <div class="stat-cell"><div class="stat-label">Worst</div><div class="stat-value" id="stat-worst">—</div></div>
@@ -272,13 +205,13 @@ html,body{
   </div>
 </div>
 
-<!-- ═══ HISTORY ═══ -->
+<!-- HISTORY -->
 <div id="screen-history" class="screen">
   <div class="screen-header"><span>History</span><span class="header-action" onclick="clearAllSolves()">Clear All</span></div>
   <div class="history-list" id="history-list"></div>
 </div>
 
-<!-- ═══ PRACTICE ═══ -->
+<!-- PRACTICE -->
 <div id="screen-practice" class="screen">
   <div class="screen-header" style="padding-left:64px;"><span>Practice</span></div>
   <div class="practice-tabs">
@@ -288,20 +221,18 @@ html,body{
     <div class="ptab" onclick="setPStage('pll')">PLL</div>
   </div>
   <div class="practice-body">
-      <div id="cube-wrap">
-  <canvas id="practice-canvas"></canvas>
-  <div id="move-overlay"></div>
-  <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.5;">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-  </div>
+    <div id="cube-wrap">
+      <canvas id="practice-canvas"></canvas>
+      <div id="move-overlay"></div>
+      <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.5;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </div>
     </div>
     <div class="practice-scroll">
       <div class="stage-card">
         <div class="stage-card-title" id="stage-title">CROSS</div>
-        <div class="stage-card-desc" id="stage-desc">Solve the 4 white edge pieces on the bottom. Cross is pre-solved for F2L/OLL/PLL.</div>
+        <div class="stage-card-desc" id="stage-desc">Only white edges scrambled. Paint any edge piece white + side color.</div>
       </div>
-
       <div>
         <div class="slabel">Scramble</div>
         <div class="sinput-row">
@@ -309,44 +240,45 @@ html,body{
           <button class="btn" id="scramble-btn" onclick="handleScrambleBtn()">Scramble</button>
         </div>
       </div>
-
       <div class="btn-row">
-  <button class="btn btn-o" onclick="resetPCube()">Reset</button>
-  <button class="btn btn-o" onclick="rotateCube90()">90°</button>
-  <button class="btn" onclick="handleSolutionBtn()">Solution</button>
+        <button class="btn btn-o" onclick="resetPCube()">Reset</button>
+        <button class="btn btn-o" onclick="rotateCube90()">90°</button>
+        <button class="btn" onclick="handleSolutionBtn()">Solution</button>
       </div>
-
-<div style="display:flex;gap:6px;align-items:center;">
-  <span style="font-size:10px;letter-spacing:2px;color:var(--g3);">SPEED</span>
-  <button class="btn btn-o speed-btn active" data-speed="slow" onclick="setSpeed('slow')" style="padding:6px 10px;font-size:10px;">Slow</button>
-  <button class="btn speed-btn" data-speed="normal" onclick="setSpeed('normal')" style="padding:6px 10px;font-size:10px;">Normal</button>
-  <button class="btn btn-o speed-btn" data-speed="fast" onclick="setSpeed('fast')" style="padding:6px 10px;font-size:10px;">Fast</button>
-</div>
-
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:10px;letter-spacing:2px;color:var(--g3);">SPEED</span>
+        <button class="btn btn-o speed-btn" data-speed="slow" onclick="setSpeed('slow')" style="padding:6px 10px;font-size:10px;">Slow</button>
+        <button class="btn speed-btn active-speed" data-speed="normal" onclick="setSpeed('normal')" style="padding:6px 10px;font-size:10px;">Normal</button>
+        <button class="btn btn-o speed-btn" data-speed="fast" onclick="setSpeed('fast')" style="padding:6px 10px;font-size:10px;">Fast</button>
+      </div>
       <div id="solution-panel">
         <div class="sol-label">Solution</div>
         <div class="sol-moves" id="sol-moves-display"></div>
       </div>
-
       <div id="mismatch-warn">⚠ Invalid cube state — check your colors</div>
       <div id="missing-warn" style="display:none;background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.4);padding:8px 12px;font-size:11px;color:#ffaa44;letter-spacing:1px;"></div>
-
       <div>
         <div class="slabel">Paint Stickers <span id="paint-restrict" style="color:var(--g3);"></span></div>
         <div class="cpalette" id="cpalette"></div>
-        <div style="margin-top:6px;font-size:11px;color:var(--g3);letter-spacing:0.5px;">Tap sticker on cube above to paint · tap again to unpaint</div>
+        <div style="margin-top:6px;font-size:11px;color:var(--g3);letter-spacing:0.5px;">Tap sticker on cube to paint · tap again to unpaint</div>
       </div>
-
       <div id="net-wrap">
         <div class="net-label">Live Cube Net</div>
         <div id="cube-net"></div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- ═══ SETTINGS ═══ -->
+<!-- LEARN -->
+<div id="screen-learn" class="screen">
+  <div class="screen-header" style="padding-left:64px;"><span>Learn</span></div>
+  <div style="flex:1;overflow:hidden;">
+    <iframe src="learn.html" style="width:100%;height:100%;border:none;"></iframe>
+  </div>
+</div>
+
+<!-- SETTINGS -->
 <div id="screen-settings" class="screen">
   <div class="screen-header" style="padding-left:64px;"><span>Settings</span></div>
   <div class="settings-body">
@@ -361,7 +293,7 @@ html,body{
   </div>
 </div>
 
-<!-- ═══ PRIVACY ═══ -->
+<!-- PRIVACY -->
 <div id="screen-privacy" class="screen">
   <div class="screen-header" style="padding-left:64px;"><span>Privacy</span></div>
   <div class="privacy-body">
@@ -373,20 +305,9 @@ html,body{
   </div>
 </div>
 
-</div>
-  <div id="screen-learn" class="screen">
-  <div class="screen-header">LEARN</div>
-  <div style="flex: 1; overflow: hidden;">
-     <iframe src="learn.html" style="width: 100%; height: 100%; border: none;"></iframe>
-  </div>
-</div>
-
-</body>
-</html>
+</div><!-- end #app -->
 
 <div id="toast"></div>
 <script src="script.js"></script>
-
 </body>
 </html>
-
