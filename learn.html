@@ -20,11 +20,13 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 .grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:40px 40px;}
 #app{position:relative;z-index:1;width:100%;height:100%;display:flex;flex-direction:column;}
 
+.chapter-indicator{position:fixed;top:16px;right:16px;z-index:100;font-family:var(--fd);font-size:11px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;}
 
 /* CHAPTER NAV */
 .chapter-nav{display:flex;overflow-x:auto;border-bottom:var(--border);flex-shrink:0;background:var(--bg2);}
 .chapter-nav::-webkit-scrollbar{height:0;}
-.chapter-btn{padding:12px 16px;white-space:nowrap;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;flex-shrink:0;}
+.chapter-btn{padding:12px 16px;white-space:nowrap;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.chapter-btn:hover{color:var(--g1);}
 .chapter-btn.active{color:var(--w);border-bottom-color:var(--w);}
 
 /* CONTENT */
@@ -57,9 +59,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 .notation-move{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--w);}
 .notation-name{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--g1);}
 .notation-desc{font-size:11px;color:var(--g2);line-height:1.5;}
-.notation-diagram{flex-shrink:0;}
 
-/* FACE DIAGRAMS — 3×3 SVG grids */
+/* DIAGRAM CARDS */
 .diagram-row{display:flex;gap:10px;align-items:flex-start;margin:10px 0;flex-wrap:wrap;}
 .diagram-card{background:var(--bg2);border:var(--border);padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:140px;}
 .diagram-label{font-size:10px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;}
@@ -72,7 +73,6 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 .alg-list{display:flex;flex-direction:column;gap:1px;background:var(--g4);}
 .alg-item{background:var(--bg2);padding:14px 16px;display:flex;flex-direction:column;gap:6px;}
 .alg-item-header{display:flex;align-items:center;gap:12px;}
-.alg-diagram{flex-shrink:0;}
 .alg-info{flex:1;}
 .alg-name{font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:4px;}
 .alg-moves{font-family:var(--fd);font-size:11px;color:var(--w);letter-spacing:0.5px;line-height:1.7;word-break:break-word;}
@@ -88,7 +88,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 .step-title{font-size:13px;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;}
 .step-desc{font-size:12px;color:var(--g2);line-height:1.7;}
 
-/* PROGRESS BAR (chapter indicator) */
+/* PROGRESS BAR */
 .progress-bar{height:2px;background:var(--g4);flex-shrink:0;}
 .progress-fill{height:100%;background:var(--w);transition:width 0.3s ease;}
 
@@ -101,2010 +101,512 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 <body>
 <div class="grid-bg"></div>
 <div id="app">
-
   <div class="chapter-indicator" id="chap-indicator">1 / 6</div>
-</div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:16.6%"></div></div>
 
-<div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:16.6%"></div></div>
-
-<div class="chapter-nav" id="chapter-nav">
-  <div class="chapter-btn active" onclick="showChapter('notation',0)">Notation</div>
-  <div class="chapter-btn" onclick="showChapter('cross',1)">Cross</div>
-  <div class="chapter-btn" onclick="showChapter('f2l',2)">F2L</div>
-  <div class="chapter-btn" onclick="showChapter('oll',3)">OLL</div>
-  <div class="chapter-btn" onclick="showChapter('pll',4)">PLL</div>
-  <div class="chapter-btn" onclick="showChapter('twolook',5)">2-Look</div>
-</div>
-
-<div class="content" id="content">
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 1: NOTATION -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter active" id="ch-notation">
-  <div class="section">
-    <div class="section-num">Chapter 01</div>
-    <div class="section-title">Notation</div>
-    <div class="section-intro">Before you learn any algorithm, you need to understand the language of cubing. Every move has a letter code. Once you know these, any algorithm in the world makes sense.</div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 Key Concept</div>
-      <p><strong>A letter = clockwise turn</strong> of that face when looking directly at it.<br>
-      <strong>A letter + ' (prime/apostrophe) = anticlockwise.</strong><br>
-      <strong>A letter + 2 = two turns</strong> (same as turning it twice, direction doesn't matter).</p>
-    </div>
-
-    <div class="section-intro" style="margin-top:16px;">How to hold the cube: <strong style="color:var(--w);">White on the bottom. Yellow on top. Green facing you.</strong> This is the standard orientation used in CUBE AI and by most speedcubers.</div>
+  <div class="chapter-nav" id="chapter-nav">
+    <div class="chapter-btn active" onclick="showChapter('notation',0)">Notation</div>
+    <div class="chapter-btn" onclick="showChapter('cross',1)">Cross</div>
+    <div class="chapter-btn" onclick="showChapter('f2l',2)">F2L</div>
+    <div class="chapter-btn" onclick="showChapter('oll',3)">OLL</div>
+    <div class="chapter-btn" onclick="showChapter('pll',4)">PLL</div>
+    <div class="chapter-btn" onclick="showChapter('twolook',5)">2-Look</div>
   </div>
 
-  <div class="section">
-    <div class="section-num">Face Moves</div>
-    <div class="section-title">The 6 Basic Faces</div>
-    <div class="notation-grid">
-      <div class="notation-card">
-        <div class="notation-move" style="color:#ff6d00;">R</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="2" width="16" height="18" class="fc-O" rx="2"/>
-          <rect x="2" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="22" width="16" height="18" class="fc-O" rx="2"/>
-          <rect x="2" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="42" width="16" height="18" class="fc-O" rx="2"/>
-          <text x="50" y="34" fill="#ff6d00" font-size="14" text-anchor="middle" font-family="Orbitron">↓</text>
-        </svg>
-        <div class="notation-name">Right Face CW</div>
-        <div class="notation-desc">Turn the right layer clockwise — as if turning a wheel towards you on the right side.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#f44336;">L</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="16" height="18" class="fc-R" rx="2"/>
-          <rect x="22" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="2" y="22" width="16" height="18" class="fc-R" rx="2"/>
-          <rect x="22" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="2" y="42" width="16" height="18" class="fc-R" rx="2"/>
-          <rect x="22" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <text x="10" y="34" fill="#f44336" font-size="14" text-anchor="middle" font-family="Orbitron">↑</text>
-        </svg>
-        <div class="notation-name">Left Face CW</div>
-        <div class="notation-desc">Turn the left layer clockwise — looks like it goes upward when facing the left side.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#ffd700;">U</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="18" height="16" class="fc-Y" rx="2"/>
-          <rect x="22" y="2" width="18" height="16" class="fc-Y" rx="2"/>
-          <rect x="42" y="2" width="18" height="16" class="fc-Y" rx="2"/>
-          <rect x="2" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="2" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="42" width="18" height="18" class="fc-x" rx="2"/>
-          <text x="30" y="14" fill="#ffd700" font-size="12" text-anchor="middle">→</text>
-        </svg>
-        <div class="notation-name">Up Face CW</div>
-        <div class="notation-desc">Turn the top layer clockwise when looking down from above.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#ffffff;">D</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="2" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="2" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="22" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="42" y="22" width="18" height="18" class="fc-x" rx="2"/>
-          <rect x="2" y="42" width="18" height="18" class="fc-W" rx="2"/>
-          <rect x="22" y="42" width="18" height="18" class="fc-W" rx="2"/>
-          <rect x="42" y="42" width="18" height="18" class="fc-W" rx="2"/>
-          <text x="30" y="58" fill="#ffffff" font-size="12" text-anchor="middle">←</text>
-        </svg>
-        <div class="notation-name">Down Face CW</div>
-        <div class="notation-desc">Turn the bottom layer clockwise when looking up from below.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#00c853;">F</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="22" y="2" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="42" y="2" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="2" y="22" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="22" y="22" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="42" y="22" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="2" y="42" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="22" y="42" width="18" height="18" class="fc-G" rx="2"/>
-          <rect x="42" y="42" width="18" height="18" class="fc-G" rx="2"/>
-          <text x="30" y="34" fill="#080808" font-size="16" text-anchor="middle" font-weight="bold">↻</text>
-        </svg>
-        <div class="notation-name">Front Face CW</div>
-        <div class="notation-desc">Turn the front face (green, facing you) clockwise.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#2979ff;">B</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="22" y="2" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="42" y="2" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="2" y="22" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="22" y="22" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="42" y="22" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="2" y="42" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="22" y="42" width="18" height="18" class="fc-B" rx="2"/>
-          <rect x="42" y="42" width="18" height="18" class="fc-B" rx="2"/>
-          <text x="30" y="34" fill="#ffffff" font-size="16" text-anchor="middle" font-weight="bold">↺</text>
-        </svg>
-        <div class="notation-name">Back Face CW</div>
-        <div class="notation-desc">Turn the back face (blue) clockwise. When you flip the cube, clockwise looks anticlockwise from your side.</div>
-      </div>
-    </div>
-  </div>
-  <div class="section">
-    <div class="section-num">Modifiers</div>
-    <div class="section-title">Prime & Double</div>
-    <div class="notation-grid">
-      <div class="notation-card">
-        <div class="notation-move">R'</div>
-        <div class="notation-name">Prime — Anticlockwise</div>
-        <div class="notation-desc">The apostrophe (') means anticlockwise. R' = right layer anticlockwise. Say it as "R prime" or "R inverse".</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move">R2</div>
-        <div class="notation-name">Double — Two Turns</div>
-        <div class="notation-desc">The number 2 means turn it twice. R2 = right face twice. Direction doesn't matter (same result either way).</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move">U'</div>
-        <div class="notation-name">U Prime</div>
-        <div class="notation-desc">Top layer anticlockwise when looking from above. Opposite of U.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move">F2</div>
-        <div class="notation-name">F Double</div>
-        <div class="notation-desc">Front face turned twice. Very common in cross solving to flip an edge.</div>
-      </div>
-    </div>
-  </div>
+  <div class="content" id="content">
 
-  <div class="section">
-    <div class="section-num">Slice Moves</div>
-    <div class="section-title">M, S, E Slices</div>
-    <div class="section-intro">Slice moves turn the middle layer instead of an outer face.</div>
-    <div class="notation-grid">
-      <div class="notation-card">
-        <div class="notation-move" style="color:#888;">M</div>
-        <div class="notation-name">Middle Slice</div>
-        <div class="notation-desc">The middle layer between L and R. M follows the same direction as L (goes up on the front side).</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#888;">S</div>
-        <div class="notation-name">Standing Slice</div>
-        <div class="notation-desc">The middle layer between F and B. Follows same direction as F.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#888;">E</div>
-        <div class="notation-name">Equatorial Slice</div>
-        <div class="notation-desc">The middle layer between U and D. Follows same direction as D.</div>
-      </div>
-      <div class="notation-card">
-        <div class="notation-move" style="color:#888;">r</div>
-        <div class="notation-name">Wide Move</div>
-        <div class="notation-desc">Lowercase = wide move. r means R + M together (two layers). Also written as Rw. Common in OLL.</div>
-      </div>
-    </div>
+    <!-- CHAPTER 1: NOTATION -->
+    <div class="chapter active" id="ch-notation">
+      <div class="section">
+        <div class="section-num">Chapter 01</div>
+        <div class="section-title">Notation</div>
+        <div class="section-intro">Before you learn any algorithm, you need to understand the language of cubing. Every move has a letter code. Once you know these, any algorithm in the world makes sense.</div>
 
-    <div class="callout">
-      <div class="callout-label">📌 Quick Reference</div>
-      <p>
-        <strong>R U R' U'</strong> — "Sexy move" — the most common sequence in F2L<br>
-        <strong>F R U R' U' F'</strong> — solves edge orientation (OLL line case)<br>
-        <strong>R U R' U R U2 R'</strong> — Sune — most important OLL<br><br>
-        Most algorithms are just combinations of these basic patterns.
-      </p>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 2: CROSS -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-cross">
-  <div class="section">
-    <div class="section-num">Chapter 02</div>
-    <div class="section-title">The Cross</div>
-    <div class="section-intro">The cross is the first step of CFOP. You need to form a white "+" on the bottom face, with each edge matching the center of its side face. This is the most important step — a good cross player can sub-20 on this alone.</div>
-
-    <div class="diagram-row">
-      <div class="diagram-card">
-        <div class="diagram-label">Target State</div>
-        <svg width="72" height="72" viewBox="0 0 72 72">
-          <rect x="2" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="2" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="50" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="2" y="26" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="26" y="26" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="50" y="26" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="2" y="50" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="50" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="50" y="50" width="20" height="20" class="fc-x" rx="2"/>
-        </svg>
-        <div class="diagram-title">White Cross</div>
-        <div class="diagram-desc">Bottom face. Corners are gray — not solved in cross step.</div>
-      </div>
-      <div class="diagram-card">
-        <div class="diagram-label">Edge Must Match</div>
-        <svg width="72" height="72" viewBox="0 0 72 72">
-          <rect x="2" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="50" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="2" y="26" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="26" width="20" height="20" class="fc-G" rx="2"/>
-          <rect x="50" y="26" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="2" y="50" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="50" width="20" height="20" class="fc-G" rx="2"/>
-          <rect x="50" y="50" width="20" height="20" class="fc-x" rx="2"/>
-          <text x="36" y="44" fill="#888" font-size="10" text-anchor="middle">↕</text>
-        </svg>
-        <div class="diagram-title">Side Must Align</div>
-        <div class="diagram-desc">The green side of the white-green edge must line up with the green center.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">Beginner Method</div>
-    <div class="section-title">The Daisy Method</div>
-    <div class="section-intro">The easiest way to learn cross. Don't try to put white edges directly on the bottom — first make a "daisy" on top, then flip them down.</div>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">Make a Daisy on Top</div>
-          <div class="step-desc">Find all 4 white edges (pieces with white on one side). Move them to the top face (U face), white side facing up. You'll get a flower pattern — white edges around the yellow center. Order doesn't matter yet.</div>
+        <div class="callout tip">
+          <div class="callout-label">💡 Key Concept</div>
+          <p><strong>A letter = clockwise turn</strong> of that face when looking directly at it.<br>
+          <strong>A letter + ' (prime/apostrophe) = anticlockwise.</strong><br>
+          <strong>A letter + 2 = two turns</strong> (same as turning it twice, direction doesn't matter).</p>
         </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">Align Each Edge with Its Center</div>
-          <div class="step-desc">Take one white edge in the daisy. Look at its side color — say it's green. Rotate the top layer (U or U') until that edge is above the green center. Now that edge is in position.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">Flip It Down — F2</div>
-          <div class="step-desc">Do F2 (turn the front face twice). The white edge flips from the top to the bottom. Check: white is now on the bottom, the colored side matches the center. One edge done!</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">Repeat for All 4 Edges</div>
-          <div class="step-desc">Repeat steps 2-3 for the remaining 3 edges. Sometimes you'll need to rotate the top layer carefully to avoid knocking out a placed edge — just rotate away first.</div>
-        </div>
-      </div>
-    </div>
 
-    <div class="callout tip">
-      <div class="callout-label">💡 Tip</div>
-      <p>If a white edge is stuck in the bottom layer but in the wrong slot, do <strong>F2</strong> to bring it to the top, align it, then F2 again. If it's flipped the wrong way, do <strong>F D' R D F2</strong> to fix it.</p>
-    </div>
-  </div>
+        <div class="section-intro" style="margin-top:16px;">How to hold the cube: <strong style="color:var(--w);">White on the bottom. Yellow on top. Green facing you.</strong> This is the standard orientation.</div>
+      </div>
 
-  <div class="section">
-    <div class="section-num">Efficient Cross</div>
-    <div class="section-title">Solving Cross in 8 Moves or Less</div>
-    <div class="section-intro">Once you can do daisy cross, the next goal is efficiency — solving cross in as few moves as possible, directly (no daisy). Top speedcubers solve cross in 4-6 moves.</div>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">Use Inspection Time</div>
-          <div class="step-desc">WCA gives you 15 seconds before starting the timer. Use every second to plan your entire cross. Find all 4 white edges and figure out how to solve them before you touch the cube.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">Work in a Consistent Order</div>
-          <div class="step-desc">Always solve cross edges in the same order: e.g. green → orange → blue → red. This helps you think faster because your brain knows what to look for next.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">Solve Pairs Together</div>
-          <div class="step-desc">Sometimes two cross edges can be solved with one sequence. If green-white and orange-white edges are both in the U layer close to each other, you can insert both with fewer total moves.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">Learn Cross Trigger Moves</div>
-          <div class="step-desc">Memorize the 4-5 most common cross cases. When you recognize a case, execute it instantly without thinking.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Common Cross Cases</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-W" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge on Top, Correct Position</div>
-              <div class="alg-moves">F2</div>
-              <div class="alg-desc">White edge is on top layer, white facing up, already above its slot. Just do F2.</div>
-            </div>
+      <div class="section">
+        <div class="section-num">Face Moves</div>
+        <div class="section-title">The 6 Basic Faces</div>
+        <div class="notation-grid">
+          <div class="notation-card">
+            <div class="notation-move" style="color:#ff6d00;">R</div>
+            <div class="notation-name">Right Face CW</div>
+            <div class="notation-desc">Turn the right layer clockwise.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#f44336;">L</div>
+            <div class="notation-name">Left Face CW</div>
+            <div class="notation-desc">Turn the left layer clockwise.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#ffd700;">U</div>
+            <div class="notation-name">Up Face CW</div>
+            <div class="notation-desc">Turn the top layer clockwise.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#ffffff;">D</div>
+            <div class="notation-name">Down Face CW</div>
+            <div class="notation-desc">Turn the bottom layer clockwise.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#00c853;">F</div>
+            <div class="notation-name">Front Face CW</div>
+            <div class="notation-desc">Turn the front face clockwise.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#2979ff;">B</div>
+            <div class="notation-name">Back Face CW</div>
+            <div class="notation-desc">Turn the back face clockwise.</div>
           </div>
         </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-W" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge on Top, Flipped</div>
-              <div class="alg-moves">F U R U'</div>
-              <div class="alg-desc">White edge is on top but white is facing front instead of up. F U R U' fixes orientation and inserts.</div>
-            </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Modifiers</div>
+        <div class="section-title">Prime & Double</div>
+        <div class="notation-grid">
+          <div class="notation-card">
+            <div class="notation-move">R'</div>
+            <div class="notation-name">Prime — Anticlockwise</div>
+            <div class="notation-desc">The apostrophe means anticlockwise turn.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move">R2</div>
+            <div class="notation-name">Double — Two Turns</div>
+            <div class="notation-desc">Turn it twice. Same result either way.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move">U'</div>
+            <div class="notation-name">U Prime</div>
+            <div class="notation-desc">Top layer anticlockwise.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move">F2</div>
+            <div class="notation-name">F Double</div>
+            <div class="notation-desc">Front face turned twice.</div>
           </div>
         </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-W" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge in Middle Layer</div>
-              <div class="alg-moves">U' R U</div>
-              <div class="alg-desc">White edge stuck in the middle layer (E slice). Bring it to the top, then align and insert.</div>
-            </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Slice Moves</div>
+        <div class="section-title">M, S, E Slices</div>
+        <div class="section-intro">Slice moves turn the middle layer instead of an outer face.</div>
+        <div class="notation-grid">
+          <div class="notation-card">
+            <div class="notation-move" style="color:#888;">M</div>
+            <div class="notation-name">Middle Slice</div>
+            <div class="notation-desc">The middle layer between L and R.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#888;">S</div>
+            <div class="notation-name">Standing Slice</div>
+            <div class="notation-desc">The middle layer between F and B.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#888;">E</div>
+            <div class="notation-name">Equatorial Slice</div>
+            <div class="notation-desc">The middle layer between U and D.</div>
+          </div>
+          <div class="notation-card">
+            <div class="notation-move" style="color:#888;">r</div>
+            <div class="notation-name">Wide Move</div>
+            <div class="notation-desc">Lowercase = R + M together (two layers).</div>
           </div>
         </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-W" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-B" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge in Bottom Wrong Slot</div>
-              <div class="alg-moves">F2 U R U' F2</div>
-              <div class="alg-desc">Edge is in the D layer but in the wrong position. Lift it, reposition, and reinsert.</div>
+
+        <div class="callout">
+          <div class="callout-label">📌 Quick Reference</div>
+          <p>
+            <strong>R U R' U'</strong> — "Sexy move"<br>
+            <strong>F R U R' U' F'</strong> — OLL edge orientation<br>
+            <strong>R U R' U R U2 R'</strong> — Sune (important OLL)<br><br>
+            Most algorithms are combinations of these patterns.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAPTER 2: CROSS -->
+    <div class="chapter" id="ch-cross">
+      <div class="section">
+        <div class="section-num">Chapter 02</div>
+        <div class="section-title">The Cross</div>
+        <div class="section-intro">The cross is the first step of CFOP. You need to form a white "+" on the bottom face, with each edge matching the center of its side face.</div>
+
+        <div class="diagram-row">
+          <div class="diagram-card">
+            <div class="diagram-label">Target State</div>
+            <div class="diagram-title">White Cross</div>
+            <div class="diagram-desc">Bottom face with white cross pattern.</div>
+          </div>
+          <div class="diagram-card">
+            <div class="diagram-label">Alignment</div>
+            <div class="diagram-title">Side Must Align</div>
+            <div class="diagram-desc">Each edge must match its center color.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Beginner Method</div>
+        <div class="section-title">The Daisy Method</div>
+        <div class="section-intro">The easiest way to learn cross. Make a "daisy" on top, then flip edges down.</div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Make a Daisy on Top</div>
+              <div class="step-desc">Find all 4 white edges. Move them to the top face (U face), white side facing up.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Align Each Edge</div>
+              <div class="step-desc">Rotate top until edge is above its correct slot.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Flip It Down — F2</div>
+              <div class="step-desc">Do F2 to flip the white edge to the bottom.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-title">Repeat for All 4 Edges</div>
+              <div class="step-desc">Repeat steps 2-3 for the remaining 3 edges.</div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 2: CROSS -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-cross">
-  <div class="section">
-    <div class="section-num">Chapter 02</div>
-    <div class="section-title">The Cross</div>
-    <div class="section-intro">The cross is the first step of CFOP. You need to form a white "+" on the bottom face, with each edge matching the center of its side face. This is the most important step — a good cross player can sub-20 on this alone.</div>
+      <div class="section">
+        <div class="section-num">Efficient Cross</div>
+        <div class="section-title">Solving Cross in 8 Moves or Less</div>
+        <div class="section-intro">Once you can do daisy cross, aim for efficiency.</div>
 
-    <div class="diagram-row">
-      <div class="diagram-card">
-        <div class="diagram-label">Target State</div>
-        <svg width="72" height="72" viewBox="0 0 72 72">
-          <rect x="2" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="2" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="50" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="2" y="26" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="26" y="26" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="50" y="26" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="2" y="50" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="50" width="20" height="20" class="fc-W" rx="2"/>
-          <rect x="50" y="50" width="20" height="20" class="fc-x" rx="2"/>
-        </svg>
-        <div class="diagram-title">White Cross</div>
-        <div class="diagram-desc">Bottom face. Corners are gray — not solved in cross step.</div>
-      </div>
-      <div class="diagram-card">
-        <div class="diagram-label">Edge Must Match</div>
-        <svg width="72" height="72" viewBox="0 0 72 72">
-          <rect x="2" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="50" y="2" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="2" y="26" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="26" width="20" height="20" class="fc-G" rx="2"/>
-          <rect x="50" y="26" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="2" y="50" width="20" height="20" class="fc-x" rx="2"/>
-          <rect x="26" y="50" width="20" height="20" class="fc-G" rx="2"/>
-          <rect x="50" y="50" width="20" height="20" class="fc-x" rx="2"/>
-          <text x="36" y="44" fill="#888" font-size="10" text-anchor="middle">↕</text>
-        </svg>
-        <div class="diagram-title">Side Must Align</div>
-        <div class="diagram-desc">The green side of the white-green edge must line up with the green center.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">Beginner Method</div>
-    <div class="section-title">The Daisy Method</div>
-    <div class="section-intro">The easiest way to learn cross. Don't try to put white edges directly on the bottom — first make a "daisy" on top, then flip them down.</div>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">Make a Daisy on Top</div>
-          <div class="step-desc">Find all 4 white edges (pieces with white on one side). Move them to the top face (U face), white side facing up. You'll get a flower pattern — white edges around the yellow center. Order doesn't matter yet.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">Align Each Edge with Its Center</div>
-          <div class="step-desc">Take one white edge in the daisy. Look at its side color — say it's green. Rotate the top layer (U or U') until that edge is above the green center. Now that edge is in position.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">Flip It Down — F2</div>
-          <div class="step-desc">Do F2 (turn the front face twice). The white edge flips from the top to the bottom. Check: white is now on the bottom, the colored side matches the center. One edge done!</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">Repeat for All 4 Edges</div>
-          <div class="step-desc">Repeat steps 2-3 for the remaining 3 edges. Sometimes you'll need to rotate the top layer carefully to avoid knocking out a placed edge — just rotate away first.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 Tip</div>
-      <p>If a white edge is stuck in the bottom layer but in the wrong slot, do <strong>F2</strong> to bring it to the top, align it, then F2 again. If it's flipped the wrong way, do <strong>F D' R D F2</strong> to fix it.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">Efficient Cross</div>
-    <div class="section-title">Solving Cross in 8 Moves or Less</div>
-    <div class="section-intro">Once you can do daisy cross, the next goal is efficiency — solving cross in as few moves as possible, directly (no daisy). Top speedcubers solve cross in 4-6 moves.</div>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">Use Inspection Time</div>
-          <div class="step-desc">WCA gives you 15 seconds before starting the timer. Use every second to plan your entire cross. Find all 4 white edges and figure out how to solve them before you touch the cube.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">Work in a Consistent Order</div>
-          <div class="step-desc">Always solve cross edges in the same order: e.g. green → orange → blue → red. This helps you think faster because your brain knows what to look for next.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">Solve Pairs Together</div>
-          <div class="step-desc">Sometimes two cross edges can be solved with one sequence. If green-white and orange-white edges are both in the U layer close to each other, you can insert both with fewer total moves.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">Learn Cross Trigger Moves</div>
-          <div class="step-desc">Memorize the 4-5 most common cross cases. When you recognize a case, execute it instantly without thinking.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Common Cross Cases</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-W" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge on Top, Correct Position</div>
-              <div class="alg-moves">F2</div>
-              <div class="alg-desc">White edge is on top layer, white facing up, already above its slot. Just do F2.</div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Use Inspection Time</div>
+              <div class="step-desc">WCA gives you 15 seconds. Plan your entire cross.</div>
             </div>
           </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-W" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge on Top, Flipped</div>
-              <div class="alg-moves">F U R U'</div>
-              <div class="alg-desc">White edge is on top but white is facing front instead of up. F U R U' fixes orientation and inserts.</div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Work in Consistent Order</div>
+              <div class="step-desc">Always solve cross edges in the same order (e.g., green → orange → blue → red).</div>
             </div>
           </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-G" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-W" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge in Middle Layer</div>
-              <div class="alg-moves">U' R U</div>
-              <div class="alg-desc">White edge stuck in the middle layer (E slice). Bring it to the top, then align and insert.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="37" width="15" height="15" class="fc-W" rx="2"/>
-              <rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="20" width="15" height="15" class="fc-B" rx="2"/>
-              <rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Edge in Bottom Wrong Slot</div>
-              <div class="alg-moves">F2 U R U' F2</div>
-              <div class="alg-desc">Edge is in the D layer but in the wrong position. Lift it, reposition, and reinsert.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 3: F2L -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-f2l">
-  <div class="section">
-    <div class="section-num">Chapter 03</div>
-    <div class="section-title">F2L — First Two Layers</div>
-    <div class="section-intro">F2L means solving the first two layers at the same time, by pairing up corner-edge pieces. This is the most time-consuming part of a solve — mastering F2L will cut your time more than anything else.</div>
-
-    <div class="callout">
-      <div class="callout-label">What is a pair?</div>
-      <p>Each F2L slot needs a <strong>corner</strong> (3 colors, including white) and an <strong>edge</strong> (2 colors, no white). For the green-orange slot, you need the white-green-orange corner and the green-orange edge. They pair up and go in together.</p>
-    </div>
-
-    <div class="diagram-row">
-      <div class="diagram-card">
-        <div class="diagram-label">Corner piece</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="26" height="26" class="fc-W" rx="2"/>
-          <rect x="32" y="2" width="26" height="26" class="fc-x" rx="2"/>
-          <rect x="2" y="32" width="26" height="26" class="fc-x" rx="2"/>
-          <rect x="32" y="32" width="26" height="26" class="fc-x" rx="2"/>
-          <text x="15" y="20" fill="#080808" font-size="9" text-anchor="middle" font-family="Rajdhani">W</text>
-        </svg>
-        <div class="diagram-desc">3 colors — always has white. Goes in the corner slot.</div>
-      </div>
-      <div class="diagram-card">
-        <div class="diagram-label">Edge piece</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="26" height="26" class="fc-G" rx="2"/>
-          <rect x="32" y="2" width="26" height="26" class="fc-x" rx="2"/>
-          <rect x="2" y="32" width="26" height="26" class="fc-O" rx="2"/>
-          <rect x="32" y="32" width="26" height="26" class="fc-x" rx="2"/>
-        </svg>
-        <div class="diagram-desc">2 colors — never white. Goes in the edge slot between two faces.</div>
-      </div>
-      <div class="diagram-card">
-        <div class="diagram-label">The pair</div>
-        <svg width="60" height="60" viewBox="0 0 60 60">
-          <rect x="2" y="2" width="26" height="26" class="fc-W" rx="2"/>
-          <rect x="32" y="2" width="26" height="26" class="fc-G" rx="2"/>
-          <rect x="2" y="32" width="26" height="26" class="fc-O" rx="2"/>
-          <rect x="32" y="32" width="26" height="26" class="fc-x" rx="2"/>
-        </svg>
-        <div class="diagram-desc">Paired up in U layer, ready to be inserted.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">Intuitive F2L</div>
-    <div class="section-title">How to Think Through F2L</div>
-    <div class="section-intro">You don't need to memorize all 41 cases. Instead, understand the goal: get the pair connected in the U layer, then insert it with one clean motion.</div>
-
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div class="step-content">
-          <div class="step-title">Find Your Corner and Edge</div>
-          <div class="step-desc">Look for the white-green-orange corner and the green-orange edge. They could be anywhere in the top layer (or sometimes stuck in the bottom). If they're already paired in the top layer — great, skip to step 3.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div class="step-content">
-          <div class="step-title">Bring Both to the Top Layer</div>
-          <div class="step-desc">If either piece is in the middle or bottom layer (not cross), extract it using R U R' or similar. The goal is to have both the corner and edge in the U layer at the same time.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-content">
-          <div class="step-title">Pair Them Up</div>
-          <div class="step-desc">Use U moves to position the corner above the slot, and the edge next to the corner with the right orientation. You want them to look "connected" — matching colors touching each other.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <div class="step-title">Insert the Pair</div>
-          <div class="step-desc">The standard insertion is R U' R' (right slot) or L' U L (left slot). The pair goes in cleanly without disrupting the cross.</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 Lookahead</div>
-      <p>The secret to fast F2L: <strong>while inserting one pair, look for the next one.</strong> Don't stare at what your hands are doing — your hands should run on autopilot. Your eyes should already be finding the next pair. This is called "lookahead" and it's what separates sub-30 from sub-20.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">Core Algorithms</div>
-    <div class="section-title">The Most Important F2L Cases</div>
-    <div class="alg-list">
-      <div class="alg-item">
-        <div class="alg-item-header">
-          <div class="alg-info">
-            <div class="alg-name">Right Slot Insert</div>
-            <div class="alg-moves">U R U' R'</div>
-            <div class="alg-desc">Pair is above the right slot, correctly oriented. Most basic F2L insert.</div>
-          </div>
-        </div>
-      </div>
-      <div class="alg-item">
-        <div class="alg-item-header">
-          <div class="alg-info">
-            <div class="alg-name">Left Slot Insert</div>
-            <div class="alg-moves">U' L' U L</div>
-            <div class="alg-desc">Mirror of right insert for the left slot.</div>
-          </div>
-        </div>
-      </div>
-      <div class="alg-item">
-        <div class="alg-item-header">
-          <div class="alg-info">
-            <div class="alg-name">Sexy Move (Right)</div>
-            <div class="alg-moves">R U R' U'</div>
-            <div class="alg-desc">The most common F2L trigger. Learn to do this as one fluid motion. Used constantly.</div>
-          </div>
-        </div>
-      </div>
-      <div class="alg-item">
-        <div class="alg-item-header">
-          <div class="alg-info">
-            <div class="alg-name">Anti-Sexy (Left)</div>
-            <div class="alg-moves">L' U' L U</div>
-            <div class="alg-desc">Mirror of sexy move. Same importance.</div>
-          </div>
-        </div>
-      </div>
-      <div class="alg-item">
-        <div class="alg-item-header">
-          <div class="alg-info">
-            <div class="alg-name">Corner in Slot, Edge on Top</div>
-            <div class="alg-moves">R U2 R' U' R U R'</div>
-            <div class="alg-desc">Corner is already in the slot but edge is in U layer. Extract the corner, pair them, reinsert.</div>
-          </div>
-        </div>
-      </div>
-      <div class="alg-item">
-        <div class="alg-item-header">
-          <div class="alg-info">
-            <div class="alg-name">Pair Connected Wrong Way</div>
-            <div class="alg-moves">U R U2 R' U R U' R'</div>
-            <div class="alg-desc">Corner and edge are "paired" but the white is on the wrong side. Break them apart and reconnect.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 4: OLL -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-oll">
-  <div class="section">
-    <div class="section-num">Chapter 04</div>
-    <div class="section-title">OLL — Orient Last Layer</div>
-    <div class="section-intro">OLL means making the entire top face yellow. After F2L, the top face will have some yellow stickers but not all. OLL uses one algorithm to orient every piece at once so the whole top face is yellow. There are 57 OLL cases (plus the skip).</div>
-
-    <div class="callout">
-      <div class="callout-label">Yellow = Oriented. Gray = Not yet.</div>
-      <p>In OLL diagrams, <strong style="color:#ffd700;">yellow squares</strong> are oriented (facing up). <strong style="color:#888;">Gray squares</strong> are not yet oriented. The sides of the top layer may also have yellow stickers — these matter for recognizing cases.</p>
-    </div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 Start with 2-Look OLL</div>
-      <p>Don't try to learn all 57 at once. 2-Look OLL uses just 7 algorithms and solves OLL in 2 steps. Once you're comfortable, learn the full 57 — each one saves you one extra step per solve.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">All 57 Cases</div>
-    <div class="section-title">Full OLL Reference</div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Cross Cases (Edge Orientation)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Dot <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">F R U R' U' F' f R U R' U' f'</div>
-              <div class="alg-desc">Only center is yellow. No edges oriented.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Horizontal Line <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">F R U R' U' F'</div>
-              <div class="alg-desc">Yellow line going left-right. Hold it horizontally.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Vertical Line</div>
-              <div class="alg-moves">f R U R' U' f'</div>
-              <div class="alg-desc">Yellow line going up-down. Use lowercase f (wide F move).</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">L Shape (top-left) <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">f R U R' U' f'</div>
-              <div class="alg-desc">L-shape pointing to top-left. Rotate to match then apply.</div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Solve Pairs Together</div>
+              <div class="step-desc">Sometimes two edges can be solved with one sequence.</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="alg-section">
-      <div class="alg-section-title">Corner Cases</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
+    <!-- CHAPTER 3: F2L -->
+    <div class="chapter" id="ch-f2l">
+      <div class="section">
+        <div class="section-num">Chapter 03</div>
+        <div class="section-title">F2L — First Two Layers</div>
+        <div class="section-intro">F2L means solving the first two layers by pairing corner-edge pieces. Mastering F2L will speed up your solves significantly.</div>
+
+        <div class="callout">
+          <div class="callout-label">What is a pair?</div>
+          <p>Each F2L slot needs a <strong>corner</strong> (3 colors, including white) and an <strong>edge</strong> (2 colors, no white).</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Intuitive F2L</div>
+        <div class="section-title">How to Think Through F2L</div>
+        <div class="section-intro">You don't need to memorize all 41 cases. Understand the goal: pair corner and edge in U layer, then insert.</div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Find Your Pieces</div>
+              <div class="step-desc">Find the corner and edge you need for each slot.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">Bring Both to Top</div>
+              <div class="step-desc">Extract pieces to the U layer if needed.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Pair Them Up</div>
+              <div class="step-desc">Use U moves to connect corner and edge.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-title">Insert the Pair</div>
+              <div class="step-desc">Use R U' R' or L' U L to insert smoothly.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-label">💡 Lookahead</div>
+          <p>While inserting one pair, look for the next one. Your hands should run on autopilot.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Core Algorithms</div>
+        <div class="section-title">Most Important F2L Cases</div>
+        <div class="alg-list">
+          <div class="alg-item">
+            <div class="alg-info">
+              <div class="alg-name">Right Slot Insert</div>
+              <div class="alg-moves">U R U' R'</div>
+              <div class="alg-desc">Basic insert for right slot.</div>
+            </div>
+          </div>
+          <div class="alg-item">
+            <div class="alg-info">
+              <div class="alg-name">Left Slot Insert</div>
+              <div class="alg-moves">U' L' U L</div>
+              <div class="alg-desc">Mirror for left slot.</div>
+            </div>
+          </div>
+          <div class="alg-item">
+            <div class="alg-info">
+              <div class="alg-name">Sexy Move (Right)</div>
+              <div class="alg-moves">R U R' U'</div>
+              <div class="alg-desc">Most common F2L trigger. Learn as one fluid motion.</div>
+            </div>
+          </div>
+          <div class="alg-item">
+            <div class="alg-info">
+              <div class="alg-name">Anti-Sexy (Left)</div>
+              <div class="alg-moves">L' U' L U</div>
+              <div class="alg-desc">Mirror of sexy move.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAPTER 4: OLL -->
+    <div class="chapter" id="ch-oll">
+      <div class="section">
+        <div class="section-num">Chapter 04</div>
+        <div class="section-title">OLL — Orient Last Layer</div>
+        <div class="section-intro">OLL means making the entire top face yellow. After F2L, you'll have some yellow stickers but not all. One algorithm orients every piece at once.</div>
+
+        <div class="callout tip">
+          <div class="callout-label">💡 Start with 2-Look OLL</div>
+          <p>Don't learn all 57 cases at once. 2-Look OLL uses just 7 algorithms. Later learn the full 57.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Key Cases</div>
+        <div class="section-title">Essential OLL Algorithms</div>
+        <div class="alg-list">
+          <div class="alg-item">
             <div class="alg-info">
               <div class="alg-name">Sune <span class="alg-tag two-look">2-Look</span></div>
               <div class="alg-moves">R U R' U R U2 R'</div>
-              <div class="alg-desc">The most important OLL algorithm. One yellow corner facing up on the left. Learn this before any other.</div>
+              <div class="alg-desc">Most important OLL. One yellow corner facing up on left.</div>
             </div>
           </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-            </svg>
+          <div class="alg-item">
             <div class="alg-info">
-              <div class="alg-name">Anti-Sune <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R U2 R' U' R U' R'</div>
-              <div class="alg-desc">Mirror of Sune. One yellow corner on the right side.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">T Shape <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">r U R' U' r' F R F'</div>
-              <div class="alg-desc">T-shape on the top. Headlights at the back.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Cross (Corners Wrong) <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R U R' U' R' F R F'</div>
-              <div class="alg-desc">Cross already on top, corners not oriented. Very common.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Pi / Bruno <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R U2 R2 U' R2 U' R2 U2 R</div>
-              <div class="alg-desc">Pi shape — 2 yellow corners diagonal, center and edges yellow.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Headlights (diagonal)</div>
-              <div class="alg-moves">R2 D R' U2 R D' R' U2 R'</div>
-              <div class="alg-desc">2 yellow corners diagonally opposite. No edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Chameleon</div>
-              <div class="alg-moves">r U R' U' r' F R F'</div>
-              <div class="alg-desc">L-shaped corner orientation, 1 corner + cross edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Knight Move (OLL 13)</div>
-              <div class="alg-moves">F U R U' R2 F' R U R U' R'</div>
-              <div class="alg-desc">Complex case with knight-move shape. Full OLL.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Frying Pan (OLL 44)</div>
-              <div class="alg-moves">f R U R' U' f'</div>
-              <div class="alg-desc">Short and easy. One corner, two edges oriented.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gun (OLL 43)</div>
-              <div class="alg-moves">F' L' U' L U F</div>
-              <div class="alg-desc">Gun shape on top. Mirror of frying pan.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Bowtie (OLL 2)</div>
-              <div class="alg-moves">F R U R' U' S R U R' U' f'</div>
-              <div class="alg-desc">Wide move version. 2 corners oriented, 2 edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">OLL Skip</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Top face already all yellow! 1 in 216 chance. No algorithm needed.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 5: PLL -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-pll">
-  <div class="section">
-    <div class="section-num">Chapter 05</div>
-    <div class="section-title">PLL — Permute Last Layer</div>
-    <div class="section-intro">PLL is the final step. The top face is fully yellow. Now you need to move the top layer pieces to their correct positions. There are 21 PLL cases.</div>
-
-    <div class="callout">
-      <div class="callout-label">How to recognize PLL</div>
-      <p>Look at the top layer from the sides. Find a face where <strong>2 or more stickers match</strong>. That's your reference face — hold it at the back or front depending on the algorithm, then execute.</p>
-    </div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 AUF</div>
-      <p><strong>AUF = Adjust U Face.</strong> Before and after PLL, you may need to do U, U', or U2 to align the top layer. This is normal and not counted as an extra algorithm — it's just positioning.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">All 21 Cases</div>
-    <div class="section-title">Full PLL Reference</div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Edge Permutations</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-              <text x="27" y="15" fill="#080808" font-size="12" text-anchor="middle">↔</text>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">H-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">M2 U M2 U2 M2 U M2</div>
-              <div class="alg-desc">Swaps all 4 edges in opposite pairs. No corners move.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-              <text x="27" y="15" fill="#080808" font-size="14" text-anchor="middle">↺</text>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Ua-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R U' R U R U R U' R' U' R2</div>
-              <div class="alg-desc">3-cycle of edges counterclockwise. One face already solved.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ub-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R2 U R U R' U' R' U' R' U R'</div>
-              <div class="alg-desc">3-cycle of edges clockwise. Mirror of Ua.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Z-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">M2 U M2 U M' U2 M2 U2 M'</div>
-              <div class="alg-desc">Swaps two pairs of opposite edges. No corners move.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Corner Permutations</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Aa-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R' F R' B2 R F' R' B2 R2</div>
-              <div class="alg-desc">3-cycle of corners clockwise. No edges move.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ab-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R B' R F2 R' B R F2 R2</div>
-              <div class="alg-desc">3-cycle of corners anticlockwise. Mirror of Aa.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">E-Perm</div>
-              <div class="alg-moves">x' R U' R' D R U R' D' R U R' D R U' R' D'</div>
-              <div class="alg-desc">Swaps two pairs of diagonal corners. Opposite edges stay.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Mixed (Corners + Edges)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">T-Perm</div>
-              <div class="alg-moves">R U R' U' R' F R2 U' R' U' R U R' F'</div>
-              <div class="alg-desc">Swaps 2 adjacent corners + 2 adjacent edges. Most common PLL — appears ~1/9 solves.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Y-Perm</div>
-              <div class="alg-moves">F R U' R' U' R U R' F' R U R' U' R' F R F'</div>
-              <div class="alg-desc">Swaps 2 diagonal corners + 2 adjacent edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ja-Perm</div>
-              <div class="alg-moves">x R2 F R F' R U2 r' U r U2</div>
-              <div class="alg-desc">Swaps 2 adjacent corners + 2 adjacent edges (different orientation).</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Jb-Perm</div>
-              <div class="alg-moves">R U R' F' R U R' U' R' F R2 U' R'</div>
-              <div class="alg-desc">Mirror of Ja. Very common and similar to T-perm.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ra-Perm</div>
-              <div class="alg-moves">R U' R' U' R U R D R' U' R D' R' U2 R'</div>
-              <div class="alg-desc">3-corner + 3-edge cycle. R-perm family.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Rb-Perm</div>
-              <div class="alg-moves">R' U2 R U2 R' F R U R' U' R' F' R2</div>
-              <div class="alg-desc">Mirror of Ra.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">F-Perm</div>
-              <div class="alg-moves">R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R</div>
-              <div class="alg-desc">Swaps 2 corners + 2 edges on different faces.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ga-Perm</div>
-              <div class="alg-moves">R2 U R' U R' U' R U' R2 D U' R' U R D'</div>
-              <div class="alg-desc">G-perm family — 4-cycles of corners and edges simultaneously.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gb-Perm</div>
-              <div class="alg-moves">R' U' R U D' R2 U R' U R U' R U' R2 D</div>
-              <div class="alg-desc">G-perm variation b.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gc-Perm</div>
-              <div class="alg-moves">R2 U' R U' R U R' U R2 D' U R U' R' D</div>
-              <div class="alg-desc">G-perm variation c.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gd-Perm</div>
-              <div class="alg-moves">R U R' U' D R2 U' R U' R' U R' U R2 D'</div>
-              <div class="alg-desc">G-perm variation d.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Na-Perm</div>
-              <div class="alg-moves">R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'</div>
-              <div class="alg-desc">Swaps 2 diagonal corners + 2 opposite edges. Long algorithm.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Nb-Perm</div>
-              <div class="alg-moves">R' U R U' R' F' U' F R U R' F R' F' R U' R</div>
-              <div class="alg-desc">Mirror of Na. Also long.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">V-Perm</div>
-              <div class="alg-moves">R' U R' U' y R' F' R2 U' R' U R' F R F</div>
-              <div class="alg-desc">Swaps 2 diagonal corners + 2 opposite edges. Different from N-perms.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">PLL Skip</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Top layer already solved! 1 in 72 chance. Just do AUF if needed.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 6: 2-LOOK -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-twolook">
-  <div class="section">
-    <div class="section-num">Chapter 06</div>
-    <div class="section-title">2-Look OLL & PLL</div>
-    <div class="section-intro">2-Look means solving OLL in 2 steps instead of 1, and PLL in 2 steps instead of 1. You only need 13 algorithms total — much easier to learn than the full 78. This is the perfect starting point for beginners moving toward speedcubing.</div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 Goal</div>
-      <p>Learn these 13 algorithms. Once you can execute all of them fluently, start adding full OLL and PLL cases one by one. Focus on the most common ones first.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">2-Look OLL</div>
-    <div class="section-title">7 Algorithms — OLL in 2 Steps</div>
-    <div class="section-intro"><strong style="color:var(--w);">Step 1: Orient the edges</strong> (make a yellow cross on top — 4 cases)<br><strong style="color:var(--w);">Step 2: Orient the corners</strong> (orient all 4 corners — 7 cases)</div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Step 1 — Edge Orientation (4 cases)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Dot — No edges oriented</div>
-              <div class="alg-moves">F R U R' U' F' f R U R' U' f'</div>
-              <div class="alg-desc">Only center is yellow. Two algorithms chained.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Line — 2 opposite edges oriented</div>
+              <div class="alg-name">Horizontal Line <span class="alg-tag two-look">2-Look</span></div>
               <div class="alg-moves">F R U R' U' F'</div>
-              <div class="alg-desc">Hold the line horizontally (left-right). Most common edge case.</div>
+              <div class="alg-desc">Yellow line going left-right.</div>
             </div>
           </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
+          <div class="alg-item">
             <div class="alg-info">
-              <div class="alg-name">L Shape — 2 adjacent edges oriented</div>
-              <div class="alg-moves">f R U R' U' f'</div>
-              <div class="alg-desc">Hold the L with the corner pointing to top-left. Rotate to match.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Cross — All edges oriented ✓</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Edges already oriented! Skip to step 2 (corner orientation).</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Step 2 — Corner Orientation (7 cases)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">All Correct — OLL done ✓</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">All corners already oriented. OLL skip! Move to PLL.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Sune — 1 corner correct (back-left)</div>
-              <div class="alg-moves">R U R' U R U2 R'</div>
-              <div class="alg-desc">Hold the 1 correct yellow corner at back-left. Most important case.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Anti-Sune — 1 corner correct (back-right)</div>
-              <div class="alg-moves">R U2 R' U' R U' R'</div>
-              <div class="alg-desc">Hold the 1 correct corner at back-right.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">T Shape — 2 adjacent corners (front)</div>
-              <div class="alg-moves">r U R' U' r' F R F'</div>
-              <div class="alg-desc">2 correct corners at the front. T pattern.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Pi (Bruno) — 2 diagonal corners</div>
-              <div class="alg-moves">R U2 R2 U' R2 U' R2 U2 R</div>
-              <div class="alg-desc">Two yellow corners diagonal, none adjacent.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Headlights — 2 corners same side</div>
-              <div class="alg-moves">R2 D R' U2 R D' R' U2 R'</div>
-              <div class="alg-desc">2 yellow corners on the same side like headlights. No D layer needed with some alts.</div>
-            </div>
-          </div>
-        </div>
- <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Chameleon</div>
-              <div class="alg-moves">r U R' U' r' F R F'</div>
-              <div class="alg-desc">L-shaped corner orientation, 1 corner + cross edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Knight Move (OLL 13)</div>
-              <div class="alg-moves">F U R U' R2 F' R U R U' R'</div>
-              <div class="alg-desc">Complex case with knight-move shape. Full OLL.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Frying Pan (OLL 44)</div>
-              <div class="alg-moves">f R U R' U' f'</div>
-              <div class="alg-desc">Short and easy. One corner, two edges oriented.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gun (OLL 43)</div>
-              <div class="alg-moves">F' L' U' L U F</div>
-              <div class="alg-desc">Gun shape on top. Mirror of frying pan.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Bowtie (OLL 2)</div>
-              <div class="alg-moves">F R U R' U' S R U R' U' f'</div>
-              <div class="alg-desc">Wide move version. 2 corners oriented, 2 edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">OLL Skip</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Top face already all yellow! 1 in 216 chance. No algorithm needed.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 5: PLL -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-pll">
-  <div class="section">
-    <div class="section-num">Chapter 05</div>
-    <div class="section-title">PLL — Permute Last Layer</div>
-    <div class="section-intro">PLL is the final step. The top face is fully yellow. Now you need to move the top layer pieces to their correct positions. There are 21 PLL cases.</div>
-
-    <div class="callout">
-      <div class="callout-label">How to recognize PLL</div>
-      <p>Look at the top layer from the sides. Find a face where <strong>2 or more stickers match</strong>. That's your reference face — hold it at the back or front depending on the algorithm, then execute.</p>
-    </div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 AUF</div>
-      <p><strong>AUF = Adjust U Face.</strong> Before and after PLL, you may need to do U, U', or U2 to align the top layer. This is normal and not counted as an extra algorithm — it's just positioning.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">All 21 Cases</div>
-    <div class="section-title">Full PLL Reference</div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Edge Permutations</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-              <text x="27" y="15" fill="#080808" font-size="12" text-anchor="middle">↔</text>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">H-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">M2 U M2 U2 M2 U M2</div>
-              <div class="alg-desc">Swaps all 4 edges in opposite pairs. No corners move.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-Y" rx="2"/>
-              <text x="27" y="15" fill="#080808" font-size="14" text-anchor="middle">↺</text>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Ua-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R U' R U R U R U' R' U' R2</div>
-              <div class="alg-desc">3-cycle of edges counterclockwise. One face already solved.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ub-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R2 U R U R' U' R' U' R' U R'</div>
-              <div class="alg-desc">3-cycle of edges clockwise. Mirror of Ua.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Z-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">M2 U M2 U M' U2 M2 U2 M'</div>
-              <div class="alg-desc">Swaps two pairs of opposite edges. No corners move.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Corner Permutations</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Aa-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R' F R' B2 R F' R' B2 R2</div>
-              <div class="alg-desc">3-cycle of corners clockwise. No edges move.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ab-Perm <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R B' R F2 R' B R F2 R2</div>
-              <div class="alg-desc">3-cycle of corners anticlockwise. Mirror of Aa.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">E-Perm</div>
-              <div class="alg-moves">x' R U' R' D R U R' D' R U R' D R U' R' D'</div>
-              <div class="alg-desc">Swaps two pairs of diagonal corners. Opposite edges stay.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Mixed (Corners + Edges)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">T-Perm</div>
-              <div class="alg-moves">R U R' U' R' F R2 U' R' U' R U R' F'</div>
-              <div class="alg-desc">Swaps 2 adjacent corners + 2 adjacent edges. Most common PLL — appears ~1/9 solves.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Y-Perm</div>
-              <div class="alg-moves">F R U' R' U' R U R' F' R U R' U' R' F R F'</div>
-              <div class="alg-desc">Swaps 2 diagonal corners + 2 adjacent edges.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ja-Perm</div>
-              <div class="alg-moves">x R2 F R F' R U2 r' U r U2</div>
-              <div class="alg-desc">Swaps 2 adjacent corners + 2 adjacent edges (different orientation).</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Jb-Perm</div>
-              <div class="alg-moves">R U R' F' R U R' U' R' F R2 U' R'</div>
-              <div class="alg-desc">Mirror of Ja. Very common and similar to T-perm.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ra-Perm</div>
-              <div class="alg-moves">R U' R' U' R U R D R' U' R D' R' U2 R'</div>
-              <div class="alg-desc">3-corner + 3-edge cycle. R-perm family.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Rb-Perm</div>
-              <div class="alg-moves">R' U2 R U2 R' F R U R' U' R' F' R2</div>
-              <div class="alg-desc">Mirror of Ra.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">F-Perm</div>
-              <div class="alg-moves">R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R</div>
-              <div class="alg-desc">Swaps 2 corners + 2 edges on different faces.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ga-Perm</div>
-              <div class="alg-moves">R2 U R' U R' U' R U' R2 D U' R' U R D'</div>
-              <div class="alg-desc">G-perm family — 4-cycles of corners and edges simultaneously.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gb-Perm</div>
-              <div class="alg-moves">R' U' R U D' R2 U R' U R U' R U' R2 D</div>
-              <div class="alg-desc">G-perm variation b.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gc-Perm</div>
-              <div class="alg-moves">R2 U' R U' R U R' U R2 D' U R U' R' D</div>
-              <div class="alg-desc">G-perm variation c.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Gd-Perm</div>
-              <div class="alg-moves">R U R' U' D R2 U' R U' R' U R' U R2 D'</div>
-              <div class="alg-desc">G-perm variation d.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Na-Perm</div>
-              <div class="alg-moves">R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'</div>
-              <div class="alg-desc">Swaps 2 diagonal corners + 2 opposite edges. Long algorithm.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Nb-Perm</div>
-              <div class="alg-moves">R' U R U' R' F' U' F R U R' F R' F' R U' R</div>
-              <div class="alg-desc">Mirror of Na. Also long.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">V-Perm</div>
-              <div class="alg-moves">R' U R' U' y R' F' R2 U' R' U R' F R F</div>
-              <div class="alg-desc">Swaps 2 diagonal corners + 2 opposite edges. Different from N-perms.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">PLL Skip</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Top layer already solved! 1 in 72 chance. Just do AUF if needed.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- CHAPTER 6: 2-LOOK -->
-<!-- ═══════════════════════════════════════════════════════ -->
-<div class="chapter" id="ch-twolook">
-  <div class="section">
-    <div class="section-num">Chapter 06</div>
-    <div class="section-title">2-Look OLL & PLL</div>
-    <div class="section-intro">2-Look means solving OLL in 2 steps instead of 1, and PLL in 2 steps instead of 1. You only need 13 algorithms total — much easier to learn than the full 78. This is the perfect starting point for beginners moving toward speedcubing.</div>
-
-    <div class="callout tip">
-      <div class="callout-label">💡 Goal</div>
-      <p>Learn these 13 algorithms. Once you can execute all of them fluently, start adding full OLL and PLL cases one by one. Focus on the most common ones first.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-num">2-Look OLL</div>
-    <div class="section-title">7 Algorithms — OLL in 2 Steps</div>
-    <div class="section-intro"><strong style="color:var(--w);">Step 1: Orient the edges</strong> (make a yellow cross on top — 4 cases)<br><strong style="color:var(--w);">Step 2: Orient the corners</strong> (orient all 4 corners — 7 cases)</div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Step 1 — Edge Orientation (4 cases)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Dot — No edges oriented</div>
+              <div class="alg-name">Dot <span class="alg-tag two-look">2-Look</span></div>
               <div class="alg-moves">F R U R' U' F' f R U R' U' f'</div>
-              <div class="alg-desc">Only center is yellow. Two algorithms chained.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Line — 2 opposite edges oriented</div>
-              <div class="alg-moves">F R U R' U' F'</div>
-              <div class="alg-desc">Hold the line horizontally (left-right). Most common edge case.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">L Shape — 2 adjacent edges oriented</div>
-<div class="alg-moves">f R U R' U' f'</div>
-              <div class="alg-desc">Hold the L with the corner pointing to top-left. Rotate to match.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <svg width="54" height="54" viewBox="0 0 54 54">
-              <rect x="2" y="2" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="2" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="2" width="15" height="15" class="fc-x" rx="2"/>
-              <rect x="2" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="20" y="20" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="20" width="15" height="15" class="fc-Y" rx="2"/>
-              <rect x="2" y="37" width="15" height="15" class="fc-x" rx="2"/><rect x="20" y="37" width="15" height="15" class="fc-Y" rx="2"/><rect x="37" y="37" width="15" height="15" class="fc-x" rx="2"/>
-            </svg>
-            <div class="alg-info">
-              <div class="alg-name">Cross — All edges oriented ✓</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Edges already oriented! Skip to step 2 (corner orientation).</div>
+              <div class="alg-desc">Only center yellow. No edges oriented.</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="alg-section">
-      <div class="alg-section-title">Step 2 — Corner Orientation (7 cases)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">All Correct — OLL done ✓</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">All corners already oriented. OLL skip! Move to PLL.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Sune — 1 corner correct (back-left)</div>
-              <div class="alg-moves">R U R' U R U2 R'</div>
-              <div class="alg-desc">Hold the 1 correct yellow corner at back-left. Most important case.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Anti-Sune — 1 corner correct (back-right)</div>
-              <div class="alg-moves">R U2 R' U' R U' R'</div>
-              <div class="alg-desc">Hold the 1 correct corner at back-right.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">T Shape — 2 adjacent corners (front)</div>
-              <div class="alg-moves">r U R' U' r' F R F'</div>
-              <div class="alg-desc">2 correct corners at the front. T pattern.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Pi (Bruno) — 2 diagonal corners</div>
-              <div class="alg-moves">R U2 R2 U' R2 U' R2 U2 R</div>
-              <div class="alg-desc">Two yellow corners diagonal, none adjacent.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Headlights — 2 corners same side</div>
-              <div class="alg-moves">R2 D R' U2 R D' R' U2 R'</div>
-              <div class="alg-desc">2 yellow corners on the same side like headlights. No D layer needed with some alts.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">None Correct — No corners yellow</div>
-              <div class="alg-moves">R U R' U' R' F R F' R U R' U R U2 R'</div>
-              <div class="alg-desc">No corners are yellow. Do T-shape then Sune, or use this combined algorithm.</div>
-            </div>
-          </div>
+    <!-- CHAPTER 5: PLL -->
+    <div class="chapter" id="ch-pll">
+      <div class="section">
+        <div class="section-num">Chapter 05</div>
+        <div class="section-title">PLL — Permute Last Layer</div>
+        <div class="section-intro">PLL means putting all the yellow pieces in their correct positions. The top face is already all yellow from OLL.</div>
+
+        <div class="callout">
+          <div class="callout-label">Goal</div>
+          <p>All 8 corner and edge pieces on top layer go to their correct slots. Position matters, not orientation.</p>
         </div>
       </div>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-num">2-Look PLL</div>
-    <div class="section-title">6 Algorithms — PLL in 2 Steps</div>
-    <div class="section-intro"><strong style="color:var(--w);">Step 1: Permute corners</strong> — get all 4 corners in the right position (ignoring edges)<br><strong style="color:var(--w);">Step 2: Permute edges</strong> — get all 4 edges in position</div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Step 1 — Corner Permutation (3 cases)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
+      <div class="section">
+        <div class="section-num">Learning Path</div>
+        <div class="section-title">Start with 2-Look PLL</div>
+        <div class="section-intro">2-Look PLL uses just 2 algorithms:</div>
+        <div class="alg-list">
+          <div class="alg-item">
             <div class="alg-info">
-              <div class="alg-name">Corners Correct ✓</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">Look at just the corners — if all 4 are in the right position (even if twisted), skip to step 2.</div>
+              <div class="alg-name">T Perm (Corners)</div>
+              <div class="alg-moves">R U R' U' R' F R2 U' R' U' R U R' F'</div>
+              <div class="alg-desc">Permute the 3 top corners.</div>
             </div>
           </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
+          <div class="alg-item">
             <div class="alg-info">
-              <div class="alg-name">Aa-Perm — 3 corners clockwise</div>
-              <div class="alg-moves">R' F R' B2 R F' R' B2 R2</div>
-              <div class="alg-desc">3 corners cycling clockwise. 1 corner already in place — hold it at front-right.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ab-Perm — 3 corners anticlockwise</div>
-              <div class="alg-moves">R B' R F2 R' B R F2 R2</div>
-              <div class="alg-desc">Mirror of Aa. 1 corner already in place — hold it at front-right.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="alg-section">
-      <div class="alg-section-title">Step 2 — Edge Permutation (4 cases)</div>
-      <div class="alg-list">
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Edges Correct — PLL done ✓</div>
-              <div class="alg-moves">—</div>
-              <div class="alg-desc">After AUF, the cube is solved! Just do U/U'/U2 to align and done.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ua-Perm — 3 edges counterclockwise</div>
-              <div class="alg-moves">R U' R U R U R U' R' U' R2</div>
-              <div class="alg-desc">1 edge already correct — hold it at back. The other 3 cycle counterclockwise.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Ub-Perm — 3 edges clockwise</div>
-              <div class="alg-moves">R2 U R U R' U' R' U' R' U R'</div>
-              <div class="alg-desc">Mirror of Ua. 1 edge correct at back, other 3 cycle clockwise.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">Z-Perm — 2 pairs of opposite edges swap</div>
-              <div class="alg-moves">M2 U M2 U M' U2 M2 U2 M'</div>
-              <div class="alg-desc">No edges correct. Two opposite pairs swap simultaneously.</div>
-            </div>
-          </div>
-        </div>
-        <div class="alg-item">
-          <div class="alg-item-header">
-            <div class="alg-info">
-              <div class="alg-name">H-Perm — all 4 edges swap in pairs</div>
+              <div class="alg-name">M2 U M2 U2 M2 U M2 (Edges)</div>
               <div class="alg-moves">M2 U M2 U2 M2 U M2</div>
-              <div class="alg-desc">All 4 edges swapped in 2 pairs (front↔back, left↔right).</div>
+              <div class="alg-desc">Cycle the 4 top edges.</div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="callout tip">
-      <div class="callout-label">🎯 Practice Order</div>
-      <p>
-        Week 1: Learn Sune, Anti-Sune, Line OLL, Ua/Ub PLL<br>
-        Week 2: Add T-shape, Pi, Aa/Ab PLL<br>
-        Week 3: Fill in the rest of 2-Look<br>
-        Month 2+: Start learning full OLL/PLL one case per week
-      </p>
+    <!-- CHAPTER 6: 2-LOOK -->
+    <div class="chapter" id="ch-twolook">
+      <div class="section">
+        <div class="section-num">Chapter 06</div>
+        <div class="section-title">2-Look CFOP Summary</div>
+        <div class="section-intro">A beginner-friendly method using just 10 algorithms total. Master these and you can solve any scramble!</div>
+
+        <div class="section">
+          <div class="section-num">The 10 Algorithms</div>
+          <div class="section-title">Complete 2-Look Repertoire</div>
+          <div class="steps">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <div class="step-title">Cross (White)</div>
+                <div class="step-desc">Layer-by-layer. Use intuition + flip moves (F2, D', R, D).</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2-5</div>
+              <div class="step-content">
+                <div class="step-title">F2L (4 slots)</div>
+                <div class="step-desc">Pair + insert. Main algorithms: R U R' U', L' U' L U, Sexy move variations.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">6</div>
+              <div class="step-content">
+                <div class="step-title">OLL (Yellow Edges)</div>
+                <div class="step-desc">3 cases: Dot (F R U R' U' F' repeat), Line (F R U R' U' F'), or Sune (R U R' U R U2 R').</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">7</div>
+              <div class="step-content">
+                <div class="step-title">OLL (Corners)</div>
+                <div class="step-desc">Usually done by Sune or its mirrors. Apply until all corners face up.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">8</div>
+              <div class="step-content">
+                <div class="step-title">PLL (Corners)</div>
+                <div class="step-desc">T-Perm or Yz-Perm. Moves all top corners to correct slots.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">9</div>
+              <div class="step-content">
+                <div class="step-title">PLL (Edges)</div>
+                <div class="step-desc">M2 U M2 U2 M2 U M2 or H-Perm. Finishes the cube.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout">
+          <div class="callout-label">Tips for 2-Look Success</div>
+          <p>
+            ✓ <strong>Slow down first.</strong> Focus on understanding, not speed.<br>
+            ✓ <strong>Practice each step separately.</strong> Don't rush to whole solves.<br>
+            ✓ <strong>Drill rotations.</strong> Once you know the algorithms, drill them 50+ times each.<br>
+            ✓ <strong>Lookahead matters.</strong> While solving one step, look for the next pieces.<br>
+            ✓ <strong>Use the practice tool</strong> in this app to get scrambles for each stage.<br>
+          </p>
+        </div>
+
+        <div class="section">
+          <div class="section-num">Next Steps</div>
+          <div class="section-intro">Once you're comfortable with 2-Look CFOP (sub-2 minutes), consider:</div>
+          <ul style="margin-left:20px;line-height:2;">
+            <li><strong>Full OLL (57 cases)</strong> — Skip 2-look edge orientation step</li>
+            <li><strong>Full PLL (21 cases)</strong> — Skip 2-look corner/edge permutation</li>
+            <li><strong>Better cross</strong> — Solve directly without daisy method</li>
+            <li><strong>Faster F2L</strong> — Improve lookahead and rotationless solutions</li>
+            <li><strong>Better finger tricks</strong> — Smooth, fluid hand movements</li>
+          </ul>
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
-
-</div><!-- content -->
-</div><!-- app -->
 
 <script>
+let currentChapter = 0;
+const chapters = ['notation', 'cross', 'f2l', 'oll', 'pll', 'twolook'];
+
 function showChapter(name, idx) {
-  document.querySelectorAll('.chapter').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.chapter-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  document.getElementById('ch-'+name).classList.add('active');
-  document.getElementById('content').scrollTop = 0;
-  document.getElementById('chap-indicator').textContent = (idx+1) + ' / 6';
-  document.getElementById('prog-fill').style.width = ((idx+1)/6*100) + '%';
-  // Scroll chapter button into view
-  document.querySelectorAll('.chapter-btn')[idx].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  currentChapter = idx;
+  
+  // Hide all chapters
+  document.querySelectorAll('.chapter').forEach(ch => ch.classList.remove('active'));
+  
+  // Show selected chapter
+  const el = document.getElementById('ch-' + name);
+  if (el) el.classList.add('active');
+  
+  // Update nav buttons
+  document.querySelectorAll('.chapter-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+  
+  // Update indicator and progress
+  const indicator = document.getElementById('chap-indicator');
+  if (indicator) indicator.textContent = (idx + 1) + ' / 6';
+  
+  const progress = document.getElementById('prog-fill');
+  if (progress) progress.style.width = ((idx + 1) * 16.666) + '%';
+  
+  // Scroll content to top
+  const content = document.getElementById('content');
+  if (content) content.scrollTop = 0;
 }
 </script>
 </body>
 </html>
-     
-              
