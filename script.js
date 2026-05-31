@@ -7,17 +7,16 @@ let settings = Object.assign({inspection:false,autoscramble:true,holdDuration:50
 
 const FACE_COLORS = {U:'#ffd700',D:'#ffffff',F:'#00c853',B:'#2979ff',R:'#ff6d00',L:'#f44336'};
 const COLOR_NAMES = {'#ffd700':'Yellow','#ffffff':'White','#00c853':'Green','#2979ff':'Blue','#ff6d00':'Orange','#f44336':'Red'};
-// Expected count of each color on full cube = 9
 const MAX_PER_COLOR = 9;
 
 const STAGE_INFO = {
-  cross:{title:'CROSS',desc:'Paint white on D face edges, side color on edge sides. Corners are fixed.'},
-  f2l:{title:'F2L — FIRST TWO LAYERS',desc:'Cross locked. Paint corner-edge pairs. Gray pieces are paintable.'},
+  cross:{title:'CROSS',desc:'Paint white + side color on any edge piece. Corners are fixed.'},
+  f2l:{title:'F2L — FIRST TWO LAYERS',desc:'Cross locked. Paint any edge or corner piece.'},
   oll:{title:'OLL — ORIENT LAST LAYER',desc:'F2L locked. Paint yellow on top face.'},
   pll:{title:'PLL — PERMUTE LAST LAYER',desc:'F2L locked, yellow top locked. Paint top layer sides.'}
 };
 
-let animSpeed = 600; // default Normal
+let animSpeed = 600;
 
 // ═══════════════════════════════════════════════════════
 //  NAV
@@ -55,11 +54,9 @@ function startTimer(){
   document.getElementById('timer-display').className='running';
   document.getElementById('timer-hint').classList.add('hidden');
   document.getElementById('bin-btn').classList.remove('visible');
-  // Hide inspection display
   const id=document.getElementById('inspection-display');
   id.style.display='none'; id.textContent='';
 }
-
 function stopTimer(){
   if(!timerRunning) return;
   timerRunning=false; clearInterval(timerInterval);
@@ -70,7 +67,6 @@ function stopTimer(){
   document.getElementById('bin-btn').classList.add('visible');
   if(settings.autoscramble) genScramble();
 }
-
 function saveSolve(ms){
   solves.push({time:ms,date:new Date().toISOString(),scramble:document.getElementById('scramble-text').textContent});
   localStorage.setItem('cubeai_solves',JSON.stringify(solves));
@@ -103,7 +99,7 @@ function updateStats(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  INSPECTION LOGIC
+//  INSPECTION
 // ═══════════════════════════════════════════════════════
 function startInspection(){
   inspRunning=true; inspEnded=false; inspTime=15;
@@ -111,43 +107,33 @@ function startInspection(){
   d.style.display='block'; d.textContent='15'; d.style.color='';
   inspInterval=setInterval(()=>{
     inspTime--;
-    if(inspTime>0){
-      d.textContent=inspTime;
-    } else {
-      // Inspection time ended automatically
-      clearInterval(inspInterval);
-      inspRunning=false; inspEnded=true;
+    if(inspTime>0){ d.textContent=inspTime; }
+    else{
+      clearInterval(inspInterval); inspRunning=false; inspEnded=true;
       flashInspectionEnd();
     }
   },1000);
 }
-
 function flashInspectionEnd(){
-  // Red flash 3 times + beep sound
   const disp=document.getElementById('timer-display');
   playBeep();
   let count=0;
   const flash=setInterval(()=>{
     disp.style.color=count%2===0?'#ff4444':'#ffffff';
     count++;
-    if(count>=6){ clearInterval(flash); disp.style.color=''; }
-  },150);
-  // Auto start timer after flash
-  setTimeout(()=>{ startTimer(); },1000);
+    if(count>=6){ clearInterval(flash); disp.style.color=''; startTimer(); }
+  },180);
 }
-
 function playBeep(){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
     [0,200,400].forEach(delay=>{
-      const osc=ctx.createOscillator();
-      const gain=ctx.createGain();
+      const osc=ctx.createOscillator(),gain=ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
       osc.frequency.value=880;
       gain.gain.setValueAtTime(0.3,ctx.currentTime+delay/1000);
       gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay/1000+0.15);
-      osc.start(ctx.currentTime+delay/1000);
-      osc.stop(ctx.currentTime+delay/1000+0.15);
+      osc.start(ctx.currentTime+delay/1000); osc.stop(ctx.currentTime+delay/1000+0.15);
     });
   }catch(e){}
 }
@@ -156,69 +142,42 @@ function playBeep(){
 //  HOLD LOGIC
 // ═══════════════════════════════════════════════════════
 const TS=document.getElementById('screen-timer');
-
 function onHoldStart(e){
   if(e.target.closest('#stats-bar')||e.target.closest('#bin-btn')) return;
-  // If timer running — stop it
   if(timerRunning){stopTimer();return;}
-  // If inspection is running — arm to start timer
-  if(inspRunning){
-    isHolding=true;
-    document.getElementById('timer-display').classList.add('holding');
-    holdTimeout=setTimeout(()=>{
-      if(isHolding){isArmed=true;document.getElementById('timer-display').classList.remove('holding');document.getElementById('timer-display').classList.add('ready');}
-    },settings.holdDuration);
-    return;
-  }
-  // Normal arm
   isHolding=true;
   document.getElementById('timer-display').classList.add('holding');
   holdTimeout=setTimeout(()=>{
     if(isHolding){isArmed=true;document.getElementById('timer-display').classList.remove('holding');document.getElementById('timer-display').classList.add('ready');}
   },settings.holdDuration);
 }
-
 function onHoldEnd(e){
   if(timerRunning) return;
   clearTimeout(holdTimeout); isHolding=false;
   if(isArmed){
-    isArmed=false;
-    document.getElementById('timer-display').classList.remove('ready');
+    isArmed=false; document.getElementById('timer-display').classList.remove('ready');
     if(inspRunning){
-      // User manually starts timer during inspection — no flash/sound
-      clearInterval(inspInterval); inspRunning=false;
-      startTimer();
-    } else if(settings.inspection && !inspEnded){
-      // Start inspection
+      clearInterval(inspInterval); inspRunning=false; startTimer();
+    } else if(settings.inspection&&!inspEnded){
       startInspection();
     } else {
       startTimer();
     }
     inspEnded=false;
-  } else {
-    document.getElementById('timer-display').classList.remove('holding');
-  }
+  } else { document.getElementById('timer-display').classList.remove('holding'); }
 }
-
 TS.addEventListener('touchstart',onHoldStart,{passive:true});
 TS.addEventListener('touchend',onHoldEnd);
 TS.addEventListener('mousedown',onHoldStart);
 TS.addEventListener('mouseup',onHoldEnd);
-document.addEventListener('keydown',e=>{
-  if(e.code==='Space'&&document.getElementById('screen-timer').classList.contains('active')){
-    e.preventDefault();
-    if(timerRunning){stopTimer();return;}
-    if(!isHolding)onHoldStart(e);
-  }
-});
-document.addEventListener('keyup',e=>{ if(e.code==='Space')onHoldEnd(e); });
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&document.getElementById('screen-timer').classList.contains('active')){e.preventDefault();if(timerRunning){stopTimer();return;}if(!isHolding)onHoldStart(e);}});
+document.addEventListener('keyup',e=>{if(e.code==='Space')onHoldEnd(e);});
 
 // ═══════════════════════════════════════════════════════
 //  SCRAMBLE GENERATORS
 // ═══════════════════════════════════════════════════════
 const MOVES=['R','L','U','D','F','B'],MODS=["","'","2"];
 const OPP={R:'L',L:'R',U:'D',D:'U',F:'B',B:'F'};
-
 function genScrambleStr(len){
   len=len||parseInt(settings.scrambleLength)||20;
   let s=[],last='',sec='';
@@ -228,29 +187,11 @@ function genScrambleStr(len){
   }
   return s.join(' ');
 }
-function genScramble(){
-  const s=genScrambleStr(); document.getElementById('scramble-text').textContent=s; return s;
-}
-function genCrossScramble(){
-  const moves=['F2','B2','R2','L2','U',"U'","U2",'D',"D'","D2"];
-  let s=[],last='';
-  for(let i=0;i<10;i++){let m;do{m=moves[Math.floor(Math.random()*moves.length)];}while(m[0]===last[0]);s.push(m);last=m;}
-  return s.join(' ');
-}
-function genF2LScramble(){
-  const moves=['R',"R'","R2",'L',"L'","L2",'U',"U'","U2",'F',"F'","B","B'"];
-  let s=[],last='';
-  for(let i=0;i<12;i++){let m;do{m=moves[Math.floor(Math.random()*moves.length)];}while(m[0]===last[0]);s.push(m);last=m;}
-  return s.join(' ');
-}
-function genOLLScramble(){
-  const cases=["R U R' U' R' F R F'","F R U R' U' F'","f R U R' U' f'","R U R' U R U2 R'","R U2 R' U' R U' R'"];
-  return cases[Math.floor(Math.random()*cases.length)];
-}
-function genPLLScramble(){
-  const cases=["R U R' U' R' F R2 U' R' U' R U R' F'","R U' R U R U R U' R' U' R2","R2 U R U R' U' R' U' R' U R'","M2 U M2 U2 M2 U M2"];
-  return cases[Math.floor(Math.random()*cases.length)];
-}
+function genScramble(){ const s=genScrambleStr(); document.getElementById('scramble-text').textContent=s; return s; }
+function genCrossScramble(){ const m=['F2','B2','R2','L2','U',"U'","U2",'D',"D'","D2"]; let s=[],l=''; for(let i=0;i<10;i++){let v;do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);s.push(v);l=v;} return s.join(' '); }
+function genF2LScramble(){ const m=['R',"R'","R2",'L',"L'","L2",'U',"U'","U2",'F',"F'","B","B'"]; let s=[],l=''; for(let i=0;i<12;i++){let v;do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);s.push(v);l=v;} return s.join(' '); }
+function genOLLScramble(){ const c=["R U R' U' R' F R F'","F R U R' U' F'","f R U R' U' f'","R U R' U R U2 R'","R U2 R' U' R U' R'"]; return c[Math.floor(Math.random()*c.length)]; }
+function genPLLScramble(){ const c=["R U R' U' R' F R2 U' R' U' R U R' F'","R U' R U R U R U' R' U' R2","R2 U R U R' U' R' U' R' U R'","M2 U M2 U2 M2 U M2"]; return c[Math.floor(Math.random()*c.length)]; }
 
 // ═══════════════════════════════════════════════════════
 //  HISTORY
@@ -270,8 +211,7 @@ function delSolve(i){solves.splice(i,1);localStorage.setItem('cubeai_solves',JSO
 //  CUBE STATE ENGINE
 // ═══════════════════════════════════════════════════════
 let cubeState=null;
-// Track paint history per color: {color: [{face,idx},...]}
-let paintHistory={};
+let paintHistory={}; // {color: [{face,idx}]}
 
 function initCubeState(){
   cubeState={};
@@ -286,7 +226,6 @@ function rotateFaceCW(s,f){
   s[f][3]=o[7];s[f][4]=o[4];s[f][5]=o[1];
   s[f][6]=o[8];s[f][7]=o[5];s[f][8]=o[2];
 }
-
 function applyMoveCW(s,base){
   if(base==='U'){rotateFaceCW(s,'U');const t=[s.F[0],s.F[1],s.F[2]];s.F[0]=s.R[0];s.F[1]=s.R[1];s.F[2]=s.R[2];s.R[0]=s.B[0];s.R[1]=s.B[1];s.R[2]=s.B[2];s.B[0]=s.L[0];s.B[1]=s.L[1];s.B[2]=s.L[2];s.L[0]=t[0];s.L[1]=t[1];s.L[2]=t[2];}
   else if(base==='D'){rotateFaceCW(s,'D');const t=[s.F[6],s.F[7],s.F[8]];s.F[6]=s.L[6];s.F[7]=s.L[7];s.F[8]=s.L[8];s.L[6]=s.B[6];s.L[7]=s.B[7];s.L[8]=s.B[8];s.B[6]=s.R[6];s.B[7]=s.R[7];s.B[8]=s.R[8];s.R[6]=t[0];s.R[7]=t[1];s.R[8]=t[2];}
@@ -296,7 +235,6 @@ function applyMoveCW(s,base){
   else if(base==='B'){rotateFaceCW(s,'B');const t=[s.U[0],s.U[1],s.U[2]];s.U[0]=s.R[2];s.U[1]=s.R[5];s.U[2]=s.R[8];s.R[2]=s.D[8];s.R[5]=s.D[7];s.R[8]=s.D[6];s.D[6]=s.L[0];s.D[7]=s.L[3];s.D[8]=s.L[6];s.L[0]=t[2];s.L[3]=t[1];s.L[6]=t[0];}
   else if(base==='M'){const t=[s.U[1],s.U[4],s.U[7]];s.U[1]=s.B[7];s.U[4]=s.B[4];s.U[7]=s.B[1];s.B[7]=s.D[1];s.B[4]=s.D[4];s.B[1]=s.D[7];s.D[1]=s.F[1];s.D[4]=s.F[4];s.D[7]=s.F[7];s.F[1]=t[0];s.F[4]=t[1];s.F[7]=t[2];}
 }
-
 function applyMove(state,move){
   const s=cloneState(state);
   const base=move.replace(/['\d]/g,'');
@@ -336,12 +274,12 @@ function initPScene(){
   const w=container.clientWidth,h=container.clientHeight;
   scene=new THREE.Scene(); scene.background=new THREE.Color(0x080808);
   camera=new THREE.PerspectiveCamera(42,w/h,0.1,100);
-  camera.position.set(4.5,4,5.5); camera.lookAt(0,0,0);
+  camera.position.set(0,2,6); camera.lookAt(0,0,0);
   renderer=new THREE.WebGLRenderer({canvas,antialias:true});
   renderer.setSize(w,h); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   scene.add(new THREE.AmbientLight(0xffffff,0.65));
-  const dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(6,10,6); scene.add(dl);
-  const dl2=new THREE.DirectionalLight(0xffffff,0.25); dl2.position.set(-4,-2,-4); scene.add(dl2);
+  const dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(3,8,6); scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0xffffff,0.25); dl2.position.set(-3,-2,-4); scene.add(dl2);
   cubeGroup=new THREE.Group(); scene.add(cubeGroup);
   initCubeState(); applyStageDefaults(pStage); buildMesh();
   resetCubeAngle();
@@ -354,19 +292,20 @@ function initPScene(){
   setupPalette(); renderNet();
 }
 
-// Straighter default angle — less tilted
+// Default: green face toward you, slightly tilted down to see top
 function resetCubeAngle(){
   if(!cubeGroup)return;
-  const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),-0.5);
-  const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),0.25);
-  cubeGroup.quaternion.copy(qY).multiply(qX);
+  // No Y rotation (green faces camera), slight X tilt down
+  const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(0.3,0,0));
+  cubeGroup.quaternion.copy(q);
 }
 
+// Smooth 90° Y rotation — pure quaternion, no mesh rebuild
 function rotateCube90(){
   if(!cubeGroup)return;
   const startQ=cubeGroup.quaternion.clone();
-  const deltaQ=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
-  const endQ=startQ.clone().multiply(deltaQ);
+  const delta=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
+  const endQ=startQ.clone().premultiply(delta);
   const duration=350,start=Date.now();
   function step(){
     const p=Math.min((Date.now()-start)/duration,1);
@@ -378,7 +317,93 @@ function rotateCube90(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  MESH
+//  PIECE TYPE HELPERS
+// ═══════════════════════════════════════════════════════
+function isEdgePiece(x,y,z){return(Math.abs(x)+Math.abs(y)+Math.abs(z))===2;}
+function isCenterPiece(x,y,z){return(Math.abs(x)+Math.abs(y)+Math.abs(z))===1;}
+function isCornerPiece(x,y,z){return Math.abs(x)===1&&Math.abs(y)===1&&Math.abs(z)===1;}
+
+// ═══════════════════════════════════════════════════════
+//  VISIBILITY — what shows colored vs gray
+// ═══════════════════════════════════════════════════════
+function isStickerVisible(stage,face,x,y,z,isScrambled){
+  if(stage==='cross'){
+    // During scramble or paint: show ONLY white stickers (wherever they are) + centers
+    if(isCenterPiece(x,y,z)) return true;
+    // Show white-colored stickers on any edge piece
+    if(isEdgePiece(x,y,z)){
+      const color=getStickerColor(face,x,y,z);
+      // Show if it's white OR if it's the side sticker of a white edge
+      if(color==='#ffffff') return true;
+      // Also show side sticker of cross edges (edge pieces containing white)
+      return crossEdgeHasWhite(x,y,z);
+    }
+    return false;
+  }
+  if(stage==='f2l'){
+    // Show everything except yellow stickers
+    if(isCenterPiece(x,y,z)) return true;
+    const color=getStickerColor(face,x,y,z);
+    return color!=='#ffd700';
+  }
+  if(stage==='oll'){
+    if(face==='U') return true;
+    if(y===1) return true;
+    if(isCenterPiece(x,y,z)) return true;
+    return false;
+  }
+  if(stage==='pll'){
+    if(y===1) return true;
+    if(isCenterPiece(x,y,z)) return true;
+    return false;
+  }
+  return true;
+}
+
+// Check if an edge piece at x,y,z has white on any of its stickers
+function crossEdgeHasWhite(x,y,z){
+  if(!isEdgePiece(x,y,z)) return false;
+  const faces=['U','D','F','B','R','L'];
+  const faceMap=[{face:'R',axis:'x',val:1},{face:'L',axis:'x',val:-1},{face:'U',axis:'y',val:1},{face:'D',axis:'y',val:-1},{face:'F',axis:'z',val:1},{face:'B',axis:'z',val:-1}];
+  for(const fm of faceMap){
+    const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
+    if(cv===fm.val){
+      const color=getStickerColor(fm.face,x,y,z);
+      if(color==='#ffffff') return true;
+    }
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PAINTABLE — what can be tapped to paint
+// ═══════════════════════════════════════════════════════
+function isPaintable(stage,face,x,y,z){
+  if(isCenterPiece(x,y,z)) return false; // centers never paintable
+  if(stage==='cross') return isEdgePiece(x,y,z); // any edge anywhere
+  if(stage==='f2l') return true; // any non-center
+  if(stage==='oll') return face==='U';
+  if(stage==='pll') return y===1;
+  return true;
+}
+
+function isColorAllowedForStage(stage,face,color){
+  if(stage==='cross'){
+    // White only on D-facing sticker, any non-white for side sticker of edge
+    // But we'll just allow white + the 4 side colors
+    return true; // let palette restrict it
+  }
+  if(stage==='oll') return color==='#ffd700';
+  return true;
+}
+
+function applyStageDefaults(stage){
+  initCubeState();
+  if(stage==='pll') cubeState['U']=Array(9).fill(FACE_COLORS.U);
+}
+
+// ═══════════════════════════════════════════════════════
+//  MESH BUILD
 // ═══════════════════════════════════════════════════════
 const FACE_MAP=[
   {face:'R',axis:'x',val:1},{face:'L',axis:'x',val:-1},
@@ -388,13 +413,15 @@ const FACE_MAP=[
 
 function buildMesh(){
   if(!cubeGroup)return;
+  // Save current quaternion
+  const savedQ=cubeGroup.quaternion.clone();
   while(cubeGroup.children.length)cubeGroup.remove(cubeGroup.children[0]);
   const gap=0.06;
   for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
     const geo=new THREE.BoxGeometry(1-gap,1-gap,1-gap);
     const mats=FACE_MAP.map(fm=>{
       const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
-      if(cv!==fm.val)return new THREE.MeshLambertMaterial({color:0x0a0a0a});
+      if(cv!==fm.val) return new THREE.MeshLambertMaterial({color:0x0a0a0a});
       const visible=isStickerVisible(pStage,fm.face,x,y,z);
       const col=visible?parseInt(getStickerColor(fm.face,x,y,z).replace('#',''),16):0x1c1c1c;
       return new THREE.MeshLambertMaterial({color:col});
@@ -403,6 +430,8 @@ function buildMesh(){
     mesh.position.set(x,y,z); mesh.userData={x,y,z};
     cubeGroup.add(mesh);
   }
+  // Restore quaternion — no explosion
+  cubeGroup.quaternion.copy(savedQ);
 }
 
 function getStickerColor(face,x,y,z){
@@ -420,87 +449,28 @@ function getStickerIndex(face,x,y,z){
   else if(face==='R'){row=1-y;col=1-z;}else{row=1-y;col=z+1;}
   return Math.max(0,Math.min(8,row*3+col));
 }
-function isEdgePiece(x,y,z){return(Math.abs(x)+Math.abs(y)+Math.abs(z))===2;}
-function isCenterPiece(x,y,z){return(Math.abs(x)+Math.abs(y)+Math.abs(z))===1;}
-function isCornerPiece(x,y,z){return Math.abs(x)===1&&Math.abs(y)===1&&Math.abs(z)===1;}
-
-function isStickerVisible(stage,face,x,y,z){
-  if(stage==='cross'){
-    if(isCenterPiece(x,y,z))return true;
-    if(face==='D'&&y===-1&&isEdgePiece(x,y,z))return true;
-    if(y===-1&&isEdgePiece(x,y,z)){
-      if(face==='F'&&x===0)return true;
-      if(face==='B'&&x===0)return true;
-      if(face==='R'&&z===0)return true;
-      if(face==='L'&&z===0)return true;
-    }
-    return false;
-  }
-  if(stage==='f2l'){if(y<1)return true;if(isCenterPiece(x,y,z))return true;return false;}
-  if(stage==='oll'){if(face==='U')return true;if(y===1)return true;if(isCenterPiece(x,y,z))return true;return false;}
-  if(stage==='pll'){if(y===1)return true;if(isCenterPiece(x,y,z))return true;return false;}
-  return true;
-}
-
-function isPaintable(stage,face,x,y,z){
-  // Centers are never paintable
-  if(isCenterPiece(x,y,z))return false;
-  if(stage==='cross'){
-    if(!isEdgePiece(x,y,z)||y!==-1)return false;
-    if(face==='D')return true;
-    if(face==='F'&&x===0)return true;
-    if(face==='B'&&x===0)return true;
-    if(face==='R'&&z===0)return true;
-    if(face==='L'&&z===0)return true;
-    return false;
-  }
-  if(stage==='f2l'){return y<1;}
-  if(stage==='oll'){return face==='U';}
-  if(stage==='pll'){return y===1;}
-  return true;
-}
-
-function isColorAllowedForStage(stage,face,color){
-  if(stage==='cross'){if(face==='D')return color==='#ffffff';return color!=='#ffffff';}
-  if(stage==='oll')return color==='#ffd700';
-  return true;
-}
-
-function applyStageDefaults(stage){
-  initCubeState();
-  if(stage==='pll')cubeState['U']=Array(9).fill(FACE_COLORS.U);
-}
 
 // ═══════════════════════════════════════════════════════
-//  COLOR LIMIT ENFORCEMENT
+//  COLOR LIMIT
 // ═══════════════════════════════════════════════════════
 function countColor(color){
-  let count=0;
-  for(const f of ['U','D','F','B','R','L'])for(const c of cubeState[f])if(c===color)count++;
-  return count;
+  let n=0;
+  for(const f of ['U','D','F','B','R','L']) for(const c of cubeState[f]) if(c===color) n++;
+  return n;
 }
-
-function getColorLimit(stage,color){
-  // Each color should have exactly 9 stickers on a full cube
-  // In cross only 4 edges visible, in f2l bottom 2 layers, etc.
-  return MAX_PER_COLOR;
-}
-
-// Remove oldest painted sticker of a given color (excluding centers)
 function removeOldestOfColor(color){
-  if(!paintHistory[color]||!paintHistory[color].length)return;
-  // Find first entry that still has this color
+  if(!paintHistory[color]||!paintHistory[color].length) return;
   while(paintHistory[color].length){
-    const entry=paintHistory[color].shift();
-    if(cubeState[entry.face]&&cubeState[entry.face][entry.idx]===color){
-      cubeState[entry.face][entry.idx]=FACE_COLORS[entry.face];
+    const e=paintHistory[color].shift();
+    if(cubeState[e.face]&&cubeState[e.face][e.idx]===color){
+      cubeState[e.face][e.idx]=FACE_COLORS[e.face];
       return;
     }
   }
 }
 
 // ═══════════════════════════════════════════════════════
-//  DRAG — world space, cube rotatable during animation
+//  DRAG — world space, works during animation
 // ═══════════════════════════════════════════════════════
 function setupDrag(){
   const canvas=document.getElementById('practice-canvas');
@@ -512,8 +482,8 @@ function setupDrag(){
   canvas.addEventListener('touchmove',e=>{
     if(!isDragging)return;
     const dx=e.touches[0].clientX-prevMouse.x,dy=e.touches[0].clientY-prevMouse.y;
-    const dist=Math.sqrt(Math.pow(e.touches[0].clientX-touchStartPos.x,2)+Math.pow(e.touches[0].clientY-touchStartPos.y,2));
-    if(dist>8)dragMoved=true;
+    const dist=Math.sqrt((e.touches[0].clientX-touchStartPos.x)**2+(e.touches[0].clientY-touchStartPos.y)**2);
+    if(dist>8) dragMoved=true;
     if(!dragMoved)return;
     const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*DRAG_SPEED);
     const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
@@ -521,8 +491,8 @@ function setupDrag(){
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
   },{passive:true});
   canvas.addEventListener('touchend',e=>{
-    const dist=Math.sqrt(Math.pow(e.changedTouches[0].clientX-touchStartPos.x,2)+Math.pow(e.changedTouches[0].clientY-touchStartPos.y,2));
-    if(dist<10)handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+    const dist=Math.sqrt((e.changedTouches[0].clientX-touchStartPos.x)**2+(e.changedTouches[0].clientY-touchStartPos.y)**2);
+    if(dist<10) handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
     isDragging=false; dragMoved=false;
   });
   canvas.addEventListener('mousedown',e=>{isDragging=true;dragMoved=false;prevMouse={x:e.clientX,y:e.clientY};touchStartPos={x:e.clientX,y:e.clientY};});
@@ -535,8 +505,8 @@ function setupDrag(){
     prevMouse={x:e.clientX,y:e.clientY};
   });
   canvas.addEventListener('mouseup',e=>{
-    const dist=Math.sqrt(Math.pow(e.clientX-touchStartPos.x,2)+Math.pow(e.clientY-touchStartPos.y,2));
-    if(dist<5)handleTap(e.clientX,e.clientY);
+    const dist=Math.sqrt((e.clientX-touchStartPos.x)**2+(e.clientY-touchStartPos.y)**2);
+    if(dist<5) handleTap(e.clientX,e.clientY);
     isDragging=false; dragMoved=false;
   });
 }
@@ -554,36 +524,28 @@ function handleTap(clientX,clientY){
   );
   raycaster.setFromCamera(mouse,camera);
   const hits=raycaster.intersectObjects(cubeGroup.children);
-  if(!hits.length)return;
+  if(!hits.length) return;
   const hit=hits[0];
   const fi=hit.face.materialIndex;
   const faceNames=['R','L','U','D','F','B'];
   const faceName=faceNames[fi];
   const {x,y,z}=hit.object.userData;
-
-  if(!isPaintable(pStage,faceName,x,y,z)){showToast('Not paintable here');return;}
-  if(!isColorAllowedForStage(pStage,faceName,selectedColor)){showToast('Wrong color for this face');return;}
-
+  if(!isPaintable(pStage,faceName,x,y,z)){showToast('Not paintable');return;}
   const idx=getStickerIndex(faceName,x,y,z);
   const current=cubeState[faceName][idx];
-
   if(current===selectedColor){
-    // Unpaint
+    // Unpaint — restore default
     cubeState[faceName][idx]=FACE_COLORS[faceName];
   } else {
-    // Check color limit
-    const currentCount=countColor(selectedColor);
-    if(currentCount>=MAX_PER_COLOR){
-      // Remove oldest of this color
+    const cnt=countColor(selectedColor);
+    if(cnt>=MAX_PER_COLOR){
       removeOldestOfColor(selectedColor);
-      showToast('Max reached — oldest removed');
+      showToast('Oldest removed');
     }
     cubeState[faceName][idx]=selectedColor;
-    // Track in history
-    if(!paintHistory[selectedColor])paintHistory[selectedColor]=[];
+    if(!paintHistory[selectedColor]) paintHistory[selectedColor]=[];
     paintHistory[selectedColor].push({face:faceName,idx});
   }
-
   buildMesh(); renderNet(); checkMismatch(); checkMissingPieces();
   currentScrambleStr=''; currentSolution='';
   document.getElementById('solution-panel').classList.remove('show');
@@ -595,39 +557,37 @@ function handleTap(clientX,clientY){
 function checkMissingPieces(){
   const warn=document.getElementById('missing-warn');
   if(!warn)return;
-  // Count painted colors (non-default stickers in paintable zones)
-  const missing=[];
-  // For cross: need 4 white+color edge pairs
+  const msgs=[];
   if(pStage==='cross'){
-    const edgeFaces=[{D:'F',side:'F'},{D:'B',side:'B'},{D:'R',side:'R'},{D:'L',side:'L'}];
-    // Check D face edges
-    const dEdges=[1,3,5,7]; // top,left,right,bottom of D face
-    let whiteCount=0;
-    for(const i of dEdges) if(cubeState['D'][i]==='#ffffff')whiteCount++;
-    if(whiteCount<4)missing.push(`${4-whiteCount} white edge(s) missing on bottom`);
+    // Count white stickers on edge pieces
+    let whiteEdges=0;
+    for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
+      if(!isEdgePiece(x,y,z))continue;
+      const faceMap=[{face:'R',axis:'x',val:1},{face:'L',axis:'x',val:-1},{face:'U',axis:'y',val:1},{face:'D',axis:'y',val:-1},{face:'F',axis:'z',val:1},{face:'B',axis:'z',val:-1}];
+      for(const fm of faceMap){
+        const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
+        if(cv===fm.val&&getStickerColor(fm.face,x,y,z)==='#ffffff') whiteEdges++;
+      }
+    }
+    if(whiteEdges<4) msgs.push(`Need ${4-whiteEdges} more white edge sticker(s)`);
   }
-  if(missing.length){
-    warn.textContent='⚠ '+missing.join(' · ');
-    warn.style.display='block';
-  } else {
-    warn.style.display='none';
-  }
+  if(msgs.length){warn.textContent='⚠ '+msgs.join(' · ');warn.style.display='block';}
+  else{warn.style.display='none';}
 }
 
 // ═══════════════════════════════════════════════════════
 //  PALETTE
 // ═══════════════════════════════════════════════════════
 const STAGE_COLORS={
-  cross:[{c:'#ffffff',l:'White (D)'},{c:'#00c853',l:'Green'},{c:'#ff6d00',l:'Orange'},{c:'#2979ff',l:'Blue'},{c:'#f44336',l:'Red'}],
+  cross:[{c:'#ffffff',l:'White'},{c:'#00c853',l:'Green'},{c:'#ff6d00',l:'Orange'},{c:'#2979ff',l:'Blue'},{c:'#f44336',l:'Red'}],
   f2l:[{c:'#ffffff',l:'W'},{c:'#ffd700',l:'Y'},{c:'#00c853',l:'G'},{c:'#ff6d00',l:'O'},{c:'#2979ff',l:'B'},{c:'#f44336',l:'R'}],
   oll:[{c:'#ffd700',l:'Yellow'}],
   pll:[{c:'#ffd700',l:'Y'},{c:'#00c853',l:'G'},{c:'#ff6d00',l:'O'},{c:'#2979ff',l:'B'},{c:'#f44336',l:'R'},{c:'#ffffff',l:'W'}]
 };
-
 function setupPalette(){
   const colors=STAGE_COLORS[pStage];
   selectedColor=colors[0].c;
-  const hint={cross:'D face = white · Edge side = any color',f2l:'All colors',oll:'Yellow only',pll:'All colors'};
+  const hint={cross:'Any edge piece',f2l:'Any edge or corner',oll:'Yellow only',pll:'All colors'};
   document.getElementById('paint-restrict').textContent='— '+hint[pStage];
   document.getElementById('cpalette').innerHTML=
     colors.map(c=>`<div class="cswatch${c.c===selectedColor?' sel':''}" style="background:${c.c}" onclick="selColor('${c.c}')" title="${c.l}"></div>`).join('');
@@ -638,7 +598,7 @@ function selColor(c){
 }
 
 // ═══════════════════════════════════════════════════════
-//  2D NET — only show visible stickers
+//  2D NET — matches 3D visibility exactly
 // ═══════════════════════════════════════════════════════
 function renderNet(){
   const net=document.getElementById('cube-net');
@@ -649,15 +609,16 @@ function renderNet(){
     {face:'U',ro:0,co:1},{face:'L',ro:1,co:0},{face:'F',ro:1,co:1},
     {face:'R',ro:1,co:2},{face:'B',ro:1,co:3},{face:'D',ro:2,co:1}
   ];
-  // Map from net index to approximate x,y,z for visibility check
-  const faceIndexToXYZ={
-    U:(i)=>{const r=Math.floor(i/3)-1,c=(i%3)-1;return{x:c,y:1,z:-r};},
-    D:(i)=>{const r=Math.floor(i/3)-1,c=(i%3)-1;return{x:c,y:-1,z:r};},
-    F:(i)=>{const r=Math.floor(i/3)-1,c=(i%3)-1;return{x:c,y:-r,z:1};},
-    B:(i)=>{const r=Math.floor(i/3)-1,c=(i%3)-1;return{x:-c,y:-r,z:-1};},
-    R:(i)=>{const r=Math.floor(i/3)-1,c=(i%3)-1;return{x:1,y:-r,z:-c};},
-    L:(i)=>{const r=Math.floor(i/3)-1,c=(i%3)-1;return{x:-1,y:-r,z:c};}
-  };
+  // Map sticker index to approx x,y,z
+  function idxToXYZ(face,i){
+    const r=Math.floor(i/3)-1,c=(i%3)-1;
+    if(face==='U') return {x:c,y:1,z:-r};
+    if(face==='D') return {x:c,y:-1,z:r};
+    if(face==='F') return {x:c,y:-r,z:1};
+    if(face==='B') return {x:-c,y:-r,z:-1};
+    if(face==='R') return {x:1,y:-r,z:-c};
+    return {x:-1,y:-r,z:c};
+  }
   let html=`<svg width="${tw}" height="${th}" viewBox="0 0 ${tw} ${th}">`;
   for(const {face,ro,co} of layout){
     const ox=co*(fs+gap),oy=ro*(fs+gap);
@@ -665,12 +626,9 @@ function renderNet(){
       const r=Math.floor(i/3),c=i%3;
       const sx=ox+c*(cs+gap),sy=oy+r*(cs+gap);
       const color=cubeState[face][i]||FACE_COLORS[face];
-      const pos=faceIndexToXYZ[face](i);
+      const pos=idxToXYZ(face,i);
       const visible=isStickerVisible(pStage,face,pos.x,pos.y,pos.z);
-      // Show actual color only if visible, else dark
-      const fill=visible?color:'#141414';
-      const stroke=visible?'#080808':'#111111';
-      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${fill}" rx="1" stroke="${stroke}" stroke-width="0.5"/>`;
+      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${visible?color:'#141414'}" rx="1" stroke="#080808" stroke-width="0.5"/>`;
     }
     html+=`<text x="${ox+fs/2}" y="${oy-2}" fill="#333" font-size="8" text-anchor="middle" font-family="Rajdhani,sans-serif">${face}</text>`;
   }
@@ -684,9 +642,9 @@ function renderNet(){
 function checkMismatch(){
   if(!cubeState){document.getElementById('mismatch-warn').classList.remove('show');return;}
   const counts={};
-  for(const f of ['U','D','F','B','R','L'])for(const c of cubeState[f])if(c)counts[c]=(counts[c]||0)+1;
+  for(const f of ['U','D','F','B','R','L']) for(const c of cubeState[f]) if(c) counts[c]=(counts[c]||0)+1;
   let bad=false;
-  for(const n of Object.values(counts))if(n>9){bad=true;break;}
+  for(const n of Object.values(counts)) if(n>9){bad=true;break;}
   document.getElementById('mismatch-warn').classList.toggle('show',bad);
 }
 
@@ -699,9 +657,9 @@ function handleScrambleBtn(){
   const input=document.getElementById('pscramble-input');
   if(!scrambleGenerated){
     let s='';
-    if(pStage==='cross')s=genCrossScramble();
-    else if(pStage==='f2l')s=genF2LScramble();
-    else if(pStage==='oll')s=genOLLScramble();
+    if(pStage==='cross') s=genCrossScramble();
+    else if(pStage==='f2l') s=genF2LScramble();
+    else if(pStage==='oll') s=genOLLScramble();
     else s=genPLLScramble();
     currentScrambleStr=s; input.value=s;
     scrambleGenerated=true; btn.textContent='Apply';
@@ -725,7 +683,7 @@ function resetPCube(){
   document.getElementById('solution-panel').classList.remove('show');
   document.getElementById('mismatch-warn').classList.remove('show');
   const mw=document.getElementById('missing-warn');
-  if(mw)mw.style.display='none';
+  if(mw) mw.style.display='none';
   currentScrambleStr=''; currentSolution='';
   applyStageDefaults(pStage);
   buildMesh(); renderNet();
@@ -737,7 +695,7 @@ function setPStage(stage){
   document.getElementById('stage-title').textContent=STAGE_INFO[stage].title;
   document.getElementById('stage-desc').textContent=STAGE_INFO[stage].desc;
   resetPCube();
-  if(pSceneInit)setupPalette();
+  if(pSceneInit) setupPalette();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -753,20 +711,18 @@ function handleSolutionBtn(){
     cubeState=cloneState(targetState);
     buildMesh(); renderNet();
     currentSolution=''; currentScrambleStr='';
-    // Don't hide solution panel — let user read it
+    // Solution panel stays visible — user closes it by resetting
   });
 }
-
 function showSolutionMoves(movesStr){
   const panel=document.getElementById('solution-panel');
   const disp=document.getElementById('sol-moves-display');
   panel.classList.add('show');
-  const moves=movesStr.trim().split(/\s+/);
-  disp.innerHTML=moves.map((m,i)=>`<span class="sol-move-item" id="smove-${i}">${m}</span>`).join(' ');
+  disp.innerHTML=movesStr.trim().split(/\s+/).map((m,i)=>`<span class="sol-move-item" id="smove-${i}">${m}</span>`).join(' ');
 }
 
 // ═══════════════════════════════════════════════════════
-//  ANIMATION — cube rotatable during animation
+//  ANIMATION — works in current orientation, cube rotatable during
 // ═══════════════════════════════════════════════════════
 function animateMoves(movesStr,onDone){
   if(isAnimating){if(onDone)onDone();return;}
@@ -777,16 +733,14 @@ function animateMoves(movesStr,onDone){
     if(idx>=moves.length){
       isAnimating=false;
       document.getElementById('move-overlay').classList.remove('show');
-      // Mark all done but DON'T remove them
       document.querySelectorAll('.sol-move-item').forEach(el=>el.classList.add('done'));
       if(onDone)onDone();
       return;
     }
     const move=moves[idx];
     document.querySelectorAll('.sol-move-item').forEach((el,i)=>{
-      el.classList.remove('current');
-      el.classList.toggle('done',i<idx);
-      if(i===idx)el.classList.add('current');
+      el.classList.remove('current'); el.classList.toggle('done',i<idx);
+      if(i===idx) el.classList.add('current');
     });
     const ov=document.getElementById('move-overlay');
     ov.textContent=move; ov.classList.add('show');
@@ -804,19 +758,25 @@ function animateSingleMove(move,onDone){
     const localAxis=getMoveAxis(base);
     const layerVal=getMoveLayerVal(base);
     const cwAngle=prime?Math.PI/2:-Math.PI/2;
+    // World axis = local axis rotated by cube's current quaternion
     const worldAxis=localAxis.clone().applyQuaternion(cubeGroup.quaternion).normalize();
+    // Select cubies in this layer
     const moving=[];
     for(const c of cubeGroup.children){
       const dot=c.position.dot(localAxis);
-      if(Math.abs(Math.round(dot)-layerVal)<0.15)moving.push(c);
+      if(Math.abs(Math.round(dot)-layerVal)<0.15) moving.push(c);
     }
     if(!moving.length){cb();return;}
+    // Create pivot in scene (not attached to cubeGroup)
     const pivot=new THREE.Object3D(); scene.add(pivot);
+    // Move cubies from cubeGroup to pivot using world transforms
     for(const m of moving){
       cubeGroup.updateMatrixWorld(true);
       const wp=new THREE.Vector3(); m.getWorldPosition(wp);
       const wq=new THREE.Quaternion(); m.getWorldQuaternion(wq);
-      cubeGroup.remove(m); m.position.copy(wp); m.quaternion.copy(wq); pivot.add(m);
+      cubeGroup.remove(m);
+      m.position.copy(wp); m.quaternion.copy(wq);
+      pivot.add(m);
     }
     const duration=animSpeed,start=Date.now();
     function step(){
@@ -833,10 +793,11 @@ function animateSingleMove(move,onDone){
           const wp=new THREE.Vector3(); m.getWorldPosition(wp);
           const wq=new THREE.Quaternion(); m.getWorldQuaternion(wq);
           pivot.remove(m); cubeGroup.add(m);
-          cubeGroup.worldToLocal(wp); m.position.copy(wp);
-          m.position.x=Math.round(m.position.x);
-          m.position.y=Math.round(m.position.y);
-          m.position.z=Math.round(m.position.z);
+          // Convert world position back to cubeGroup local space
+          const invQ=cubeGroup.quaternion.clone().invert();
+          const lp=wp.clone().applyQuaternion(invQ);
+          m.position.set(Math.round(lp.x),Math.round(lp.y),Math.round(lp.z));
+          // Convert world quaternion to local
           const cq=new THREE.Quaternion(); cubeGroup.getWorldQuaternion(cq);
           m.quaternion.copy(cq.invert().multiply(wq));
         }
@@ -850,14 +811,14 @@ function animateSingleMove(move,onDone){
 }
 
 function getMoveAxis(base){
-  if(base==='R'||base==='L'||base==='M')return new THREE.Vector3(1,0,0);
-  if(base==='U'||base==='D')return new THREE.Vector3(0,1,0);
+  if(base==='R'||base==='L'||base==='M') return new THREE.Vector3(1,0,0);
+  if(base==='U'||base==='D') return new THREE.Vector3(0,1,0);
   return new THREE.Vector3(0,0,1);
 }
 function getMoveLayerVal(base){
-  if(base==='R')return 1;if(base==='L'||base==='M')return -1;
-  if(base==='U')return 1;if(base==='D')return -1;
-  if(base==='F')return 1;if(base==='B')return -1;
+  if(base==='R') return 1; if(base==='L'||base==='M') return -1;
+  if(base==='U') return 1; if(base==='D') return -1;
+  if(base==='F') return 1; if(base==='B') return -1;
   return 0;
 }
 
@@ -865,9 +826,9 @@ function getMoveLayerVal(base){
 //  SPEED
 // ═══════════════════════════════════════════════════════
 function setSpeed(speed){
-  if(speed==='slow')animSpeed=900;
-  else if(speed==='normal')animSpeed=600;
-  else if(speed==='fast')animSpeed=300;
+  if(speed==='slow') animSpeed=900;
+  else if(speed==='normal') animSpeed=600;
+  else if(speed==='fast') animSpeed=300;
   document.querySelectorAll('.speed-btn').forEach(b=>b.classList.toggle('active-speed',b.dataset.speed===speed));
   showToast(speed.charAt(0).toUpperCase()+speed.slice(1));
 }
@@ -895,8 +856,7 @@ let toastT;
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>t.classList.remove('show'),1800);
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -904,3 +864,5 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════
 genScramble(); updateStats(); loadSettings();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+JSEOF
+echo "done"
