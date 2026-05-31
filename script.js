@@ -25,7 +25,7 @@ function showScreen(name){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach((item,i)=>{
-    item.classList.toggle('active',['timer','history','practice','','settings','privacy'][i]===name);
+    item.classList.toggle('active',['timer','history','practice','learn','settings','privacy'][i]===name);
   });
   if(name==='history') renderHistory();
   if(name==='practice') initPScene();
