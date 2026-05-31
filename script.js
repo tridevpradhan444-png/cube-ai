@@ -170,7 +170,7 @@ TS.addEventListener('touchstart',onHoldStart,{passive:true});
 TS.addEventListener('touchend',onHoldEnd);
 TS.addEventListener('mousedown',onHoldStart);
 TS.addEventListener('mouseup',onHoldEnd);
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&document.getElementById('screen-timer').classList.contains('active')){e.preventDefault();if(timerRunning){stopTimer();return;}if(!isHolding)onHoldStart(e);}});
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&document.getElementById('screen-timer').classList.contains('active')){e.preventDefault();if(timerRunning){stopTimer();return;}if(!isHolding){onHoldStart(e);}}});
 document.addEventListener('keyup',e=>{if(e.code==='Space')onHoldEnd(e);});
 
 // ═══════════════════════════════════════════════════════
@@ -190,8 +190,28 @@ function genScrambleStr(len){
 function genScramble(){ const s=genScrambleStr(); document.getElementById('scramble-text').textContent=s; return s; }
 
 // Cross/F2L: random moves
-function genCrossScramble(){ const m=['F2','B2','R2','L2','U',"U'","U2",'D',"D'","D2"]; let s=[],l=''; for(let i=0;i<10;i++){let v;do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);s.push(v);l=v;} return s.join(' '); }
-function genF2LScramble(){ const m=['R',"R'","R2",'L',"L'","L2",'U',"U'","U2",'F',"F'","B","B'"]; let s=[],l=''; for(let i=0;i<12;i++){let v;do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);s.push(v);l=v;} return s.join(' '); }
+function genCrossScramble(){ 
+  const m=['F2','B2','R2','L2','U',"U'","U2",'D',"D'","D2"]; 
+  let s=[],l=''; 
+  for(let i=0;i<10;i++){
+    let v;
+    do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);
+    s.push(v); 
+    l=v;
+  } 
+  return s.join(' ');
+}
+function genF2LScramble(){ 
+  const m=['R',"R'","R2",'L',"L'","L2",'U',"U'","U2",'F',"F'","B","B'"]; 
+  let s=[],l=''; 
+  for(let i=0;i<12;i++){
+    let v;
+    do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);
+    s.push(v); 
+    l=v;
+  } 
+  return s.join(' ');
+}
 
 // OLL: real cases
 const OLL_CASES=[
@@ -243,11 +263,14 @@ function genPLLScramble(){ return invertMoves(PLL_CASES[Math.floor(Math.random()
 function renderHistory(){
   const list=document.getElementById('history-list');
   if(!list) return;
-  if(!solves.length){list.innerHTML='<div class="history-empty"><div style="font-size:48px;opacity:0.3;">⏱</div><div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;">No solves yet</div></div>';return;}
+  if(!solves.length){
+    list.innerHTML='<div class="history-empty"><div style="font-size:48px;opacity:0.3;">⏱</div><div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;">No solves yet</div></div>';
+    return;
+  }
   list.innerHTML=[...solves].reverse().map((s,i)=>{
     const n=solves.length-i,d=new Date(s.date);
     const ds=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-    return `<div class="solve-item"><div class="solve-num">#${n}</div><div class="solve-time">${fmt(s.time)}</div><div class="solve-date">${ds}</div><div class="solve-del" onclick="delSolve(${solves.length-1-i})">×</div></div>`;
+    return `<div class="solve-item"><div class="solve-num">#${n}</div><div class="solve-time">${fmt(s.time)}</div><div class="solve-date">${ds}</div><div class="solve-del" onclick="delSolve(${solves.length-n})">✕</div></div>`;
   }).join('');
 }
 function delSolve(i){solves.splice(i,1);localStorage.setItem('cubeai_solves',JSON.stringify(solves));updateStats();renderHistory();}
@@ -275,9 +298,9 @@ function rotateFaceCW(s,f){
 function applyMoveCW(s,base){
   if(base==='U'){rotateFaceCW(s,'U');const t=[s.F[0],s.F[1],s.F[2]];s.F[0]=s.R[0];s.F[1]=s.R[1];s.F[2]=s.R[2];s.R[0]=s.B[0];s.R[1]=s.B[1];s.R[2]=s.B[2];s.B[0]=s.L[0];s.B[1]=s.L[1];s.B[2]=s.L[2];s.L[0]=t[0];s.L[1]=t[1];s.L[2]=t[2];}
   else if(base==='D'){rotateFaceCW(s,'D');const t=[s.F[6],s.F[7],s.F[8]];s.F[6]=s.L[6];s.F[7]=s.L[7];s.F[8]=s.L[8];s.L[6]=s.B[6];s.L[7]=s.B[7];s.L[8]=s.B[8];s.B[6]=s.R[6];s.B[7]=s.R[7];s.B[8]=s.R[8];s.R[6]=t[0];s.R[7]=t[1];s.R[8]=t[2];}
-  else if(base==='R'){rotateFaceCW(s,'R');const t=[s.U[2],s.U[5],s.U[8]];s.U[2]=s.F[2];s.U[5]=s.F[5];s.U[8]=s.F[8];s.F[2]=s.D[2];s.F[5]=s.D[5];s.F[8]=s.D[8];s.D[2]=s.B[6];s.D[5]=s.B[3];s.D[8]=s.B[0];s.B[6]=t[0];s.B[3]=t[1];s.B[0]=t[2];}
+  else if(base==='R'){rotateFaceCW(s,'R');const t=[s.U[2],s.U[5],s.U[8]];s.U[2]=s.F[2];s.U[5]=s.F[5];s.U[8]=s.F[8];s.F[2]=s.D[2];s.F[5]=s.D[5];s.F[8]=s.D[8];s.D[2]=s.B[6];s.D[5]=s.B[3];s.D[8]=s.B[0];s.B[0]=t[2];s.B[3]=t[1];s.B[6]=t[0];}
   else if(base==='L'){rotateFaceCW(s,'L');const t=[s.U[0],s.U[3],s.U[6]];s.U[0]=s.B[8];s.U[3]=s.B[5];s.U[6]=s.B[2];s.B[8]=s.D[0];s.B[5]=s.D[3];s.B[2]=s.D[6];s.D[0]=s.F[0];s.D[3]=s.F[3];s.D[6]=s.F[6];s.F[0]=t[0];s.F[3]=t[1];s.F[6]=t[2];}
-  else if(base==='F'){rotateFaceCW(s,'F');const t=[s.U[6],s.U[7],s.U[8]];s.U[6]=s.L[8];s.U[7]=s.L[5];s.U[8]=s.L[2];s.L[2]=s.D[0];s.L[5]=s.D[1];s.L[8]=s.D[2];s.D[0]=s.R[6];s.D[1]=s.R[3];s.D[2]=s.R[0];s.R[0]=t[2];s.R[3]=t[1];s.R[6]=t[0];}
+  else if(base==='F'){rotateFaceCW(s,'F');const t=[s.U[6],s.U[7],s.U[8]];s.U[6]=s.L[8];s.U[7]=s.L[5];s.U[8]=s.L[2];s.L[2]=s.D[0];s.L[5]=s.D[1];s.L[8]=s.D[2];s.D[0]=s.R[6];s.D[1]=s.R[3];s.D[2]=s.R[0];s.R[0]=t[0];s.R[3]=t[1];s.R[6]=t[2];}
   else if(base==='B'){rotateFaceCW(s,'B');const t=[s.U[0],s.U[1],s.U[2]];s.U[0]=s.R[2];s.U[1]=s.R[5];s.U[2]=s.R[8];s.R[2]=s.D[8];s.R[5]=s.D[7];s.R[8]=s.D[6];s.D[6]=s.L[0];s.D[7]=s.L[3];s.D[8]=s.L[6];s.L[0]=t[2];s.L[3]=t[1];s.L[6]=t[0];}
   else if(base==='M'){const t=[s.U[1],s.U[4],s.U[7]];s.U[1]=s.B[7];s.U[4]=s.B[4];s.U[7]=s.B[1];s.B[7]=s.D[1];s.B[4]=s.D[4];s.B[1]=s.D[7];s.D[1]=s.F[1];s.D[4]=s.F[4];s.D[7]=s.F[7];s.F[1]=t[0];s.F[4]=t[1];s.F[7]=t[2];}
 }
@@ -967,5 +990,3 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════
 genScramble(); updateStats(); loadSettings();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
-JSEOF
-echo "done"
