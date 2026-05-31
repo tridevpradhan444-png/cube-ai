@@ -110,7 +110,7 @@ html,body{
   position: relative;
 }
 
-#bin-btn{position:relative;margin-top:12px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
+#bin-btn{position:relative;margin-top:16px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
 
 /* Make it visible when .visible class is added */
 #bin-btn.visible {
@@ -262,7 +262,7 @@ html,body{
     <div id="inspection-display"></div>
     <div id="timer-display"><div class="timer-glow"></div><span id="timer-text">0.000</span></div>
     <div class="timer-hint" id="timer-hint">HOLD TO START</div>
-  <div id="bin-btn" onclick="deleteLastSolve()"><svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M3 6h18v2H3zm2 3h14l-1.5 12h-11zm5-6h4v2h-4z"/></svg></div>
+  <div id="bin-btn" onclick="deleteLastSolve()"><svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M3 6h18v2H3zm2 3h14l-1.5 12h-11zm5-6h4v2h-4z"/></svg></div>
   <div id="stats-bar">
     <div class="stat-cell"><div class="stat-label">Best</div><div class="stat-value" id="stat-best">—</div></div>
     <div class="stat-cell"><div class="stat-label">Worst</div><div class="stat-value" id="stat-worst">—</div></div>
@@ -294,6 +294,7 @@ html,body{
   <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.5;">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
   </div>
+      </div>
     </div>
     <div class="practice-scroll">
       <div class="stage-card">
