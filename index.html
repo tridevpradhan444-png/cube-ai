@@ -110,26 +110,7 @@ html,body{
   position: relative;
 }
 
-/* ==================== TRASH BIN BUTTON ==================== */
-#bin-btn {
-  position: absolute;           /* or 'fixed' if you want true floating */
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: var(--border);
-  background: var(--bg2);
-  cursor: pointer;
-  font-size: 22px;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s ease;
-  z-index: 100;
-}
+#bin-btn{position:relative;margin-top:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:none;background:none;cursor:pointer;font-size:20px;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
 
 /* Make it visible when .visible class is added */
 #bin-btn.visible {
