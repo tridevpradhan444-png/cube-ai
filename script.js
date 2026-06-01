@@ -6,18 +6,18 @@ let settings = Object.assign({inspection:false,autoscramble:true,holdDuration:50
   JSON.parse(localStorage.getItem('cubeai_settings')||'{}'));
 
 const FACE_COLORS = {U:'#ffd700',D:'#ffffff',F:'#00c853',B:'#2979ff',R:'#ff6d00',L:'#f44336'};
-// Opposite face pairs — can't be on same piece
 const OPPOSITE_COLORS = {'#ffd700':'#ffffff','#ffffff':'#ffd700','#00c853':'#2979ff','#2979ff':'#00c853','#ff6d00':'#f44336','#f44336':'#ff6d00'};
 const COLOR_NAMES = {'#ffd700':'Yellow','#ffffff':'White','#00c853':'Green','#2979ff':'Blue','#ff6d00':'Orange','#f44336':'Red'};
 
 const STAGE_INFO = {
-  cross:{title:'CROSS',desc:'Paint any edge gray → white (D side) + side color. No yellow. Max 4 white edges.'},
-  f2l:{title:'F2L — FIRST TWO LAYERS',desc:'Paint edges and corners. No yellow. Max 4 per color on edges/corners.'},
-  oll:{title:'OLL — ORIENT LAST LAYER',desc:'Real OLL cases. Yellow on top face.'},
-  pll:{title:'PLL — PERMUTE LAST LAYER',desc:'Real PLL cases. Top layer permutation.'}
+  cross:{title:'CROSS',desc:'Tap any edge to move it. Centers guide you. No corners, no yellow.'},
+  f2l:{title:'F2L — FIRST TWO LAYERS',desc:'Tap any corner or edge to move it. No yellow. Cross is locked.'},
+  oll:{title:'OLL — ORIENT LAST LAYER',desc:'Real OLL cases. Orient top face yellow.'},
+  pll:{title:'PLL — PERMUTE LAST LAYER',desc:'Real PLL cases. Permute top layer.'}
 };
 
 let animSpeed = 600;
+let animFrameId = null; // for kill switch
 
 // ═══════════════════════════════════════════════════════
 //  NAV
@@ -77,13 +77,21 @@ function saveSolve(ms){
 }
 function deleteLastSolve(){
   if(!solves.length) return;
-  solves.pop(); localStorage.setItem('cubeai_solves',JSON.stringify(solves));
-  updateStats(); document.getElementById('bin-btn').classList.remove('visible'); showToast('Deleted');
+  solves.pop();
+  localStorage.setItem('cubeai_solves',JSON.stringify(solves));
+  updateStats();
+  document.getElementById('bin-btn').classList.remove('visible');
+  // Reset timer display to 0.000
+  timerVal=0; setTimerText(0);
+  showToast('Deleted');
 }
 function clearAllSolves(){
   if(!solves.length) return;
   solves=[]; localStorage.setItem('cubeai_solves',JSON.stringify(solves));
-  updateStats(); renderHistory(); document.getElementById('bin-btn').classList.remove('visible'); showToast('Cleared');
+  updateStats(); renderHistory();
+  document.getElementById('bin-btn').classList.remove('visible');
+  timerVal=0; setTimerText(0);
+  showToast('Cleared');
 }
 function calcAo(n){
   if(solves.length<n) return null;
@@ -99,6 +107,58 @@ function updateStats(){
   const a5=calcAo(5),a12=calcAo(12);
   document.getElementById('stat-ao5').textContent=a5?fmt(a5):'—';
   document.getElementById('stat-ao12').textContent=a12?fmt(a12):'—';
+}
+
+// ═══════════════════════════════════════════════════════
+//  2D SCRAMBLE NET (Timer page)
+// ═══════════════════════════════════════════════════════
+let timerCubeState = null;
+
+function initTimerCubeState(){
+  timerCubeState = {};
+  for(const [f,c] of Object.entries(FACE_COLORS)) timerCubeState[f]=Array(9).fill(c);
+}
+
+function applyScrambleToTimerNet(scrambleStr){
+  initTimerCubeState();
+  if(!scrambleStr||!scrambleStr.trim()) return;
+  const moves=scrambleStr.trim().split(/\s+/);
+  for(const m of moves){
+    if(m) timerCubeState=applyMoveToState(timerCubeState,m);
+  }
+  renderTimerNet();
+}
+
+function applyMoveToState(state,move){
+  const s=cloneState(state);
+  const base=move.replace(/['\d]/g,'');
+  const prime=move.includes("'"),double=move.includes("2");
+  const times=double?2:(prime?3:1);
+  for(let t=0;t<times;t++) applyMoveCW(s,base);
+  return s;
+}
+
+function renderTimerNet(){
+  const net=document.getElementById('timer-net');
+  if(!net||!timerCubeState) return;
+  const cs=10,gap=1,fs=cs*3+gap*2;
+  const tw=4*(fs+gap)-gap, th=3*(fs+gap)-gap;
+  const layout=[
+    {face:'U',ro:0,co:1},{face:'L',ro:1,co:0},{face:'F',ro:1,co:1},
+    {face:'R',ro:1,co:2},{face:'B',ro:1,co:3},{face:'D',ro:2,co:1}
+  ];
+  let html=`<svg width="${tw}" height="${th}" viewBox="0 0 ${tw} ${th}">`;
+  for(const{face,ro,co}of layout){
+    const ox=co*(fs+gap),oy=ro*(fs+gap);
+    for(let i=0;i<9;i++){
+      const r=Math.floor(i/3),c=i%3;
+      const sx=ox+c*(cs+gap),sy=oy+r*(cs+gap);
+      const color=timerCubeState[face][i]||FACE_COLORS[face];
+      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${color}" rx="1"/>`;
+    }
+  }
+  html+='</svg>';
+  net.innerHTML=html;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -166,14 +226,26 @@ TS.addEventListener('touchstart',onHoldStart,{passive:true});
 TS.addEventListener('touchend',onHoldEnd);
 TS.addEventListener('mousedown',onHoldStart);
 TS.addEventListener('mouseup',onHoldEnd);
-document.addEventListener('keydown',e=>{if(e.code==='Space'&&document.getElementById('screen-timer').classList.contains('active')){e.preventDefault();if(timerRunning){stopTimer();return;}if(!isHolding)onHoldStart(e);}});
-document.addEventListener('keyup',e=>{if(e.code==='Space')onHoldEnd(e);});
+document.addEventListener('keydown',e=>{
+  // Don't intercept if typing in input
+  if(e.target.tagName==='INPUT') return;
+  if(e.code==='Space'&&document.getElementById('screen-timer').classList.contains('active')){
+    e.preventDefault();
+    if(timerRunning){stopTimer();return;}
+    if(!isHolding)onHoldStart(e);
+  }
+});
+document.addEventListener('keyup',e=>{
+  if(e.target.tagName==='INPUT') return;
+  if(e.code==='Space')onHoldEnd(e);
+});
 
 // ═══════════════════════════════════════════════════════
 //  SCRAMBLE GENERATORS
 // ═══════════════════════════════════════════════════════
 const MOVES=['R','L','U','D','F','B'],MODS=["","'","2"];
 const OPP_MOVES={R:'L',L:'R',U:'D',D:'U',F:'B',B:'F'};
+
 function genScrambleStr(len){
   len=len||parseInt(settings.scrambleLength)||20;
   let s=[],last='',sec='';
@@ -183,12 +255,17 @@ function genScrambleStr(len){
   }
   return s.join(' ');
 }
-function genScramble(){ const s=genScrambleStr(); document.getElementById('scramble-text').textContent=s; return s; }
+function genScramble(){
+  const s=genScrambleStr();
+  document.getElementById('scramble-text').textContent=s;
+  applyScrambleToTimerNet(s);
+  return s;
+}
 function genCrossScramble(){ const m=['F2','B2','R2','L2','U',"U'","U2",'D',"D'","D2"]; let s=[],l=''; for(let i=0;i<10;i++){let v;do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);s.push(v);l=v;} return s.join(' '); }
 function genF2LScramble(){ const m=['R',"R'","R2",'L',"L'","L2",'U',"U'","U2",'F',"F'","B","B'"]; let s=[],l=''; for(let i=0;i<12;i++){let v;do{v=m[Math.floor(Math.random()*m.length)];}while(v[0]===l[0]);s.push(v);l=v;} return s.join(' '); }
 
-const OLL_CASES=["R U R' U' R' F R F'","F R U R' U' F'","f R U R' U' f'","R U R' U R U2 R'","R U2 R' U' R U' R'","r U R' U R U2 r'","r U2 R' U' R U' r'","R U2 R2 U' R2 U' R2 U2 R","R' U' R U' R' U R U' R' U2 R","R U R' U' R U' R' U2 R U' R'","F R U R' U' R U R' U' F'","r U R' U' r' R U R' U'","R U R' U' M' U R U' r'","r' U' R U' R' U2 r","F R U R' U' F' f R U R' U' f'","r U2 R' U' R U R' U' R U' r'","R U R' U R U2 R' U2 R U' R'"];
-const PLL_CASES=["R U R' U' R' F R2 U' R' U' R U R' F'","R U R' F' R U R' U' R' F R2 U' R'","R U' R U R U R U' R' U' R2","R2 U R U R' U' R' U' R' U R'","M2 U M2 U2 M2 U M2","M2 U M2 U M' U2 M2 U2 M'","R' F R' B2 R F' R' B2 R2","R B' R F2 R' B R F2 R2","F R U' R' U' R U R' F' R U R' U' R' F R F'","R U R' U' R' F R2 U' R' U' R U R' F' U2","R' U R U' R' F' U' F R U R' F R' F' R U' R","x R2 F R F' R U2 r' U r U2"];
+const OLL_CASES=["R U R' U' R' F R F'","F R U R' U' F'","f R U R' U' f'","R U R' U R U2 R'","R U2 R' U' R U' R'","r U R' U R U2 r'","r U2 R' U' R U' r'","R U2 R2 U' R2 U' R2 U2 R","R' U' R U' R' U R U' R' U2 R","R U R' U' R U' R' U2 R U' R'","F R U R' U' R U R' U' F'","r U R' U' r' R U R' U'","R U R' U' M' U R U' r'","r' U' R U' R' U2 r","F R U R' U' F' f R U R' U' f'"];
+const PLL_CASES=["R U R' U' R' F R2 U' R' U' R U R' F'","R U R' F' R U R' U' R' F R2 U' R'","R U' R U R U R U' R' U' R2","R2 U R U R' U' R' U' R' U R'","M2 U M2 U2 M2 U M2","M2 U M2 U M' U2 M2 U2 M'","R' F R' B2 R F' R' B2 R2","R B' R F2 R' B R F2 R2","F R U' R' U' R U R' F' R U R' U' R' F R F'","R U R' U' R' F R2 U' R' U' R U R' F' U2"];
 
 function genOLLScramble(){ return invertMoves(OLL_CASES[Math.floor(Math.random()*OLL_CASES.length)]); }
 function genPLLScramble(){ return invertMoves(PLL_CASES[Math.floor(Math.random()*PLL_CASES.length)]); }
@@ -212,12 +289,10 @@ function delSolve(i){solves.splice(i,1);localStorage.setItem('cubeai_solves',JSO
 //  CUBE STATE ENGINE
 // ═══════════════════════════════════════════════════════
 let cubeState=null;
-let paintHistory={};  // {color:[{face,idx,pieceType}]}
 
 function initCubeState(){
   cubeState={};
   for(const [f,c] of Object.entries(FACE_COLORS)) cubeState[f]=Array(9).fill(c);
-  paintHistory={};
 }
 function cloneState(s){const c={};for(const f of Object.keys(s))c[f]=[...s[f]];return c;}
 
@@ -272,27 +347,11 @@ function getPieceType(x,y,z){
   return 'core';
 }
 
-// Get all sticker colors of a piece
-function getPieceColors(x,y,z){
-  const colors=[];
-  for(const fm of FACE_MAP_STATIC){
-    const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
-    if(cv===fm.val) colors.push(getStickerColor(fm.face,x,y,z));
-  }
-  return colors;
-}
-
 const FACE_MAP_STATIC=[
   {face:'R',axis:'x',val:1},{face:'L',axis:'x',val:-1},
   {face:'U',axis:'y',val:1},{face:'D',axis:'y',val:-1},
   {face:'F',axis:'z',val:1},{face:'B',axis:'z',val:-1}
 ];
-
-// ═══════════════════════════════════════════════════════
-//  STICKER COLOR — returns actual painted color or gray if unpainted
-// ═══════════════════════════════════════════════════════
-// "Unpainted" marker — we use the default face color as unpainted
-// After painting, the sticker gets the selected color
 
 function getStickerColor(face,x,y,z){
   if(!cubeState) return FACE_COLORS[face];
@@ -311,28 +370,25 @@ function getStickerIndex(face,x,y,z){
   return Math.max(0,Math.min(8,row*3+col));
 }
 
-function isStickerPainted(face,x,y,z){
-  const color=getStickerColor(face,x,y,z);
-  return color!==FACE_COLORS[face];
-}
-
 // ═══════════════════════════════════════════════════════
 //  VISIBILITY
 // ═══════════════════════════════════════════════════════
 function isStickerVisible(stage,face,x,y,z){
   const ptype=getPieceType(x,y,z);
   if(ptype==='core') return false;
-  if(ptype==='center') return true;
+  if(ptype==='center') return true; // centers always visible with color
 
   if(stage==='cross'){
-    if(ptype==='corner') return false;
-    if(ptype==='edge') return true; // all edges shown (gray until painted)
+    if(ptype==='corner') return false; // corners hidden
+    if(ptype==='edge'){
+      // Hide yellow stickers on edges
+      const color=getStickerColor(face,x,y,z);
+      return color!=='#ffd700';
+    }
   }
   if(stage==='f2l'){
-    // Show all non-center pieces, but hide yellow stickers
     const color=getStickerColor(face,x,y,z);
-    if(color==='#ffd700') return false;
-    return true;
+    return color!=='#ffd700'; // hide yellow everywhere
   }
   if(stage==='oll'){
     if(face==='U') return true;
@@ -347,90 +403,182 @@ function isStickerVisible(stage,face,x,y,z){
 }
 
 // ═══════════════════════════════════════════════════════
-//  PAINTABLE
+//  PAINTABLE / MOVEABLE
 // ═══════════════════════════════════════════════════════
 function isPaintable(stage,face,x,y,z){
   const ptype=getPieceType(x,y,z);
   if(ptype==='center'||ptype==='core') return false;
   if(stage==='cross') return ptype==='edge';
-  if(stage==='f2l') return ptype==='edge'||ptype==='corner';
+  if(stage==='f2l'){
+    // Cross pieces locked (D face edges)
+    if(ptype==='edge'&&y===-1) return false; // bottom edges = cross, locked
+    return ptype==='edge'||ptype==='corner';
+  }
   if(stage==='oll') return face==='U';
   if(stage==='pll') return y===1;
   return true;
 }
 
-function isColorAllowed(stage,color){
-  if(stage==='cross'||stage==='f2l') return color!=='#ffd700';
-  if(stage==='oll') return color==='#ffd700';
-  return true;
-}
-
 function applyStageDefaults(stage){
-  initCubeState();
-  if(stage==='pll') cubeState['U']=Array(9).fill(FACE_COLORS.U);
-}
+  initCubeState(); // start with solved cube
+  // All stages start solved — user moves pieces around
+    }
 
 // ═══════════════════════════════════════════════════════
-//  COLOR COUNTING
+//  TAP-TO-MOVE LOGIC
+// When user taps a piece, we swap it with another piece
+// so the selected color ends up at the tapped location
 // ═══════════════════════════════════════════════════════
-function countColorOnType(color,pieceTypeFn){
-  if(!cubeState) return 0;
-  let n=0;
-  for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
-    if(!pieceTypeFn(x,y,z)) continue;
-    for(const fm of FACE_MAP_STATIC){
-      const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
-      if(cv===fm.val && getStickerColor(fm.face,x,y,z)===color) n++;
+function handleTapToMove(faceName,x,y,z){
+  const ptype=getPieceType(x,y,z);
+  const idx=getStickerIndex(faceName,x,y,z);
+  const currentColor=cubeState[faceName][idx];
+
+  // If tapping center — ignore
+  if(ptype==='center'||ptype==='core') return;
+
+  // Get selected color from palette
+  const newColor=selectedColor;
+
+  // Check color allowed
+  if(newColor==='#ffd700'&&(pStage==='cross'||pStage==='f2l')){
+    showToast('Yellow not allowed here');
+    return;
+  }
+
+  // Validate impossible piece — check other stickers on same piece
+  const err=validatePiecePaint(faceName,x,y,z,newColor);
+  if(err){showToast(err);return;}
+
+  // If already has this color — unpaint (restore to face default)
+  if(currentColor===newColor){
+    cubeState[faceName][idx]=FACE_COLORS[faceName];
+    buildMesh(); renderNet(); checkMissingPieces();
+    updateSolutionFromState();
+    return;
+  }
+
+  // Find where newColor currently exists on same piece type and swap
+  // This is the "tap-to-move" mechanic
+  let swapFace=null, swapIdx=null;
+
+  // Search for newColor on edges (if painting edge)
+  if(ptype==='edge'){
+    outer:for(let sx=-1;sx<=1;sx++) for(let sy=-1;sy<=1;sy++) for(let sz=-1;sz<=1;sz++){
+      if(!isEdgePiece(sx,sy,sz)) continue;
+      if(sx===x&&sy===y&&sz===z) continue; // skip current piece
+      for(const fm of FACE_MAP_STATIC){
+        const cv=fm.axis==='x'?sx:fm.axis==='y'?sy:sz;
+        if(cv!==fm.val) continue;
+        const si=getStickerIndex(fm.face,sx,sy,sz);
+        if(cubeState[fm.face][si]===newColor){
+          swapFace=fm.face; swapIdx=si;
+          break outer;
+        }
+      }
+    }
+  } else if(ptype==='corner'){
+    outer:for(let sx=-1;sx<=1;sx++) for(let sy=-1;sy<=1;sy++) for(let sz=-1;sz<=1;sz++){
+      if(!isCornerPiece(sx,sy,sz)) continue;
+      if(sx===x&&sy===y&&sz===z) continue;
+      for(const fm of FACE_MAP_STATIC){
+        const cv=fm.axis==='x'?sx:fm.axis==='y'?sy:sz;
+        if(cv!==fm.val) continue;
+        const si=getStickerIndex(fm.face,sx,sy,sz);
+        if(cubeState[fm.face][si]===newColor){
+          swapFace=fm.face; swapIdx=si;
+          break outer;
+        }
+      }
     }
   }
-  return n;
-}
 
-function removeOldestOfColor(color,pieceType){
-  if(!paintHistory[color]) return;
-  const idx=paintHistory[color].findIndex(e=>e.pieceType===pieceType);
-  if(idx===-1) return;
-  const entry=paintHistory[color].splice(idx,1)[0];
-  if(cubeState[entry.face]&&cubeState[entry.face][entry.idx]===color){
-    cubeState[entry.face][entry.idx]=FACE_COLORS[entry.face];
+  if(swapFace!==null){
+    // Swap: remove from old location, put at new location
+    cubeState[swapFace][swapIdx]=FACE_COLORS[swapFace]; // restore old to default
+    cubeState[faceName][idx]=newColor; // paint new location
+  } else {
+    // Color not found elsewhere — just paint it here
+    cubeState[faceName][idx]=newColor;
   }
+
+  buildMesh(); renderNet(); checkMissingPieces();
+  updateSolutionFromState();
 }
 
 // ═══════════════════════════════════════════════════════
-//  IMPOSSIBLE PIECE VALIDATION
+//  VALIDATION
 // ═══════════════════════════════════════════════════════
 function validatePiecePaint(face,x,y,z,newColor){
-  const ptype=getPieceType(x,y,z);
-  // Get current colors of this piece
   const existingColors=[];
   for(const fm of FACE_MAP_STATIC){
     const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
-    if(cv===fm.val){
-      const c=getStickerColor(fm.face,x,y,z);
-      if(c!==FACE_COLORS[fm.face]) existingColors.push(c); // only count painted stickers
-    }
+    if(cv!==fm.val) continue;
+    if(fm.face===face) continue; // skip the face we're painting
+    const c=cubeState[fm.face][getStickerIndex(fm.face,x,y,z)];
+    if(c!==FACE_COLORS[fm.face]) existingColors.push(c);
   }
-  // Check: new color can't be opposite to any existing color on this piece
   for(const ec of existingColors){
     if(OPPOSITE_COLORS[newColor]===ec){
-      const n1=COLOR_NAMES[newColor]||newColor;
-      const n2=COLOR_NAMES[ec]||ec;
-      return `${n1} and ${n2} are opposite colors — can't be on the same piece`;
+      return `${COLOR_NAMES[newColor]||newColor} and ${COLOR_NAMES[ec]||ec} are opposite — can't be on same piece`;
+    }
+    if(ec===newColor){
+      return `${COLOR_NAMES[newColor]||newColor} already on this piece`;
     }
   }
-  // Check: same color can't appear twice on same piece
-  if(existingColors.includes(newColor)){
-    return `${COLOR_NAMES[newColor]||newColor} already on this piece`;
+  return null;
+}
+
+function checkMissingPieces(){
+  const warn=document.getElementById('missing-warn');
+  if(!warn||!cubeState) return;
+  const msgs=[];
+  if(pStage==='cross'){
+    // Check white edges
+    let whiteEdges=0;
+    for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
+      if(!isEdgePiece(x,y,z)) continue;
+      for(const fm of FACE_MAP_STATIC){
+        const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
+        if(cv===fm.val&&cubeState[fm.face][getStickerIndex(fm.face,x,y,z)]==='#ffffff') whiteEdges++;
+      }
+    }
+    if(whiteEdges<4) msgs.push(`Need ${4-whiteEdges} more white edge(s)`);
   }
-  return null; // valid
+  if(msgs.length){warn.textContent='⚠ '+msgs.join(' · ');warn.style.display='block';}
+  else{warn.style.display='none';}
+}
+
+// ═══════════════════════════════════════════════════════
+//  SOLUTION FROM PAINTED STATE
+// Use inverse of scramble if available, otherwise basic solver hint
+// ═══════════════════════════════════════════════════════
+let currentScrambleStr='';
+let currentSolution='';
+let scrambleGenerated=false;
+
+function updateSolutionFromState(){
+  // When user paints — the solution is computed from the current state
+  // For now, mark that solution needs recompute
+  currentSolution='';
+  currentScrambleStr='';
+}
+
+function computeSolution(){
+  // If we have a scramble string, solution is its inverse
+  if(currentScrambleStr) return invertMoves(currentScrambleStr);
+  // Otherwise show "scramble first" 
+  return null;
 }
 
 // ═══════════════════════════════════════════════════════
 //  PRACTICE STATE
 // ═══════════════════════════════════════════════════════
-let pStage='cross',scrambleGenerated=false,currentScrambleStr='',currentSolution='';
-let selectedColor='#ffffff',isAnimating=false,pSceneInit=false;
-let scene,camera,renderer,cubeGroup;
+let pStage='cross';
+let selectedColor='#ffffff';
+let isAnimating=false;
+let pSceneInit=false;
+let scene,camera,renderer,rootGroup,cubeGroup;
 let isDragging=false,prevMouse={x:0,y:0},dragMoved=false,touchStartPos={x:0,y:0};
 const DRAG_SPEED=0.007;
 
@@ -448,7 +596,12 @@ function initPScene(){
   scene.add(new THREE.AmbientLight(0xffffff,0.65));
   const dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(3,8,6); scene.add(dl);
   const dl2=new THREE.DirectionalLight(0xffffff,0.25); dl2.position.set(-3,-2,-4); scene.add(dl2);
-  cubeGroup=new THREE.Group(); scene.add(cubeGroup);
+
+  // Master root — drag rotates this
+  rootGroup=new THREE.Group(); scene.add(rootGroup);
+  // Inner cube group — animations rotate individual pieces inside this
+  cubeGroup=new THREE.Group(); rootGroup.add(cubeGroup);
+
   initCubeState(); applyStageDefaults(pStage); buildMesh();
   resetCubeAngle(); setupDrag();
   requestAnimationFrame(function loop(){requestAnimationFrame(loop);renderer.render(scene,camera);});
@@ -460,22 +613,21 @@ function initPScene(){
 }
 
 function resetCubeAngle(){
-  if(!cubeGroup)return;
-  cubeGroup.quaternion.setFromEuler(new THREE.Euler(0.3,0,0));
+  if(!rootGroup)return;
+  rootGroup.quaternion.setFromEuler(new THREE.Euler(0.3,0,0));
 }
 
 function rotateCube90(){
-  if(!cubeGroup)return;
-  const startQ=cubeGroup.quaternion.clone();
-  // Rotate around cube's LOCAL Y axis to avoid tilt
-  const localY=new THREE.Vector3(0,1,0).applyQuaternion(cubeGroup.quaternion);
-  const delta=new THREE.Quaternion().setFromAxisAngle(localY,Math.PI/2);
-  const endQ=delta.multiply(startQ);
+  if(!rootGroup||isAnimating)return;
+  const startQ=rootGroup.quaternion.clone();
+  // Rotate around world Y — no tilt
+  const delta=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
+  const endQ=delta.clone().multiply(startQ);
   const dur=350,start=Date.now();
   function step(){
     const p=Math.min((Date.now()-start)/dur,1);
     const e=p<0.5?2*p*p:(1-Math.pow(-2*p+2,2)/2);
-    cubeGroup.quaternion.slerpQuaternions(startQ,endQ,e);
+    rootGroup.quaternion.slerpQuaternions(startQ,endQ,e);
     if(p<1)requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
@@ -491,32 +643,27 @@ const FACE_MAP=[
 ];
 
 function buildMesh(){
-  if(!cubeGroup||!cubeState)return;
-  const savedQ=cubeGroup.quaternion.clone();
-  while(cubeGroup.children.length)cubeGroup.remove(cubeGroup.children[0]);
+  if(!cubeGroup||!cubeState) return;
+  while(cubeGroup.children.length) cubeGroup.remove(cubeGroup.children[0]);
   const gap=0.06;
-  for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){
+  for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
     const geo=new THREE.BoxGeometry(1-gap,1-gap,1-gap);
     const mats=FACE_MAP.map(fm=>{
       const cv=fm.axis==='x'?x:fm.axis==='y'?y:z;
       if(cv!==fm.val) return new THREE.MeshLambertMaterial({color:0x0a0a0a});
       const visible=isStickerVisible(pStage,fm.face,x,y,z);
       if(!visible) return new THREE.MeshLambertMaterial({color:0x111111});
-      const actualColor=getStickerColor(fm.face,x,y,z);
-      const painted=actualColor!==FACE_COLORS[fm.face];
-      // Painted = show actual color, unpainted but visible = dark gray
-      const col=painted?parseInt(actualColor.replace('#',''),16):0x2a2a2a;
-      return new THREE.MeshLambertMaterial({color:col});
+      const color=getStickerColor(fm.face,x,y,z);
+      return new THREE.MeshLambertMaterial({color:parseInt(color.replace('#',''),16)});
     });
     const mesh=new THREE.Mesh(geo,mats);
     mesh.position.set(x,y,z); mesh.userData={x,y,z};
     cubeGroup.add(mesh);
   }
-  cubeGroup.quaternion.copy(savedQ);
 }
 
 // ═══════════════════════════════════════════════════════
-//  DRAG
+//  DRAG — rotates rootGroup only
 // ═══════════════════════════════════════════════════════
 function setupDrag(){
   const canvas=document.getElementById('practice-canvas');
@@ -530,9 +677,10 @@ function setupDrag(){
     const dx=e.touches[0].clientX-prevMouse.x,dy=e.touches[0].clientY-prevMouse.y;
     if(Math.sqrt((e.touches[0].clientX-touchStartPos.x)**2+(e.touches[0].clientY-touchStartPos.y)**2)>8) dragMoved=true;
     if(!dragMoved)return;
+    // Rotate rootGroup around world axes — no inversion
     const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*DRAG_SPEED);
     const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
-    cubeGroup.quaternion.premultiply(qY).premultiply(qX);
+    rootGroup.quaternion.premultiply(qY).premultiply(qX);
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
   },{passive:true});
   canvas.addEventListener('touchend',e=>{
@@ -546,7 +694,7 @@ function setupDrag(){
     const dx=e.clientX-prevMouse.x,dy=e.clientY-prevMouse.y;
     const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*DRAG_SPEED);
     const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
-    cubeGroup.quaternion.premultiply(qY).premultiply(qX);
+    rootGroup.quaternion.premultiply(qY).premultiply(qX);
     prevMouse={x:e.clientX,y:e.clientY};
   });
   canvas.addEventListener('mouseup',e=>{
@@ -557,7 +705,7 @@ function setupDrag(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  TAP TO PAINT
+//  TAP HANDLER — raycaster against cubeGroup children
 // ═══════════════════════════════════════════════════════
 function handleTap(clientX,clientY){
   if(!scene||!camera||!cubeGroup) return;
@@ -569,54 +717,23 @@ function handleTap(clientX,clientY){
     -((clientY-rect.top)/rect.height)*2+1
   );
   raycaster.setFromCamera(mouse,camera);
-  const hits=raycaster.intersectObjects(cubeGroup.children);
+  // Raycast against cubeGroup children
+  const hits=raycaster.intersectObjects(cubeGroup.children,false);
   if(!hits.length) return;
 
   const hit=hits[0];
   const fi=hit.face.materialIndex;
+  // materialIndex: 0=R,1=L,2=U,3=D,4=F,5=B
   const faceNames=['R','L','U','D','F','B'];
   const faceName=faceNames[fi];
   const {x,y,z}=hit.object.userData;
-  const ptype=getPieceType(x,y,z);
 
-  if(!isPaintable(pStage,faceName,x,y,z)){showToast('Cannot paint here');return;}
-  if(!isColorAllowed(pStage,selectedColor)){showToast('Color not allowed in this stage');return;}
-
-  const idx=getStickerIndex(faceName,x,y,z);
-  const current=cubeState[faceName][idx];
-
-  if(current===selectedColor){
-    // Unpaint
-    cubeState[faceName][idx]=FACE_COLORS[faceName];
-    if(paintHistory[selectedColor]){
-      const hi=paintHistory[selectedColor].findIndex(e=>e.face===faceName&&e.idx===idx);
-      if(hi!==-1) paintHistory[selectedColor].splice(hi,1);
-    }
-  } else {
-    // Validate impossible piece
-    const err=validatePiecePaint(faceName,x,y,z,selectedColor);
-    if(err){showToast(err);return;}
-
-    // Enforce color limits
-    if(ptype==='edge'){
-      const cnt=countColorOnType(selectedColor,isEdgePiece);
-      if(cnt>=4){ removeOldestOfColor(selectedColor,'edge'); showToast('Max 4 edges — oldest removed'); }
-    } else if(ptype==='corner'){
-      const cnt=countColorOnType(selectedColor,isCornerPiece);
-      if(cnt>=4){ removeOldestOfColor(selectedColor,'corner'); showToast('Max 4 corners — oldest removed'); }
-    }
-
-    cubeState[faceName][idx]=selectedColor;
-    if(!paintHistory[selectedColor]) paintHistory[selectedColor]=[];
-    paintHistory[selectedColor].push({face:faceName,idx,pieceType:ptype});
+  if(!isPaintable(pStage,faceName,x,y,z)){
+    showToast('Cannot paint here');
+    return;
   }
-
-  buildMesh(); renderNet(); checkMissingPieces();
-  currentScrambleStr=''; currentSolution='';
-  const sp=document.getElementById('solution-panel');
-  if(sp) sp.classList.remove('show');
+  handleTapToMove(faceName,x,y,z);
 }
-
 // ═══════════════════════════════════════════════════════
 //  PALETTE
 // ═══════════════════════════════════════════════════════
@@ -629,7 +746,7 @@ const STAGE_COLORS={
 function setupPalette(){
   const colors=STAGE_COLORS[pStage];
   selectedColor=colors[0].c;
-  const hint={cross:'Edges only · no yellow · max 4 per color',f2l:'Edges & corners · no yellow',oll:'Yellow only',pll:'All colors'};
+  const hint={cross:'Tap edge to move that color there',f2l:'Tap edge/corner to move',oll:'Yellow only',pll:'All colors'};
   const pr=document.getElementById('paint-restrict');
   if(pr) pr.textContent='— '+hint[pStage];
   const cp=document.getElementById('cpalette');
@@ -641,7 +758,7 @@ function selColor(c){
 }
 
 // ═══════════════════════════════════════════════════════
-//  2D NET
+//  2D NET (Practice page)
 // ═══════════════════════════════════════════════════════
 function renderNet(){
   const net=document.getElementById('cube-net');
@@ -666,10 +783,8 @@ function renderNet(){
       const sx=ox+c*(cs+gap),sy=oy+r*(cs+gap);
       const pos=idxToXYZ(face,i);
       const visible=isStickerVisible(pStage,face,pos.x,pos.y,pos.z);
-      const actualColor=cubeState[face][i]||FACE_COLORS[face];
-      const painted=actualColor!==FACE_COLORS[face];
-      const fill=!visible?'#111111':painted?actualColor:'#2a2a2a';
-      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${fill}" rx="1" stroke="#080808" stroke-width="0.5"/>`;
+      const color=cubeState[face][i]||FACE_COLORS[face];
+      html+=`<rect x="${sx}" y="${sy}" width="${cs}" height="${cs}" fill="${visible?color:'#1a1a1a'}" rx="1" stroke="#080808" stroke-width="0.5"/>`;
     }
     html+=`<text x="${ox+fs/2}" y="${oy-2}" fill="#333" font-size="8" text-anchor="middle" font-family="Rajdhani,sans-serif">${face}</text>`;
   }
@@ -678,62 +793,55 @@ function renderNet(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  MISSING PIECES CHECK
-// ═══════════════════════════════════════════════════════
-function checkMissingPieces(){
-  const warn=document.getElementById('missing-warn');
-  if(!warn||!cubeState)return;
-  const msgs=[];
-  if(pStage==='cross'){
-    const whiteEdges=countColorOnType('#ffffff',isEdgePiece);
-    if(whiteEdges<4) msgs.push(`Need ${4-whiteEdges} more white edge sticker(s)`);
-    // Check each color has a matching white edge
-    const sideColors=['#00c853','#ff6d00','#2979ff','#f44336'];
-    for(const sc of sideColors){
-      const cnt=countColorOnType(sc,isEdgePiece);
-      if(cnt===0) msgs.push(`Missing ${COLOR_NAMES[sc]} edge`);
-    }
-  }
-  if(msgs.length){warn.textContent='⚠ '+msgs.join(' · ');warn.style.display='block';}
-  else{warn.style.display='none';}
-}
-
-// ═══════════════════════════════════════════════════════
 //  SCRAMBLE BUTTON
 // ═══════════════════════════════════════════════════════
 function handleScrambleBtn(){
-  if(isAnimating)return;
+  if(isAnimating) return;
   const btn=document.getElementById('scramble-btn');
   const input=document.getElementById('pscramble-input');
+  if(!input) return;
+
   if(!scrambleGenerated){
+    // First tap: generate scramble string
     let s='';
     if(pStage==='cross') s=genCrossScramble();
     else if(pStage==='f2l') s=genF2LScramble();
     else if(pStage==='oll') s=genOLLScramble();
     else s=genPLLScramble();
-    currentScrambleStr=s; input.value=s;
-    scrambleGenerated=true; btn.textContent='Apply';
+    // Also allow manual input
+    currentScrambleStr=s;
+    input.value=s;
+    scrambleGenerated=true;
+    if(btn) btn.textContent='Apply';
     showToast('Tap Apply to scramble');
   } else {
-    scrambleGenerated=false; btn.textContent='Scramble';
+    // Second tap: apply scramble
+    // Use input value in case user typed their own
+    const inputVal=input.value.trim();
+    if(inputVal) currentScrambleStr=inputVal;
+    scrambleGenerated=false;
+    if(btn) btn.textContent='Scramble';
     applyStageDefaults(pStage);
     cubeState=applyMoves(cubeState,currentScrambleStr);
+    currentSolution=invertMoves(currentScrambleStr);
     animateMoves(currentScrambleStr,()=>{
       buildMesh(); renderNet();
-      currentSolution=invertMoves(currentScrambleStr);
     });
   }
 }
 
 function resetPCube(){
-  if(isAnimating)return;
+  // Kill animation
+  isAnimating=false;
   scrambleGenerated=false;
+  currentScrambleStr=''; currentSolution='';
   const inp=document.getElementById('pscramble-input'); if(inp) inp.value='';
   const btn=document.getElementById('scramble-btn'); if(btn) btn.textContent='Scramble';
   const sp=document.getElementById('solution-panel'); if(sp) sp.classList.remove('show');
   const mw=document.getElementById('missing-warn'); if(mw) mw.style.display='none';
-  currentScrambleStr=''; currentSolution='';
-  applyStageDefaults(pStage); buildMesh(); renderNet();
+  const ov=document.getElementById('move-overlay'); if(ov){ov.classList.remove('show');ov.textContent='';}
+  applyStageDefaults(pStage);
+  buildMesh(); renderNet();
 }
 
 function setPStage(stage){
@@ -749,9 +857,10 @@ function setPStage(stage){
 //  SOLUTION
 // ═══════════════════════════════════════════════════════
 function handleSolutionBtn(){
-  if(isAnimating)return;
-  const sol=currentSolution||invertMoves(currentScrambleStr);
+  if(isAnimating) return;
+  const sol=currentSolution||computeSolution();
   if(!sol||!sol.trim()){showToast('Scramble first!');return;}
+  currentSolution=sol;
   showSolutionMoves(sol);
   const targetState=applyMoves(cubeState,sol);
   animateMoves(sol,()=>{
@@ -763,13 +872,14 @@ function handleSolutionBtn(){
 function showSolutionMoves(movesStr){
   const panel=document.getElementById('solution-panel');
   const disp=document.getElementById('sol-moves-display');
-  if(!panel||!disp)return;
+  if(!panel||!disp) return;
   panel.classList.add('show');
   disp.innerHTML=movesStr.trim().split(/\s+/).map((m,i)=>`<span class="sol-move-item" id="smove-${i}">${m}</span>`).join(' ');
 }
 
 // ═══════════════════════════════════════════════════════
-//  ANIMATION — correct orientation, no mesh deformation
+//  ANIMATION — rootGroup for viewing, cubeGroup pieces for moves
+//  No deformation: pieces stay in cubeGroup local space
 // ═══════════════════════════════════════════════════════
 function animateMoves(movesStr,onDone){
   if(isAnimating){if(onDone)onDone();return;}
@@ -777,6 +887,11 @@ function animateMoves(movesStr,onDone){
   const moves=movesStr.trim().split(/\s+/).filter(m=>m);
   let idx=0;
   function doNext(){
+    if(!isAnimating){
+      // Killed by reset
+      if(onDone)onDone();
+      return;
+    }
     if(idx>=moves.length){
       isAnimating=false;
       const ov=document.getElementById('move-overlay'); if(ov) ov.classList.remove('show');
@@ -803,68 +918,59 @@ function animateSingleMove(move,onDone){
   let t=0;
 
   function doOnce(cb){
+    if(!isAnimating){cb();return;} // killed
     const localAxis=getMoveAxis(base);
     const layerVal=getMoveLayerVal(base);
-    // CW in local space: negative angle in Three.js (right-hand rule)
+    // Angle: CW in cube local space
     const cwAngle=prime?Math.PI/2:-Math.PI/2;
 
-    // Transform local axis to world space
-    const worldAxis=localAxis.clone().applyQuaternion(cubeGroup.quaternion).normalize();
-
-    // Find cubies in this layer by LOCAL position
+    // Find pieces in this layer by local position
     const moving=[];
     for(const c of cubeGroup.children){
-      const localDot=c.position.dot(localAxis);
-      if(Math.abs(Math.round(localDot)-layerVal)<0.15) moving.push(c);
+      const dot=c.position.dot(localAxis);
+      if(Math.abs(Math.round(dot)-layerVal)<0.15) moving.push(c);
     }
     if(!moving.length){cb();return;}
 
-    // Use a pivot parented to scene (not cubeGroup) to avoid deformation
-    const pivot=new THREE.Object3D();
-    scene.add(pivot);
+    // Save each piece's position and quaternion in cubeGroup local space
+    const saved=moving.map(m=>({
+      mesh:m,
+      pos:m.position.clone(),
+      quat:m.quaternion.clone()
+    }));
 
-    // Move cubies to pivot, preserving world transforms
-    const worldData=moving.map(m=>{
-      cubeGroup.updateMatrixWorld(true);
-      const wp=new THREE.Vector3(); m.getWorldPosition(wp);
-      const wq=new THREE.Quaternion(); m.getWorldQuaternion(wq);
-      cubeGroup.remove(m);
-      m.position.copy(wp);
-      m.quaternion.copy(wq);
-      pivot.add(m);
-      return {wp,wq};
-    });
+    // Rotation quaternion in cubeGroup local space
+    const rotQ=new THREE.Quaternion().setFromAxisAngle(localAxis,cwAngle);
 
     const duration=animSpeed,start=Date.now();
     function step(){
+      if(!isAnimating){
+        // Reset positions
+        saved.forEach(({mesh,pos,quat})=>{mesh.position.copy(pos);mesh.quaternion.copy(quat);});
+        cb();return;
+      }
       const elapsed=Date.now()-start;
       const progress=Math.min(elapsed/duration,1);
       const eased=progress<0.5?2*progress*progress:(1-Math.pow(-2*progress+2,2)/2);
-      pivot.quaternion.setFromAxisAngle(worldAxis,cwAngle*eased);
-      if(progress<1){requestAnimationFrame(step);}
-      else{
-        pivot.quaternion.setFromAxisAngle(worldAxis,cwAngle);
-        pivot.updateMatrixWorld(true);
-        // Return cubies to cubeGroup
-        for(const m of moving){
-          m.updateMatrixWorld(true);
-          const wp=new THREE.Vector3(); m.getWorldPosition(wp);
-          const wq=new THREE.Quaternion(); m.getWorldQuaternion(wq);
-          pivot.remove(m);
-          cubeGroup.add(m);
-          // Convert world pos to cubeGroup local space (accounting for cubeGroup rotation)
-          const cubeWorldQ=new THREE.Quaternion();
-          cubeGroup.getWorldQuaternion(cubeWorldQ);
-          const invCubeQ=cubeWorldQ.clone().invert();
-          const localPos=wp.clone().applyQuaternion(invCubeQ);
-          m.position.set(Math.round(localPos.x),Math.round(localPos.y),Math.round(localPos.z));
-          m.quaternion.copy(invCubeQ.multiply(wq));
-        }
-        scene.remove(pivot);
+      const interpQ=new THREE.Quaternion().slerp(rotQ,eased);
+      // Apply rotation to each piece relative to its saved position
+      saved.forEach(({mesh,pos,quat})=>{
+        mesh.position.copy(pos.clone().applyQuaternion(interpQ));
+        mesh.quaternion.copy(interpQ.clone().multiply(quat));
+      });
+      if(progress<1){
+        animFrameId=requestAnimationFrame(step);
+      } else {
+        // Snap to final
+        saved.forEach(({mesh,pos,quat})=>{
+          const finalPos=pos.clone().applyQuaternion(rotQ);
+          mesh.position.set(Math.round(finalPos.x),Math.round(finalPos.y),Math.round(finalPos.z));
+          mesh.quaternion.copy(rotQ.clone().multiply(quat));
+        });
         cb();
       }
     }
-    requestAnimationFrame(step);
+    animFrameId=requestAnimationFrame(step);
   }
 
   function run(){if(t>=times){onDone();return;}t++;doOnce(run);}
@@ -919,7 +1025,7 @@ function loadSettings(){
 // ═══════════════════════════════════════════════════════
 let toastT;
 function showToast(msg){
-  const t=document.getElementById('toast'); if(!t)return;
+  const t=document.getElementById('toast'); if(!t) return;
   t.textContent=msg; t.classList.add('show');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
 }
@@ -927,5 +1033,8 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
-genScramble(); updateStats(); loadSettings();
+initTimerCubeState();
+genScramble();
+updateStats();
+loadSettings();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
