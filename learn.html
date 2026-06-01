@@ -8,569 +8,450 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;
-  --w:#ffffff;--g1:#e0e0e0;--g2:#888888;--g3:#444444;--g4:#2a2a2a;
-  --border:1px solid #2a2a2a;--border-w:1px solid #ffffff;
-  --fd:'Orbitron',monospace;--fb:'Rajdhani',sans-serif;
-  --cW:#ffffff;--cY:#ffd700;--cG:#00c853;--cB:#2979ff;--cR:#f44336;--cO:#ff6d00;
+:root {
+  --bg: #080808; --bg2: #111111; --bg3: #1a1a1a;
+  --w: #ffffff; --g1: #e0e0e0; --g2: #888888; --g3: #444444; --g4: #2a2a2a;
+  --border: 1px solid #2a2a2a; --border-w: 1px solid #ffffff;
+  --fd: 'Orbitron', monospace; --fb: 'Rajdhani', sans-serif;
+  
+  /* Cube Colors */
+  --cY: #ffd700; --cW: #ffffff; --cG: #00c853; 
+  --cB: #2979ff; --cR: #f44336; --cO: #ff6d00; 
+  --cGray: #333333; --cDark: #1a1a1a;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family:var(--fb);overflow:hidden;}
-.grid-bg{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:40px 40px;}
-#app{position:relative;z-index:1;width:100%;height:100%;display:flex;flex-direction:column;}
 
-.chapter-indicator{position:fixed;top:16px;right:16px;z-index:100;font-family:var(--fd);font-size:11px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: var(--bg); color: var(--w); font-family: var(--fb); overflow: hidden; }
 
-/* CHAPTER NAV */
-.chapter-nav{display:flex;overflow-x:auto;border-bottom:var(--border);flex-shrink:0;background:var(--bg2);}
-.chapter-nav::-webkit-scrollbar{height:0;}
-.chapter-btn{padding:12px 16px;white-space:nowrap;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
-.chapter-btn:hover{color:var(--g1);}
-.chapter-btn.active{color:var(--w);border-bottom-color:var(--w);}
+/* Background Grid */
+.grid-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 40px 40px; }
+#app { position: relative; z-index: 1; width: 100%; height: 100%; display: flex; flex-direction: column; }
 
-/* CONTENT */
-.content{flex:1;overflow-y:auto;padding:0;}
-.content::-webkit-scrollbar{width:2px;}
-.content::-webkit-scrollbar-thumb{background:var(--g3);}
+/* Header & Nav */
+.chapter-indicator { position: fixed; top: 16px; right: 20px; z-index: 100; font-family: var(--fd); font-size: 12px; letter-spacing: 2px; color: var(--g2); text-transform: uppercase; }
+.chapter-nav { display: flex; overflow-x: auto; border-bottom: var(--border); flex-shrink: 0; background: rgba(17, 17, 17, 0.95); backdrop-filter: blur(5px); padding: 0 10px; }
+.chapter-nav::-webkit-scrollbar { height: 0; }
+.chapter-btn { padding: 16px 20px; white-space: nowrap; font-family: var(--fd); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--g3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.chapter-btn:hover { color: var(--g1); }
+.chapter-btn.active { color: var(--w); border-bottom-color: var(--w); }
+.progress-bar { height: 2px; background: var(--g4); flex-shrink: 0; }
+.progress-fill { height: 100%; background: var(--w); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* CHAPTERS */
-.chapter{display:none;padding-bottom:60px;}
-.chapter.active{display:block;}
+/* Main Content Area */
+.content { flex: 1; overflow-y: auto; padding: 0 0 80px 0; scroll-behavior: smooth; }
+.content::-webkit-scrollbar { width: 4px; }
+.content::-webkit-scrollbar-thumb { background: var(--g3); border-radius: 4px; }
+.chapter { display: none; animation: fadeIn 0.3s ease; }
+.chapter.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* SECTIONS */
-.section{padding:20px;}
-.section+.section{border-top:var(--border);}
-.section-num{font-family:var(--fd);font-size:9px;letter-spacing:3px;color:var(--g3);text-transform:uppercase;margin-bottom:6px;}
-.section-title{font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:2px;margin-bottom:12px;}
-.section-intro{font-size:14px;color:var(--g2);line-height:1.8;margin-bottom:16px;}
+/* Section Formatting */
+.section { padding: 32px 24px; max-width: 800px; margin: 0 auto; }
+.section + .section { border-top: var(--border); }
+.section-num { font-family: var(--fd); font-size: 10px; letter-spacing: 4px; color: var(--g3); text-transform: uppercase; margin-bottom: 8px; }
+.section-title { font-family: var(--fd); font-size: 22px; font-weight: 900; letter-spacing: 1px; margin-bottom: 16px; color: var(--w); }
+.section-intro { font-size: 16px; color: var(--g1); line-height: 1.8; margin-bottom: 24px; font-weight: 400; }
 
-/* CALLOUT BOXES */
-.callout{background:var(--bg2);border:var(--border);border-left:3px solid var(--w);padding:14px 16px;margin:12px 0;}
-.callout.tip{border-left-color:#ffd700;}
-.callout.warning{border-left-color:#f44336;}
-.callout-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:6px;}
-.callout p{font-size:13px;color:var(--g2);line-height:1.7;}
-.callout strong{color:var(--w);}
+/* Typography & Text blocks */
+.callout { background: var(--bg2); border: var(--border); border-left: 4px solid var(--w); padding: 20px; margin: 24px 0; border-radius: 0 8px 8px 0; }
+.callout.tip { border-left-color: var(--cY); }
+.callout.warning { border-left-color: var(--cR); }
+.callout-label { font-family: var(--fd); font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--g2); margin-bottom: 8px; }
+.callout p { font-size: 15px; color: var(--g1); line-height: 1.7; }
+.callout strong { color: var(--w); font-weight: 600; }
 
-/* NOTATION CARDS */
-.notation-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;}
-.notation-card{background:var(--bg2);border:var(--border);padding:14px;display:flex;flex-direction:column;gap:8px;}
-.notation-move{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--w);}
-.notation-name{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--g1);}
-.notation-desc{font-size:11px;color:var(--g2);line-height:1.5;}
+/* Practice Button */
+.practice-btn { display: block; width: 100%; background: var(--w); color: var(--bg); font-family: var(--fd); font-size: 16px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; text-align: center; padding: 20px; border: none; border-radius: 4px; margin: 32px 0 16px 0; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
+.practice-btn:hover { background: var(--cY); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,215,0,0.2); }
+.practice-btn:active { transform: translateY(0); }
 
-/* DIAGRAM CARDS */
-.diagram-row{display:flex;gap:10px;align-items:flex-start;margin:10px 0;flex-wrap:wrap;}
-.diagram-card{background:var(--bg2);border:var(--border);padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:140px;}
-.diagram-label{font-size:10px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;}
-.diagram-title{font-size:13px;font-weight:600;letter-spacing:0.5px;}
-.diagram-desc{font-size:11px;color:var(--g2);line-height:1.5;}
+/* --- SVGs --- */
+.svg-notation { width: 100%; max-width: 120px; height: auto; display: block; margin: 0 auto 16px auto; }
+.svg-oll-pll { width: 90px; height: 90px; flex-shrink: 0; }
 
-/* ALG CARDS */
-.alg-section{margin:16px 0;}
-.alg-section-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:10px;padding-bottom:6px;border-bottom:var(--border);}
-.alg-list{display:flex;flex-direction:column;gap:1px;background:var(--g4);}
-.alg-item{background:var(--bg2);padding:14px 16px;display:flex;flex-direction:column;gap:6px;}
-.alg-item-header{display:flex;align-items:center;gap:12px;}
-.alg-info{flex:1;}
-.alg-name{font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:4px;}
-.alg-moves{font-family:var(--fd);font-size:11px;color:var(--w);letter-spacing:0.5px;line-height:1.7;word-break:break-word;}
-.alg-desc{font-size:11px;color:var(--g2);line-height:1.4;}
-.alg-tag{display:inline-block;font-size:9px;letter-spacing:1px;padding:2px 6px;border:var(--border);color:var(--g3);text-transform:uppercase;margin-right:4px;}
-.alg-tag.two-look{border-color:rgba(255,215,0,0.4);color:#ffd700;}
+/* Grid Fills */
+.f-y { fill: var(--cY); }      /* Yellow Sticker */
+.f-g { fill: var(--cGray); }   /* Unoriented/Gray Sticker */
+.f-b { fill: var(--cDark); }   /* Black Grid Background */
 
-/* STEP-BY-STEP */
-.steps{display:flex;flex-direction:column;gap:12px;margin:12px 0;}
-.step{display:flex;gap:14px;}
-.step-num{width:28px;height:28px;border:var(--border-w);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:11px;font-weight:700;flex-shrink:0;}
-.step-content{flex:1;padding-top:4px;}
-.step-title{font-size:13px;font-weight:700;letter-spacing:0.5px;margin-bottom:4px;}
-.step-desc{font-size:12px;color:var(--g2);line-height:1.7;}
+/* Notation Grid */
+.notation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin: 24px 0; }
+.notation-card { background: var(--bg2); border: var(--border); border-radius: 8px; padding: 24px 16px; text-align: center; transition: background 0.2s; }
+.notation-card:hover { background: var(--bg3); }
+.notation-move { font-family: var(--fd); font-size: 28px; font-weight: 900; color: var(--w); margin-bottom: 4px; }
+.notation-name { font-size: 13px; font-weight: 600; letter-spacing: 1px; color: var(--g2); text-transform: uppercase; }
 
-/* PROGRESS BAR */
-.progress-bar{height:2px;background:var(--g4);flex-shrink:0;}
-.progress-fill{height:100%;background:var(--w);transition:width 0.3s ease;}
+/* Algorithm Lists */
+.alg-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.alg-item { background: var(--bg2); border: var(--border); border-radius: 8px; padding: 20px; display: flex; gap: 24px; align-items: center; }
+.alg-info { flex: 1; }
+.alg-name { font-family: var(--fb); font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 6px; color: var(--w); }
+.alg-moves { font-family: var(--fd); font-size: 15px; color: var(--cY); letter-spacing: 1px; line-height: 1.5; word-break: break-word; }
+.alg-desc { font-size: 13px; color: var(--g2); margin-top: 8px; line-height: 1.5; }
 
-/* FACE COLORS for SVG */
-.fc-W{fill:#ffffff;} .fc-Y{fill:#ffd700;} .fc-G{fill:#00c853;}
-.fc-B{fill:#2979ff;} .fc-R{fill:#f44336;} .fc-O{fill:#ff6d00;}
-.fc-X{fill:#1e1e1e;} .fc-x{fill:#2a2a2a;}
+/* Step-by-step layout */
+.step-container { display: flex; flex-direction: column; gap: 24px; margin: 24px 0; }
+.step-row { display: flex; gap: 20px; align-items: flex-start; }
+.step-number { width: 36px; height: 36px; border-radius: 50%; background: var(--bg3); border: var(--border-w); display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 14px; font-weight: 900; flex-shrink: 0; color: var(--w); }
+.step-text h4 { font-family: var(--fd); font-size: 16px; margin-bottom: 8px; letter-spacing: 1px; }
+.step-text p { font-size: 15px; color: var(--g1); line-height: 1.6; }
+
 </style>
 </head>
 <body>
 <div class="grid-bg"></div>
 <div id="app">
-  <div class="chapter-indicator" id="chap-indicator">1 / 6</div>
-  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:16.6%"></div></div>
+  <div class="chapter-indicator" id="chap-indicator">1 / 5</div>
+  <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:20%"></div></div>
 
   <div class="chapter-nav" id="chapter-nav">
-    <div class="chapter-btn active" onclick="showChapter('notation',0)">Notation</div>
-    <div class="chapter-btn" onclick="showChapter('cross',1)">Cross</div>
-    <div class="chapter-btn" onclick="showChapter('f2l',2)">F2L</div>
-    <div class="chapter-btn" onclick="showChapter('oll',3)">OLL</div>
-    <div class="chapter-btn" onclick="showChapter('pll',4)">PLL</div>
-    <div class="chapter-btn" onclick="showChapter('twolook',5)">2-Look</div>
+    <div class="chapter-btn active" onclick="showChapter('notation', 0)">Notation</div>
+    <div class="chapter-btn" onclick="showChapter('cross', 1)">Cross</div>
+    <div class="chapter-btn" onclick="showChapter('f2l', 2)">F2L</div>
+    <div class="chapter-btn" onclick="showChapter('oll', 3)">OLL</div>
+    <div class="chapter-btn" onclick="showChapter('pll', 4)">PLL</div>
   </div>
 
   <div class="content" id="content">
 
-    <!-- CHAPTER 1: NOTATION -->
     <div class="chapter active" id="ch-notation">
       <div class="section">
         <div class="section-num">Chapter 01</div>
-        <div class="section-title">Notation</div>
-        <div class="section-intro">Before you learn any algorithm, you need to understand the language of cubing. Every move has a letter code. Once you know these, any algorithm in the world makes sense.</div>
+        <div class="section-title">The Language of the Cube</div>
+        <div class="section-intro">Every algorithm is written in standard WCA notation. Think of the cube as having 6 faces. The letter tells you <strong>which face to turn</strong>. The modifier tells you <strong>how to turn it</strong>.</div>
 
         <div class="callout tip">
-          <div class="callout-label">💡 Key Concept</div>
-          <p><strong>A letter = clockwise turn</strong> of that face when looking directly at it.<br>
-          <strong>A letter + ' (prime/apostrophe) = anticlockwise.</strong><br>
-          <strong>A letter + 2 = two turns</strong> (same as turning it twice, direction doesn't matter).</p>
-        </div>
-
-        <div class="section-intro" style="margin-top:16px;">How to hold the cube: <strong style="color:var(--w);">White on the bottom. Yellow on top. Green facing you.</strong> This is the standard orientation.</div>
-      </div>
-
-      <div class="section">
-        <div class="section-num">Face Moves</div>
-        <div class="section-title">The 6 Basic Faces</div>
-        <div class="notation-grid">
-          <div class="notation-card">
-            <div class="notation-move" style="color:#ff6d00;">R</div>
-            <div class="notation-name">Right Face CW</div>
-            <div class="notation-desc">Turn the right layer clockwise.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#f44336;">L</div>
-            <div class="notation-name">Left Face CW</div>
-            <div class="notation-desc">Turn the left layer clockwise.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#ffd700;">U</div>
-            <div class="notation-name">Up Face CW</div>
-            <div class="notation-desc">Turn the top layer clockwise.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#ffffff;">D</div>
-            <div class="notation-name">Down Face CW</div>
-            <div class="notation-desc">Turn the bottom layer clockwise.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#00c853;">F</div>
-            <div class="notation-name">Front Face CW</div>
-            <div class="notation-desc">Turn the front face clockwise.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#2979ff;">B</div>
-            <div class="notation-name">Back Face CW</div>
-            <div class="notation-desc">Turn the back face clockwise.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-num">Modifiers</div>
-        <div class="section-title">Prime & Double</div>
-        <div class="notation-grid">
-          <div class="notation-card">
-            <div class="notation-move">R'</div>
-            <div class="notation-name">Prime — Anticlockwise</div>
-            <div class="notation-desc">The apostrophe means anticlockwise turn.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move">R2</div>
-            <div class="notation-name">Double — Two Turns</div>
-            <div class="notation-desc">Turn it twice. Same result either way.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move">U'</div>
-            <div class="notation-name">U Prime</div>
-            <div class="notation-desc">Top layer anticlockwise.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move">F2</div>
-            <div class="notation-name">F Double</div>
-            <div class="notation-desc">Front face turned twice.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-num">Slice Moves</div>
-        <div class="section-title">M, S, E Slices</div>
-        <div class="section-intro">Slice moves turn the middle layer instead of an outer face.</div>
-        <div class="notation-grid">
-          <div class="notation-card">
-            <div class="notation-move" style="color:#888;">M</div>
-            <div class="notation-name">Middle Slice</div>
-            <div class="notation-desc">The middle layer between L and R.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#888;">S</div>
-            <div class="notation-name">Standing Slice</div>
-            <div class="notation-desc">The middle layer between F and B.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#888;">E</div>
-            <div class="notation-name">Equatorial Slice</div>
-            <div class="notation-desc">The middle layer between U and D.</div>
-          </div>
-          <div class="notation-card">
-            <div class="notation-move" style="color:#888;">r</div>
-            <div class="notation-name">Wide Move</div>
-            <div class="notation-desc">Lowercase = R + M together (two layers).</div>
-          </div>
-        </div>
-
-        <div class="callout">
-          <div class="callout-label">📌 Quick Reference</div>
+          <div class="callout-label">The 3 Rules</div>
           <p>
-            <strong>R U R' U'</strong> — "Sexy move"<br>
-            <strong>F R U R' U' F'</strong> — OLL edge orientation<br>
-            <strong>R U R' U R U2 R'</strong> — Sune (important OLL)<br><br>
-            Most algorithms are combinations of these patterns.
+            <strong>Letter Only (R):</strong> Turn that face 90° Clockwise.<br>
+            <strong>Apostrophe (R'):</strong> Pronounced "Prime". Turn 90° Anti-Clockwise.<br>
+            <strong>Number 2 (R2):</strong> Turn that face 180° (Double turn). Direction doesn't matter.
           </p>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-num">Visualizing Turns</div>
+        <div class="section-title">Outer Face Moves</div>
+        <div class="notation-grid">
+          
+          <div class="notation-card">
+            <svg class="svg-notation" viewBox="0 0 100 100">
+              <rect x="18" y="18" width="64" height="64" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="18" height="18" class="f-g"/><rect x="20" y="41" width="18" height="18" class="f-g"/><rect x="20" y="62" width="18" height="18" class="f-g"/>
+              <rect x="41" y="20" width="18" height="18" class="f-g"/><rect x="41" y="41" width="18" height="18" class="f-g"/><rect x="41" y="62" width="18" height="18" class="f-g"/>
+              <rect x="62" y="20" width="18" height="18" fill="#ff6d00"/><rect x="62" y="41" width="18" height="18" fill="#ff6d00"/><rect x="62" y="62" width="18" height="18" fill="#ff6d00"/>
+              <path d="M 71 72 L 71 28" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="71,20 64,32 78,32" fill="#fff"/>
+            </svg>
+            <div class="notation-move">R</div>
+            <div class="notation-name">Right Clockwise</div>
+          </div>
+
+          <div class="notation-card">
+            <svg class="svg-notation" viewBox="0 0 100 100">
+              <rect x="18" y="18" width="64" height="64" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="18" height="18" class="f-y"/><rect x="41" y="20" width="18" height="18" class="f-y"/><rect x="62" y="20" width="18" height="18" class="f-y"/>
+              <rect x="20" y="41" width="18" height="18" class="f-g"/><rect x="41" y="41" width="18" height="18" class="f-g"/><rect x="62" y="41" width="18" height="18" class="f-g"/>
+              <rect x="20" y="62" width="18" height="18" class="f-g"/><rect x="41" y="62" width="18" height="18" class="f-g"/><rect x="62" y="62" width="18" height="18" class="f-g"/>
+              <path d="M 28 29 L 72 29" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="80,29 68,22 68,36" fill="#fff"/>
+            </svg>
+            <div class="notation-move">U</div>
+            <div class="notation-name">Up Clockwise</div>
+          </div>
+
+          <div class="notation-card">
+            <svg class="svg-notation" viewBox="0 0 100 100">
+              <rect x="18" y="18" width="64" height="64" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="18" height="18" fill="#00c853"/><rect x="41" y="20" width="18" height="18" fill="#00c853"/><rect x="62" y="20" width="18" height="18" fill="#00c853"/>
+              <rect x="20" y="41" width="18" height="18" fill="#00c853"/><rect x="41" y="41" width="18" height="18" fill="#00c853"/><rect x="62" y="41" width="18" height="18" fill="#00c853"/>
+              <rect x="20" y="62" width="18" height="18" fill="#00c853"/><rect x="41" y="62" width="18" height="18" fill="#00c853"/><rect x="62" y="62" width="18" height="18" fill="#00c853"/>
+              <path d="M 35 65 A 22 22 0 1 1 65 65" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+              <polygon points="66,75 58,62 74,62" fill="#fff"/>
+            </svg>
+            <div class="notation-move">F</div>
+            <div class="notation-name">Front Clockwise</div>
+          </div>
+
+          <div class="notation-card">
+            <svg class="svg-notation" viewBox="0 0 100 100">
+              <rect x="18" y="18" width="64" height="64" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="18" height="18" fill="#f44336"/><rect x="20" y="41" width="18" height="18" fill="#f44336"/><rect x="20" y="62" width="18" height="18" fill="#f44336"/>
+              <rect x="41" y="20" width="18" height="18" class="f-g"/><rect x="41" y="41" width="18" height="18" class="f-g"/><rect x="41" y="62" width="18" height="18" class="f-g"/>
+              <rect x="62" y="20" width="18" height="18" class="f-g"/><rect x="62" y="41" width="18" height="18" class="f-g"/><rect x="62" y="62" width="18" height="18" class="f-g"/>
+              <path d="M 29 72 L 29 28" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="29,20 22,32 36,32" fill="#fff"/>
+            </svg>
+            <div class="notation-move">L'</div>
+            <div class="notation-name">Left Prime (Anti)</div>
+          </div>
+
         </div>
       </div>
     </div>
 
-    <!-- CHAPTER 2: CROSS -->
+
     <div class="chapter" id="ch-cross">
       <div class="section">
         <div class="section-num">Chapter 02</div>
-        <div class="section-title">The Cross</div>
-        <div class="section-intro">The cross is the first step of CFOP. You need to form a white "+" on the bottom face, with each edge matching the center of its side face.</div>
+        <div class="section-title">The White Cross</div>
+        <div class="section-intro">The foundation of the solve. You need to form a White Cross on the bottom face. But there is a strict rule: <strong>The side colors of your white edges MUST match the center pieces of the adjacent faces.</strong></div>
 
-        <div class="diagram-row">
-          <div class="diagram-card">
-            <div class="diagram-label">Target State</div>
-            <div class="diagram-title">White Cross</div>
-            <div class="diagram-desc">Bottom face with white cross pattern.</div>
-          </div>
-          <div class="diagram-card">
-            <div class="diagram-label">Alignment</div>
-            <div class="diagram-title">Side Must Align</div>
-            <div class="diagram-desc">Each edge must match its center color.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-num">Beginner Method</div>
-        <div class="section-title">The Daisy Method</div>
-        <div class="section-intro">The easiest way to learn cross. Make a "daisy" on top, then flip edges down.</div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <div class="step-title">Make a Daisy on Top</div>
-              <div class="step-desc">Find all 4 white edges. Move them to the top face (U face), white side facing up.</div>
+        <div class="step-container">
+          <div class="step-row">
+            <div class="step-number">1</div>
+            <div class="step-text">
+              <h4>The Beginner "Daisy" Method</h4>
+              <p>If building directly on the bottom is confusing, build it on top first. Move all 4 White edges to surround the Yellow center piece. Orientation of the side colors doesn't matter yet.</p>
             </div>
           </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <div class="step-title">Align Each Edge</div>
-              <div class="step-desc">Rotate top until edge is above its correct slot.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <div class="step-title">Flip It Down — F2</div>
-              <div class="step-desc">Do F2 to flip the white edge to the bottom.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">4</div>
-            <div class="step-content">
-              <div class="step-title">Repeat for All 4 Edges</div>
-              <div class="step-desc">Repeat steps 2-3 for the remaining 3 edges.</div>
+          <div class="step-row">
+            <div class="step-number">2</div>
+            <div class="step-text">
+              <h4>Match and Drop</h4>
+              <p>Look at the side color of one of your top white edges (e.g., Red). Rotate the top layer (U) until that Red edge lines up over the Red center piece. Once matched, turn that front face twice (F2) to drop it to the bottom. Repeat 3 more times.</p>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="section">
-        <div class="section-num">Efficient Cross</div>
-        <div class="section-title">Solving Cross in 8 Moves or Less</div>
-        <div class="section-intro">Once you can do daisy cross, aim for efficiency.</div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <div class="step-title">Use Inspection Time</div>
-              <div class="step-desc">WCA gives you 15 seconds. Plan your entire cross.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <div class="step-title">Work in Consistent Order</div>
-              <div class="step-desc">Always solve cross edges in the same order (e.g., green → orange → blue → red).</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <div class="step-title">Solve Pairs Together</div>
-              <div class="step-desc">Sometimes two edges can be solved with one sequence.</div>
-            </div>
-          </div>
-        </div>
+        <button class="practice-btn" onclick="goToPractice('cross')">Practice Cross</button>
       </div>
     </div>
 
-    <!-- CHAPTER 3: F2L -->
+
     <div class="chapter" id="ch-f2l">
       <div class="section">
         <div class="section-num">Chapter 03</div>
-        <div class="section-title">F2L — First Two Layers</div>
-        <div class="section-intro">F2L means solving the first two layers by pairing corner-edge pieces. Mastering F2L will speed up your solves significantly.</div>
-
-        <div class="callout">
-          <div class="callout-label">What is a pair?</div>
-          <p>Each F2L slot needs a <strong>corner</strong> (3 colors, including white) and an <strong>edge</strong> (2 colors, no white).</p>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-num">Intuitive F2L</div>
-        <div class="section-title">How to Think Through F2L</div>
-        <div class="section-intro">You don't need to memorize all 41 cases. Understand the goal: pair corner and edge in U layer, then insert.</div>
-
-        <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <div class="step-content">
-              <div class="step-title">Find Your Pieces</div>
-              <div class="step-desc">Find the corner and edge you need for each slot.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <div class="step-content">
-              <div class="step-title">Bring Both to Top</div>
-              <div class="step-desc">Extract pieces to the U layer if needed.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <div class="step-content">
-              <div class="step-title">Pair Them Up</div>
-              <div class="step-desc">Use U moves to connect corner and edge.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="step-num">4</div>
-            <div class="step-content">
-              <div class="step-title">Insert the Pair</div>
-              <div class="step-desc">Use R U' R' or L' U L to insert smoothly.</div>
-            </div>
-          </div>
-        </div>
+        <div class="section-title">First Two Layers (F2L)</div>
+        <div class="section-intro">Forget solving corner-by-corner and edge-by-edge. F2L combines them. You find a matching Corner (has white) and Edge (no white), pair them up in the top layer, and insert them into their slot simultaneously.</div>
 
         <div class="callout tip">
-          <div class="callout-label">💡 Lookahead</div>
-          <p>While inserting one pair, look for the next one. Your hands should run on autopilot.</p>
+          <div class="callout-label">The Golden Rule of F2L</div>
+          <p>If the white sticker is pointing UP, you match the edge to its center color. If the white sticker is on the SIDE, you look at the top colors of the two pieces to decide how to pair them.</p>
         </div>
-      </div>
 
-      <div class="section">
-        <div class="section-num">Core Algorithms</div>
-        <div class="section-title">Most Important F2L Cases</div>
-        <div class="alg-list">
-          <div class="alg-item">
-            <div class="alg-info">
-              <div class="alg-name">Right Slot Insert</div>
-              <div class="alg-moves">U R U' R'</div>
-              <div class="alg-desc">Basic insert for right slot.</div>
+        <div class="section-title" style="margin-top: 40px; font-size: 18px;">The 3 Basic Scenarios</div>
+        <div class="step-container">
+          <div class="step-row">
+            <div class="step-number">A</div>
+            <div class="step-text">
+              <h4>Top Colors are Different</h4>
+              <p>When the corner and edge are on top, and their top-facing colors are different (e.g., Corner is Green, Edge is Red). You simply bring them together so they connect smoothly, then insert using <strong>R U' R'</strong>.</p>
             </div>
           </div>
-          <div class="alg-item">
-            <div class="alg-info">
-              <div class="alg-name">Left Slot Insert</div>
-              <div class="alg-moves">U' L' U L</div>
-              <div class="alg-desc">Mirror for left slot.</div>
+          <div class="step-row">
+            <div class="step-number">B</div>
+            <div class="step-text">
+              <h4>Top Colors are the Same</h4>
+              <p>If both top colors match (e.g., both are Red), you need to "Hide" the corner in the bottom layer, move the edge away, and bring the corner back up so they form a pair separated by one block. Insert with <strong>R U R'</strong>.</p>
             </div>
           </div>
-          <div class="alg-item">
-            <div class="alg-info">
-              <div class="alg-name">Sexy Move (Right)</div>
-              <div class="alg-moves">R U R' U'</div>
-              <div class="alg-desc">Most common F2L trigger. Learn as one fluid motion.</div>
-            </div>
-          </div>
-          <div class="alg-item">
-            <div class="alg-info">
-              <div class="alg-name">Anti-Sexy (Left)</div>
-              <div class="alg-moves">L' U' L U</div>
-              <div class="alg-desc">Mirror of sexy move.</div>
+          <div class="step-row">
+            <div class="step-number">C</div>
+            <div class="step-text">
+              <h4>White is Pointing Up</h4>
+              <p>Match the edge piece with its center color. Turn that face away from you, rotate the top layer so the corner drops directly on top of the edge, then pull them both back up. The pair is made.</p>
             </div>
           </div>
         </div>
+
+        <button class="practice-btn" onclick="goToPractice('f2l')">Practice F2L</button>
       </div>
     </div>
 
-    <!-- CHAPTER 4: OLL -->
+
     <div class="chapter" id="ch-oll">
       <div class="section">
         <div class="section-num">Chapter 04</div>
-        <div class="section-title">OLL — Orient Last Layer</div>
-        <div class="section-intro">OLL means making the entire top face yellow. After F2L, you'll have some yellow stickers but not all. One algorithm orients every piece at once.</div>
+        <div class="section-title">Orient Last Layer (OLL)</div>
+        <div class="section-intro">Make the entire top face Yellow. We will use the <strong>2-Look</strong> method. First, make a yellow cross (Step 1). Then, orient the yellow corners (Step 2).</div>
 
         <div class="callout tip">
-          <div class="callout-label">💡 Start with 2-Look OLL</div>
-          <p>Don't learn all 57 cases at once. 2-Look OLL uses just 7 algorithms. Later learn the full 57.</p>
+          <div class="callout-label">How to read these diagrams</div>
+          <p>You are looking straight down at the top of the 3x3 grid. The thin bars on the outside edges represent Yellow stickers that are facing sideways.</p>
         </div>
-      </div>
 
-      <div class="section">
-        <div class="section-num">Key Cases</div>
-        <div class="section-title">Essential OLL Algorithms</div>
+        <h3 class="section-title" style="font-size: 18px; margin-top: 32px;">Step 1: Yellow Edges (Cross)</h3>
         <div class="alg-list">
+          
           <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-g"/> <rect x="48" y="20" width="24" height="24" class="f-g"/> <rect x="76" y="20" width="24" height="24" class="f-g"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-g"/> <rect x="48" y="76" width="24" height="24" class="f-g"/> <rect x="76" y="76" width="24" height="24" class="f-g"/>
+            </svg>
             <div class="alg-info">
-              <div class="alg-name">Sune <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">R U R' U R U2 R'</div>
-              <div class="alg-desc">Most important OLL. One yellow corner facing up on left.</div>
-            </div>
-          </div>
-          <div class="alg-item">
-            <div class="alg-info">
-              <div class="alg-name">Horizontal Line <span class="alg-tag two-look">2-Look</span></div>
+              <div class="alg-name">Horizontal Line</div>
               <div class="alg-moves">F R U R' U' F'</div>
-              <div class="alg-desc">Yellow line going left-right.</div>
+              <div class="alg-desc">Make sure the yellow line is horizontal across the center before executing.</div>
             </div>
           </div>
+
           <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-g"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-g"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-g"/>
+              <rect x="20" y="76" width="24" height="24" class="f-g"/> <rect x="48" y="76" width="24" height="24" class="f-g"/> <rect x="76" y="76" width="24" height="24" class="f-g"/>
+            </svg>
             <div class="alg-info">
-              <div class="alg-name">Dot <span class="alg-tag two-look">2-Look</span></div>
-              <div class="alg-moves">F R U R' U' F' f R U R' U' f'</div>
-              <div class="alg-desc">Only center yellow. No edges oriented.</div>
+              <div class="alg-name">Angle (L-Shape)</div>
+              <div class="alg-moves">f R U R' U' f'</div>
+              <div class="alg-desc">Hold the yellow edges at 9 o'clock and 12 o'clock (Left and Back).</div>
             </div>
           </div>
+
         </div>
+
+        <h3 class="section-title" style="font-size: 18px; margin-top: 40px;">Step 2: Yellow Corners</h3>
+        <div class="alg-list">
+          
+          <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-g"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-g"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-y"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-g"/>
+              <rect x="4" y="20" width="8" height="24" class="f-y" rx="2"/>  <rect x="76" y="4" width="24" height="8" class="f-y" rx="2"/>  <rect x="108" y="76" width="8" height="24" class="f-y" rx="2"/> </svg>
+            <div class="alg-info">
+              <div class="alg-name">Sune (Case 27)</div>
+              <div class="alg-moves">R U R' U R U2 R'</div>
+              <div class="alg-desc">One corner is yellow. Hold it in the Bottom-Left.</div>
+            </div>
+          </div>
+
+          <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-g"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-g"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-g"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-y"/>
+              <rect x="20" y="108" width="24" height="8" class="f-y" rx="2"/> <rect x="4" y="20" width="8" height="24" class="f-y" rx="2"/>  <rect x="76" y="4" width="24" height="8" class="f-y" rx="2"/>  </svg>
+            <div class="alg-info">
+              <div class="alg-name">Anti-Sune (Case 26)</div>
+              <div class="alg-moves">R U2 R' U' R U' R'</div>
+              <div class="alg-desc">One corner is yellow. Hold it in the Bottom-Right.</div>
+            </div>
+          </div>
+
+          <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-g"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-g"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-g"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-g"/>
+              <rect x="20" y="4" width="24" height="8" class="f-y" rx="2"/>
+              <rect x="76" y="4" width="24" height="8" class="f-y" rx="2"/>
+              <rect x="20" y="108" width="24" height="8" class="f-y" rx="2"/>
+              <rect x="76" y="108" width="24" height="8" class="f-y" rx="2"/>
+            </svg>
+            <div class="alg-info">
+              <div class="alg-name">H / Cross (Case 21)</div>
+              <div class="alg-moves">F R U R' U' R U R' U' R U R' U' F'</div>
+              <div class="alg-desc">No corners yellow. Headlights facing front AND back.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <button class="practice-btn" onclick="goToPractice('oll')">Practice OLL</button>
       </div>
     </div>
 
-    <!-- CHAPTER 5: PLL -->
+
     <div class="chapter" id="ch-pll">
       <div class="section">
         <div class="section-num">Chapter 05</div>
-        <div class="section-title">PLL — Permute Last Layer</div>
-        <div class="section-intro">PLL means putting all the yellow pieces in their correct positions. The top face is already all yellow from OLL.</div>
+        <div class="section-title">Permute Last Layer (PLL)</div>
+        <div class="section-intro">The top is completely Yellow. Now we move the pieces around to finish the cube. Step 1 swaps the corners. Step 2 swaps the edges.</div>
 
-        <div class="callout">
-          <div class="callout-label">Goal</div>
-          <p>All 8 corner and edge pieces on top layer go to their correct slots. Position matters, not orientation.</p>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-num">Learning Path</div>
-        <div class="section-title">Start with 2-Look PLL</div>
-        <div class="section-intro">2-Look PLL uses just 2 algorithms:</div>
+        <h3 class="section-title" style="font-size: 18px; margin-top: 32px;">Step 1: Corners</h3>
         <div class="alg-list">
+
           <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-y"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-y"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-y"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-y"/>
+              
+              <path d="M 88 45 L 88 75" stroke="#080808" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="88,35 94,47 82,47" fill="#080808"/>
+              <polygon points="88,85 94,73 82,73" fill="#080808"/>
+            </svg>
             <div class="alg-info">
-              <div class="alg-name">T Perm (Corners)</div>
+              <div class="alg-name">Adjacent Swap (T Perm)</div>
               <div class="alg-moves">R U R' U' R' F R2 U' R' U' R U R' F'</div>
-              <div class="alg-desc">Permute the 3 top corners.</div>
+              <div class="alg-desc">Look for "Headlights" (two corners same color on one side). Hold them on the LEFT.</div>
             </div>
           </div>
+
           <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-y"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-y"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-y"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-y"/>
+              
+              <path d="M 42 42 L 78 78" stroke="#080808" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="34,34 46,34 34,46" fill="#080808"/>
+              <polygon points="86,86 74,86 86,74" fill="#080808"/>
+            </svg>
             <div class="alg-info">
-              <div class="alg-name">M2 U M2 U2 M2 U M2 (Edges)</div>
+              <div class="alg-name">Diagonal Swap (Y Perm)</div>
+              <div class="alg-moves">F R U' R' U' R U R' F' R U R' U' R' F R F'</div>
+              <div class="alg-desc">No headlights anywhere. Swaps diagonal corners.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <h3 class="section-title" style="font-size: 18px; margin-top: 40px;">Step 2: Edges</h3>
+        <div class="alg-list">
+
+          <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-y"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-y"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-y"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-y"/>
+              
+              <path d="M 60 78 A 18 18 0 1 1 78 60" fill="none" stroke="#080808" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="78,65 72,55 84,55" fill="#080808"/>
+            </svg>
+            <div class="alg-info">
+              <div class="alg-name">Ua Perm (Clockwise)</div>
+              <div class="alg-moves">M2 U M U2 M' U M2</div>
+              <div class="alg-desc">One solid bar is solved. Hold it at the BACK. Cycles 3 front edges clockwise.</div>
+            </div>
+          </div>
+
+          <div class="alg-item">
+            <svg class="svg-oll-pll" viewBox="0 0 120 120">
+              <rect x="16" y="16" width="88" height="88" class="f-b" rx="4"/>
+              <rect x="20" y="20" width="24" height="24" class="f-y"/> <rect x="48" y="20" width="24" height="24" class="f-y"/> <rect x="76" y="20" width="24" height="24" class="f-y"/>
+              <rect x="20" y="48" width="24" height="24" class="f-y"/> <rect x="48" y="48" width="24" height="24" class="f-y"/> <rect x="76" y="48" width="24" height="24" class="f-y"/>
+              <rect x="20" y="76" width="24" height="24" class="f-y"/> <rect x="48" y="76" width="24" height="24" class="f-y"/> <rect x="76" y="76" width="24" height="24" class="f-y"/>
+              
+              <path d="M 40 60 L 80 60" stroke="#080808" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="40,60 48,54 48,66" fill="#080808"/>
+              <polygon points="80,60 72,54 72,66" fill="#080808"/>
+              <path d="M 60 40 L 60 80" stroke="#080808" stroke-width="4" stroke-linecap="round"/>
+              <polygon points="60,40 54,48 66,48" fill="#080808"/>
+              <polygon points="60,80 54,72 66,72" fill="#080808"/>
+            </svg>
+            <div class="alg-info">
+              <div class="alg-name">H Perm (Opposites)</div>
               <div class="alg-moves">M2 U M2 U2 M2 U M2</div>
-              <div class="alg-desc">Cycle the 4 top edges.</div>
+              <div class="alg-desc">No solid bars. Every edge needs to go to the opposite side.</div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- CHAPTER 6: 2-LOOK -->
-    <div class="chapter" id="ch-twolook">
-      <div class="section">
-        <div class="section-num">Chapter 06</div>
-        <div class="section-title">2-Look CFOP Summary</div>
-        <div class="section-intro">A beginner-friendly method using just 10 algorithms total. Master these and you can solve any scramble!</div>
-
-        <div class="section">
-          <div class="section-num">The 10 Algorithms</div>
-          <div class="section-title">Complete 2-Look Repertoire</div>
-          <div class="steps">
-            <div class="step">
-              <div class="step-num">1</div>
-              <div class="step-content">
-                <div class="step-title">Cross (White)</div>
-                <div class="step-desc">Layer-by-layer. Use intuition + flip moves (F2, D', R, D).</div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">2-5</div>
-              <div class="step-content">
-                <div class="step-title">F2L (4 slots)</div>
-                <div class="step-desc">Pair + insert. Main algorithms: R U R' U', L' U' L U, Sexy move variations.</div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">6</div>
-              <div class="step-content">
-                <div class="step-title">OLL (Yellow Edges)</div>
-                <div class="step-desc">3 cases: Dot (F R U R' U' F' repeat), Line (F R U R' U' F'), or Sune (R U R' U R U2 R').</div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">7</div>
-              <div class="step-content">
-                <div class="step-title">OLL (Corners)</div>
-                <div class="step-desc">Usually done by Sune or its mirrors. Apply until all corners face up.</div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">8</div>
-              <div class="step-content">
-                <div class="step-title">PLL (Corners)</div>
-                <div class="step-desc">T-Perm or Yz-Perm. Moves all top corners to correct slots.</div>
-              </div>
-            </div>
-            <div class="step">
-              <div class="step-num">9</div>
-              <div class="step-content">
-                <div class="step-title">PLL (Edges)</div>
-                <div class="step-desc">M2 U M2 U2 M2 U M2 or H-Perm. Finishes the cube.</div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <div class="callout">
-          <div class="callout-label">Tips for 2-Look Success</div>
-          <p>
-            ✓ <strong>Slow down first.</strong> Focus on understanding, not speed.<br>
-            ✓ <strong>Practice each step separately.</strong> Don't rush to whole solves.<br>
-            ✓ <strong>Drill rotations.</strong> Once you know the algorithms, drill them 50+ times each.<br>
-            ✓ <strong>Lookahead matters.</strong> While solving one step, look for the next pieces.<br>
-            ✓ <strong>Use the practice tool</strong> in this app to get scrambles for each stage.<br>
-          </p>
-        </div>
-
-        <div class="section">
-          <div class="section-num">Next Steps</div>
-          <div class="section-intro">Once you're comfortable with 2-Look CFOP (sub-2 minutes), consider:</div>
-          <ul style="margin-left:20px;line-height:2;">
-            <li><strong>Full OLL (57 cases)</strong> — Skip 2-look edge orientation step</li>
-            <li><strong>Full PLL (21 cases)</strong> — Skip 2-look corner/edge permutation</li>
-            <li><strong>Better cross</strong> — Solve directly without daisy method</li>
-            <li><strong>Faster F2L</strong> — Improve lookahead and rotationless solutions</li>
-            <li><strong>Better finger tricks</strong> — Smooth, fluid hand movements</li>
-          </ul>
-        </div>
+        <button class="practice-btn" onclick="goToPractice('pll')">Practice PLL</button>
       </div>
     </div>
 
@@ -578,34 +459,23 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--w);font-family
 </div>
 
 <script>
-let currentChapter = 0;
-const chapters = ['notation', 'cross', 'f2l', 'oll', 'pll', 'twolook'];
-
+// Navigation Logic
 function showChapter(name, idx) {
-  currentChapter = idx;
-  
-  // Hide all chapters
   document.querySelectorAll('.chapter').forEach(ch => ch.classList.remove('active'));
+  document.getElementById('ch-' + name).classList.add('active');
   
-  // Show selected chapter
-  const el = document.getElementById('ch-' + name);
-  if (el) el.classList.add('active');
-  
-  // Update nav buttons
   document.querySelectorAll('.chapter-btn').forEach((btn, i) => {
     btn.classList.toggle('active', i === idx);
   });
   
-  // Update indicator and progress
-  const indicator = document.getElementById('chap-indicator');
-  if (indicator) indicator.textContent = (idx + 1) + ' / 6';
-  
-  const progress = document.getElementById('prog-fill');
-  if (progress) progress.style.width = ((idx + 1) * 16.666) + '%';
-  
-  // Scroll content to top
-  const content = document.getElementById('content');
-  if (content) content.scrollTop = 0;
+  document.getElementById('chap-indicator').textContent = (idx + 1) + ' / 5';
+  document.getElementById('prog-fill').style.width = ((idx + 1) * 20) + '%';
+  document.getElementById('content').scrollTop = 0;
+}
+
+// Redirect logic
+function goToPractice(stage) {
+  window.location.href = `index.html?tab=practice&stage=${stage}`;
 }
 </script>
 </body>
