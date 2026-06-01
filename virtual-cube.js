@@ -59,10 +59,13 @@ class VirtualCube {
         this.settings = {
             advanced: false,
             vibration: false,
+            sound: true,
             blindfold: false,
             inspection: false,
             theme: 'standard'
         };
+
+        this.audioCtx = null;
 
         this.themes = {
             standard: { U: 0xffd700, D: 0xffffff, F: 0x00c853, B: 0x2979ff, R: 0xff6d00, L: 0xf44336 },
@@ -331,6 +334,7 @@ class VirtualCube {
         }
 
         this._vibrate(15);
+        if (!isUndo) this._playMoveSound();
 
         // Update logical state immediately
         const isRotation = ['X', 'Y', 'Z'].includes(moveStr[0].toUpperCase());
@@ -673,6 +677,29 @@ class VirtualCube {
             btn.addEventListener('mouseup', e => { e.stopPropagation(); this._onBtnUp(btn); });
         });
 
+        const popup = document.getElementById('vc-popup');
+        if (popup) {
+            const opts = popup.querySelectorAll('.vc-option');
+            const onPick = (sel) => (e) => {
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+                const base = popup.dataset.baseMove;
+                if (!base) return;
+                this._setPopupSelection(sel);
+                this.applyMove(sel === 'prime' ? base + "'" : base);
+                this._hidePopup();
+                this.activeBtn = null;
+            };
+            if (opts[0]) {
+                opts[0].addEventListener('touchstart', onPick('normal'), { passive: false });
+                opts[0].addEventListener('mousedown', onPick('normal'));
+            }
+            if (opts[1]) {
+                opts[1].addEventListener('touchstart', onPick('prime'), { passive: false });
+                opts[1].addEventListener('mousedown', onPick('prime'));
+            }
+        }
+
         // Drag on canvas — touch
         this.container.addEventListener('touchstart', e => {
             if (e.target.closest('.vc-btn,.vc-icon-btn,.vc-popup')) return;
@@ -723,10 +750,7 @@ class VirtualCube {
         this.activeBtn = btn;
         this.btnStartY = clientY;
         this._vibrate(10);
-
-        this.holdTimer = setTimeout(() => {
-            if (!['X', 'Y', 'Z'].includes(move)) this._showPopup(move);
-        }, 320);
+        this._showPopup(move, btn);
     }
 
     _onBtnMove(clientY) {
@@ -750,26 +774,26 @@ class VirtualCube {
             this.applyMove(finalMove);
             this._hidePopup();
         } else {
-            // Double-tap = prime
-            const now = Date.now();
-            if (now - this.lastTapTime < 280 && this.lastTapMove === move) {
-                this.applyMove(move + "'");
-                this.lastTapTime = 0;
-            } else {
-                this.applyMove(move);
-                this.lastTapTime = now;
-                this.lastTapMove = move;
-            }
+            this.applyMove(move);
         }
         this.activeBtn = null;
     }
 
-    _showPopup(move) {
+    _showPopup(move, btn) {
         const popup = document.getElementById('vc-popup');
+        if (!popup) return;
         popup.dataset.baseMove = move;
         const opts = popup.querySelectorAll('.vc-option');
         opts[0].textContent = move;
         opts[1].textContent = move + "'";
+        if (btn) {
+            const br = btn.getBoundingClientRect();
+            const cr = this.container.getBoundingClientRect();
+            const cx = br.left + br.width / 2 - cr.left;
+            const cy = br.top + br.height / 2 - cr.top;
+            popup.style.left = cx + 'px';
+            popup.style.top = cy + 'px';
+        }
         popup.classList.add('show');
         this._setPopupSelection('normal');
     }
@@ -818,6 +842,28 @@ class VirtualCube {
 
     _vibrate(ms) { if (this.settings.vibration && navigator.vibrate) navigator.vibrate(ms); }
 
+    _playMoveSound() {
+        if (!this.settings.sound) return;
+        try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            if (!this.audioCtx) this.audioCtx = new Ctx();
+            if (this.audioCtx.state === 'suspended') this.audioCtx.resume().catch(() => { });
+            const now = this.audioCtx.currentTime;
+            const o = this.audioCtx.createOscillator();
+            const g = this.audioCtx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(170 + Math.random() * 40, now);
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.exponentialRampToValueAtTime(0.12, now + 0.006);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+            o.connect(g);
+            g.connect(this.audioCtx.destination);
+            o.start(now);
+            o.stop(now + 0.07);
+        } catch (_) { }
+    }
+
     startRenderLoop() {
         const tick = () => {
             requestAnimationFrame(tick);
@@ -835,15 +881,32 @@ function vcScramble() { if (window.vCube) window.vCube.scramble(); }
 function vcReset()    { if (window.vCube) window.vCube.reset(); }
 
 function initVirtualCube() {
-    if (!window.vCube) window.vCube = new VirtualCube();
+    if (!window.vCube) {
+        window.vCube = new VirtualCube();
+        for (const k of ['advanced', 'vibration', 'sound', 'blindfold', 'inspection']) {
+            const el = document.getElementById('tog-vc-' + k);
+            if (el) window.vCube.updateSettings(k, el.classList.contains('on'));
+        }
+        const sel = document.getElementById('sel-vc-theme');
+        if (sel) window.vCube.updateSettings('theme', sel.value);
+    }
 }
 
-// Hook into showScreen
-const _origShowScreen = window.showScreen;
-window.showScreen = function(id) {
-    if (_origShowScreen) _origShowScreen(id);
-    if (id === 'virtual-cube') initVirtualCube();
-};
+function hookVirtualCubeToShowScreen() {
+    if (typeof window.showScreen !== 'function') {
+        setTimeout(hookVirtualCubeToShowScreen, 0);
+        return;
+    }
+    if (window.showScreen._vcHooked) return;
+    const orig = window.showScreen;
+    const wrapped = function(id) {
+        orig(id);
+        if (id === 'virtual-cube') initVirtualCube();
+    };
+    wrapped._vcHooked = true;
+    window.showScreen = wrapped;
+}
+hookVirtualCubeToShowScreen();
 
 function toggleVCSetting(key) {
     const btn = document.getElementById('tog-vc-' + key);
