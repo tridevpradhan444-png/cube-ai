@@ -475,7 +475,14 @@ function showChapter(name, idx) {
 
 // Redirect logic
 function goToPractice(stage) {
-  window.location.href = `index.html?tab=practice&stage=${stage}`;
+  const url = `index.html?tab=practice&stage=${stage}`;
+  if (window.parent && window.parent !== window) {
+    if (typeof window.parent.showScreen === 'function') window.parent.showScreen('practice');
+    if (typeof window.parent.setPStage === 'function') window.parent.setPStage(stage);
+    try { window.parent.history.replaceState(null, '', url); } catch (e) { }
+  } else {
+    window.location.href = url;
+  }
 }
 </script>
 </body>

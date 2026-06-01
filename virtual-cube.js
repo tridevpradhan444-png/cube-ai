@@ -61,7 +61,8 @@ class VirtualCube {
             vibration: false,
             blindfold: false,
             inspection: false,
-            theme: 'standard'
+            theme: 'standard',
+            sound: true
         };
 
         this.themes = {
@@ -166,7 +167,7 @@ class VirtualCube {
             s.U[3]=s.L[7]; s.U[4]=s.L[4]; s.U[5]=s.L[1];
             s.L[7]=s.D[5]; s.L[4]=s.D[4]; s.L[1]=s.D[3];
             s.D[5]=s.R[3]; s.D[4]=s.R[4]; s.D[3]=s.R[5];
-            s.R[3]=t[3];   s.R[4]=t[4];   s.R[5]=t[5];
+            s.R[3]=t[0];   s.R[4]=t[1];   s.R[5]=t[2];
         }
         // X Y Z: whole-cube rotations — state doesn't change face stickers
         // (we don't track orientation of the cube itself in state)
@@ -349,6 +350,7 @@ class VirtualCube {
         if (this.isAnimating || this.moveQueue.length === 0) return;
         const move = this.moveQueue.shift();
         this.isAnimating = true;
+        this._playMoveSound();
         this._animateMove(move, () => {
             this.isAnimating = false;
             // After animation, sync colors from logical state
@@ -670,6 +672,7 @@ class VirtualCube {
             btn.addEventListener('touchmove', e => this._onBtnMove(e.touches[0].clientY), { passive: true });
             btn.addEventListener('touchend', e => this._onBtnUp(btn), { passive: true });
             btn.addEventListener('mousedown', e => { e.stopPropagation(); this._onBtnDown(e, btn, e.clientY); });
+            btn.addEventListener('mousemove', e => this._onBtnMove(e.clientY));
             btn.addEventListener('mouseup', e => { e.stopPropagation(); this._onBtnUp(btn); });
         });
 
@@ -723,10 +726,9 @@ class VirtualCube {
         this.activeBtn = btn;
         this.btnStartY = clientY;
         this._vibrate(10);
-
-        this.holdTimer = setTimeout(() => {
-            if (!['X', 'Y', 'Z'].includes(move)) this._showPopup(move);
-        }, 320);
+        clearTimeout(this.holdTimer);
+        if (!['X', 'Y', 'Z'].includes(move)) this._showPopup(move, btn);
+        else this._hidePopup();
     }
 
     _onBtnMove(clientY) {
@@ -750,26 +752,23 @@ class VirtualCube {
             this.applyMove(finalMove);
             this._hidePopup();
         } else {
-            // Double-tap = prime
-            const now = Date.now();
-            if (now - this.lastTapTime < 280 && this.lastTapMove === move) {
-                this.applyMove(move + "'");
-                this.lastTapTime = 0;
-            } else {
-                this.applyMove(move);
-                this.lastTapTime = now;
-                this.lastTapMove = move;
-            }
+            this.applyMove(move);
         }
         this.activeBtn = null;
     }
 
-    _showPopup(move) {
+    _showPopup(move, btn) {
         const popup = document.getElementById('vc-popup');
         popup.dataset.baseMove = move;
         const opts = popup.querySelectorAll('.vc-option');
         opts[0].textContent = move;
         opts[1].textContent = move + "'";
+        if (btn) {
+            const b = btn.getBoundingClientRect();
+            const c = this.container.getBoundingClientRect();
+            popup.style.left = (b.left + b.width / 2 - c.left) + 'px';
+            popup.style.top = (b.top + b.height / 2 - c.top) + 'px';
+        }
         popup.classList.add('show');
         this._setPopupSelection('normal');
     }
@@ -818,6 +817,32 @@ class VirtualCube {
 
     _vibrate(ms) { if (this.settings.vibration && navigator.vibrate) navigator.vibrate(ms); }
 
+    _playMoveSound() {
+        if (!this.settings.sound) return;
+        try {
+            if (!this._audioCtx) this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const ctx = this._audioCtx;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const filter = ctx.createBiquadFilter();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            filter.type = 'lowpass';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+            filter.frequency.setValueAtTime(1200, now);
+            filter.frequency.exponentialRampToValueAtTime(240, now + 0.12);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.18);
+        } catch (e) { }
+    }
+
     startRenderLoop() {
         const tick = () => {
             requestAnimationFrame(tick);
@@ -834,24 +859,40 @@ function vcRedo()     { if (window.vCube) window.vCube.redo(); }
 function vcScramble() { if (window.vCube) window.vCube.scramble(); }
 function vcReset()    { if (window.vCube) window.vCube.reset(); }
 
-function initVirtualCube() {
-    if (!window.vCube) window.vCube = new VirtualCube();
+const VC_DEFAULT_SETTINGS = { advanced: false, vibration: false, blindfold: false, inspection: false, theme: 'standard', sound: true };
+let vcSettings = Object.assign({}, VC_DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('cubeai_vc_settings') || '{}'));
+
+function saveVCSettings() {
+    localStorage.setItem('cubeai_vc_settings', JSON.stringify(vcSettings));
 }
 
-// Hook into showScreen
-const _origShowScreen = window.showScreen;
-window.showScreen = function(id) {
-    if (_origShowScreen) _origShowScreen(id);
-    if (id === 'virtual-cube') initVirtualCube();
-};
+function syncVCSettingsUI() {
+    ['advanced', 'vibration', 'blindfold', 'inspection', 'sound'].forEach(k => {
+        const el = document.getElementById('tog-vc-' + k);
+        if (el) el.classList.toggle('on', !!vcSettings[k]);
+    });
+    const sel = document.getElementById('sel-vc-theme');
+    if (sel) sel.value = vcSettings.theme || 'standard';
+}
+
+function initVirtualCube() {
+    if (!window.vCube) window.vCube = new VirtualCube();
+    for (const [k, v] of Object.entries(vcSettings)) window.vCube.updateSettings(k, v);
+}
 
 function toggleVCSetting(key) {
     const btn = document.getElementById('tog-vc-' + key);
     if (!btn) return;
     const isOn = btn.classList.toggle('on');
+    vcSettings[key] = isOn;
+    saveVCSettings();
     if (window.vCube) window.vCube.updateSettings(key, isOn);
 }
 
 function updateVCTheme(theme) {
+    vcSettings.theme = theme;
+    saveVCSettings();
     if (window.vCube) window.vCube.updateSettings('theme', theme);
 }
+
+syncVCSettingsUI();
