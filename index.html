@@ -179,6 +179,7 @@ html,body{
       <div class="nav-item" onclick="showScreen('practice');closeDrawer()"><span class="nav-icon">🎯</span>Practice</div>
       <div class="nav-item" onclick="showScreen('learn');closeDrawer()"><span class="nav-icon">📖</span>Learn</div>
       <div class="nav-item" onclick="showScreen('settings');closeDrawer()"><span class="nav-icon">⚙</span>Settings</div>
+      <div class="nav-item" onclick="showScreen('virtual-cube');closeDrawer()"><span class="nav-icon">🧊</span>Virtual Cube</div>
       <div class="nav-item" onclick="showScreen('privacy');closeDrawer()"><span class="nav-icon">🔒</span>Privacy</div>
     </nav>
     <div class="drawer-footer">CUBE AI v1.0 · Free</div>
@@ -288,6 +289,13 @@ html,body{
     <div class="sgroup-label">Scramble</div>
     <div class="srow"><div class="sinfo"><div class="sname">Auto Scramble</div><div class="sdesc">New scramble after each solve</div></div><div class="toggle on" id="tog-autoscramble" onclick="toggleS('autoscramble')"><div class="tknob"></div></div></div>
     <div class="srow"><div class="sinfo"><div class="sname">Scramble Length</div><div class="sdesc">Moves in generated scrambles</div></div><select class="ssel" id="sel-slen" onchange="saveS('scrambleLength',this.value)"><option value="15">15</option><option value="20" selected>20</option><option value="25">25</option></select></div>
+    <div class="sgroup-label">Virtual Cube</div>
+    <div class="srow"><div class="sinfo"><div class="sname">Advanced Mode</div><div class="sdesc">Show slice move buttons (E, S, M)</div></div><div class="toggle" id="tog-vc-advanced" onclick="toggleVCSetting('advanced')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Vibration</div><div class="sdesc">Haptic feedback on moves</div></div><div class="toggle" id="tog-vc-vibration" onclick="toggleVCSetting('vibration')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Blindfold Mode</div><div class="sdesc">Hide all cube colors</div></div><div class="toggle" id="tog-vc-blindfold" onclick="toggleVCSetting('blindfold')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Inspection</div><div class="sdesc">15s inspection for Virtual Cube</div></div><div class="toggle" id="tog-vc-inspection" onclick="toggleVCSetting('inspection')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Cube Theme</div><div class="sdesc">Change the color scheme</div></div><select class="ssel" id="sel-vc-theme" onchange="updateVCTheme(this.value)"><option value="standard">Standard</option><option value="neon">Neon</option><option value="pastel">Pastel</option></select></div>
+    
     <div class="sgroup-label">Data</div>
     <div class="srow"><div class="sinfo"><div class="sname">Reset All Solves</div><div class="sdesc">Cannot be undone</div></div><button class="btn btn-o" style="font-size:11px;padding:8px 14px;" onclick="clearAllSolves()">Reset</button></div>
   </div>
@@ -307,6 +315,70 @@ html,body{
 
 </div><!-- end #app -->
 
+<!-- VIRTUAL CUBE SCREEN -->
+<div id="screen-virtual-cube" class="screen">
+  <div class="screen-header" style="padding-left:64px;"><span>Virtual Cube</span></div>
+  <div id="vc-canvas-container">
+    <canvas id="vc-canvas"></canvas>
+    
+    <!-- Top Bar: History & Actions -->
+    <div class="vc-top-bar">
+      <div style="display: flex; justify-content: space-between; align-items: center; pointer-events: auto;">
+        <div style="flex: 1;">
+          <div id="vc-history">No moves yet</div>
+          <div id="vc-scramble-text" onclick="window.vCube.toggleScramble()" style="font-size: 11px; color: var(--g3); cursor: pointer; margin-top: 4px; display: none;">Tap to show scramble</div>
+        </div>
+        <div id="vc-timer-display" style="font-family: var(--fd); font-size: 24px; color: var(--w); margin-left: 15px;">0.00</div>
+      </div>
+      <div class="vc-action-row">
+        <div class="vc-icon-btn" onclick="vcUndo()" title="Undo"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcRedo()" title="Redo"><svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcScramble()" title="Scramble"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcReset()" title="Reset Orientation"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></div>
+      </div>
+    </div>
+
+    <!-- Controls Overlay -->
+    <div class="vc-controls">
+      <div class="vc-btn-group vc-top">
+        <div class="vc-btn" data-move="U">U<div class="vc-scroll-hint up">U</div><div class="vc-scroll-hint down">U'</div></div>
+      </div>
+      
+      <div class="vc-middle">
+        <div class="vc-btn" data-move="L">L<div class="vc-scroll-hint up">L</div><div class="vc-scroll-hint down">L'</div></div>
+        <div class="vc-btn" data-move="F">F<div class="vc-scroll-hint up">F</div><div class="vc-scroll-hint down">F'</div></div>
+        <div class="vc-btn" data-move="R">R<div class="vc-scroll-hint up">R</div><div class="vc-scroll-hint down">R'</div></div>
+      </div>
+      
+      <div class="vc-btn-group vc-bottom">
+        <div class="vc-btn" data-move="D">D<div class="vc-scroll-hint up">D</div><div class="vc-scroll-hint down">D'</div></div>
+      </div>
+    </div>
+
+    <!-- Rotations Cluster -->
+    <!-- Slice Controls (Advanced Mode) -->
+    <div id="vc-slice-controls" class="vc-rotations" style="right: auto; left: 20px; display: none;">
+      <div class="vc-btn" data-move="M">M</div>
+      <div class="vc-btn" data-move="E">E</div>
+      <div class="vc-btn" data-move="S">S</div>
+    </div>
+
+    <div class="vc-rotations">
+      <div class="vc-btn" data-move="X">X</div>
+      <div class="vc-btn" data-move="Y">Y</div>
+      <div class="vc-btn" data-move="Z">Z</div>
+    </div>
+
+    <!-- Selection Popup -->
+    <div id="vc-popup" class="vc-popup">
+      <div class="vc-option">R</div>
+      <div class="vc-option">R'</div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="virtual-cube.css">
+<script src="virtual-cube.js"></script>
 <div id="toast"></div>
 <script src="script.js"></script>
 </body>
