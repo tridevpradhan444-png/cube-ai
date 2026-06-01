@@ -62,7 +62,8 @@ class VirtualCube {
             sound: true,
             blindfold: false,
             inspection: false,
-            theme: 'standard'
+            theme: 'standard',
+            sound: true
         };
 
         this.audioCtx = null;
@@ -169,7 +170,7 @@ class VirtualCube {
             s.U[3]=s.L[7]; s.U[4]=s.L[4]; s.U[5]=s.L[1];
             s.L[7]=s.D[5]; s.L[4]=s.D[4]; s.L[1]=s.D[3];
             s.D[5]=s.R[3]; s.D[4]=s.R[4]; s.D[3]=s.R[5];
-            s.R[3]=t[3];   s.R[4]=t[4];   s.R[5]=t[5];
+            s.R[3]=t[0];   s.R[4]=t[1];   s.R[5]=t[2];
         }
         // X Y Z: whole-cube rotations — state doesn't change face stickers
         // (we don't track orientation of the cube itself in state)
@@ -353,6 +354,7 @@ class VirtualCube {
         if (this.isAnimating || this.moveQueue.length === 0) return;
         const move = this.moveQueue.shift();
         this.isAnimating = true;
+        this._playMoveSound();
         this._animateMove(move, () => {
             this.isAnimating = false;
             // After animation, sync colors from logical state
@@ -674,6 +676,7 @@ class VirtualCube {
             btn.addEventListener('touchmove', e => this._onBtnMove(e.touches[0].clientY), { passive: true });
             btn.addEventListener('touchend', e => this._onBtnUp(btn), { passive: true });
             btn.addEventListener('mousedown', e => { e.stopPropagation(); this._onBtnDown(e, btn, e.clientY); });
+            btn.addEventListener('mousemove', e => this._onBtnMove(e.clientY));
             btn.addEventListener('mouseup', e => { e.stopPropagation(); this._onBtnUp(btn); });
         });
 
@@ -750,7 +753,9 @@ class VirtualCube {
         this.activeBtn = btn;
         this.btnStartY = clientY;
         this._vibrate(10);
-        this._showPopup(move, btn);
+        clearTimeout(this.holdTimer);
+        if (!['X', 'Y', 'Z'].includes(move)) this._showPopup(move, btn);
+        else this._hidePopup();
     }
 
     _onBtnMove(clientY) {
@@ -787,12 +792,10 @@ class VirtualCube {
         opts[0].textContent = move;
         opts[1].textContent = move + "'";
         if (btn) {
-            const br = btn.getBoundingClientRect();
-            const cr = this.container.getBoundingClientRect();
-            const cx = br.left + br.width / 2 - cr.left;
-            const cy = br.top + br.height / 2 - cr.top;
-            popup.style.left = cx + 'px';
-            popup.style.top = cy + 'px';
+            const b = btn.getBoundingClientRect();
+            const c = this.container.getBoundingClientRect();
+            popup.style.left = (b.left + b.width / 2 - c.left) + 'px';
+            popup.style.top = (b.top + b.height / 2 - c.top) + 'px';
         }
         popup.classList.add('show');
         this._setPopupSelection('normal');
@@ -845,23 +848,27 @@ class VirtualCube {
     _playMoveSound() {
         if (!this.settings.sound) return;
         try {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) return;
-            if (!this.audioCtx) this.audioCtx = new Ctx();
-            if (this.audioCtx.state === 'suspended') this.audioCtx.resume().catch(() => { });
-            const now = this.audioCtx.currentTime;
-            const o = this.audioCtx.createOscillator();
-            const g = this.audioCtx.createGain();
-            o.type = 'triangle';
-            o.frequency.setValueAtTime(170 + Math.random() * 40, now);
-            g.gain.setValueAtTime(0.0001, now);
-            g.gain.exponentialRampToValueAtTime(0.12, now + 0.006);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
-            o.connect(g);
-            g.connect(this.audioCtx.destination);
-            o.start(now);
-            o.stop(now + 0.07);
-        } catch (_) { }
+            if (!this._audioCtx) this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const ctx = this._audioCtx;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const filter = ctx.createBiquadFilter();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            filter.type = 'lowpass';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+            filter.frequency.setValueAtTime(1200, now);
+            filter.frequency.exponentialRampToValueAtTime(240, now + 0.12);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.18);
+        } catch (e) { }
     }
 
     startRenderLoop() {
@@ -880,41 +887,40 @@ function vcRedo()     { if (window.vCube) window.vCube.redo(); }
 function vcScramble() { if (window.vCube) window.vCube.scramble(); }
 function vcReset()    { if (window.vCube) window.vCube.reset(); }
 
-function initVirtualCube() {
-    if (!window.vCube) {
-        window.vCube = new VirtualCube();
-        for (const k of ['advanced', 'vibration', 'sound', 'blindfold', 'inspection']) {
-            const el = document.getElementById('tog-vc-' + k);
-            if (el) window.vCube.updateSettings(k, el.classList.contains('on'));
-        }
-        const sel = document.getElementById('sel-vc-theme');
-        if (sel) window.vCube.updateSettings('theme', sel.value);
-    }
+const VC_DEFAULT_SETTINGS = { advanced: false, vibration: false, blindfold: false, inspection: false, theme: 'standard', sound: true };
+let vcSettings = Object.assign({}, VC_DEFAULT_SETTINGS, JSON.parse(localStorage.getItem('cubeai_vc_settings') || '{}'));
+
+function saveVCSettings() {
+    localStorage.setItem('cubeai_vc_settings', JSON.stringify(vcSettings));
 }
 
-function hookVirtualCubeToShowScreen() {
-    if (typeof window.showScreen !== 'function') {
-        setTimeout(hookVirtualCubeToShowScreen, 0);
-        return;
-    }
-    if (window.showScreen._vcHooked) return;
-    const orig = window.showScreen;
-    const wrapped = function(id) {
-        orig(id);
-        if (id === 'virtual-cube') initVirtualCube();
-    };
-    wrapped._vcHooked = true;
-    window.showScreen = wrapped;
+function syncVCSettingsUI() {
+    ['advanced', 'vibration', 'blindfold', 'inspection', 'sound'].forEach(k => {
+        const el = document.getElementById('tog-vc-' + k);
+        if (el) el.classList.toggle('on', !!vcSettings[k]);
+    });
+    const sel = document.getElementById('sel-vc-theme');
+    if (sel) sel.value = vcSettings.theme || 'standard';
 }
-hookVirtualCubeToShowScreen();
+
+function initVirtualCube() {
+    if (!window.vCube) window.vCube = new VirtualCube();
+    for (const [k, v] of Object.entries(vcSettings)) window.vCube.updateSettings(k, v);
+}
 
 function toggleVCSetting(key) {
     const btn = document.getElementById('tog-vc-' + key);
     if (!btn) return;
     const isOn = btn.classList.toggle('on');
+    vcSettings[key] = isOn;
+    saveVCSettings();
     if (window.vCube) window.vCube.updateSettings(key, isOn);
 }
 
 function updateVCTheme(theme) {
+    vcSettings.theme = theme;
+    saveVCSettings();
     if (window.vCube) window.vCube.updateSettings('theme', theme);
 }
+
+syncVCSettingsUI();

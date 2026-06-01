@@ -170,41 +170,46 @@
     position: absolute;
     left: 0;
     top: 0;
-    transform: translate(-50%, -50%) scale(0.6);
-    opacity: 0;
-    pointer-events: none;
-    background: transparent;
-    border: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    width: 0;
+    height: 0;
+    display: block;
     z-index: 100;
-    border-radius: 999px;
-    transition: transform 0.12s ease, opacity 0.12s ease;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
 }
 
-.vc-popup.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.vc-popup.show { opacity: 1; }
 
 .vc-option {
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.8);
     font-family: var(--fd);
     font-size: 16px;
-    text-align: center;
+    letter-spacing: 1px;
     display: flex;
     align-items: center;
     justify-content: center;
-    user-select: none;
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+    transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
+.vc-popup.show .vc-option { opacity: 1; }
+.vc-popup.show .vc-option:nth-child(1) { transform: translate(-50%, -85px) scale(1); }
+.vc-popup.show .vc-option:nth-child(2) { transform: translate(-50%, 85px) scale(1); }
+
 .vc-option.selected {
-    background: rgba(255, 255, 255, 0.9);
-    color: #080808;
+    background: var(--w);
+    color: var(--bg);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .vc-scroll-hint {

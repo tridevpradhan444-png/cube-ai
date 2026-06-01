@@ -50,6 +50,7 @@ function showScreen(name) {
     });
     if (name === 'history') renderHistory();
     if (name === 'practice') initPScene();
+    if (name === 'virtual-cube' && typeof initVirtualCube === 'function') initVirtualCube();
   } catch (e) { console.error('showScreen:', e); }
 }
 function goLearn() { showScreen('learn'); closeDrawer(); }
@@ -376,12 +377,11 @@ function applyMoveCW(s, base) {
   else if (base === 'F') { rotateFaceCW(s, 'F'); const t = [s.U[6], s.U[7], s.U[8]]; s.U[6] = s.L[8]; s.U[7] = s.L[5]; s.U[8] = s.L[2]; s.L[2] = s.D[0]; s.L[5] = s.D[1]; s.L[8] = s.D[2]; s.D[0] = s.R[6]; s.D[1] = s.R[3]; s.D[2] = s.R[0]; s.R[0] = t[2]; s.R[3] = t[1]; s.R[6] = t[0]; }
   else if (base === 'B') { rotateFaceCW(s, 'B'); const t = [s.U[0], s.U[1], s.U[2]]; s.U[0] = s.R[2]; s.U[1] = s.R[5]; s.U[2] = s.R[8]; s.R[2] = s.D[8]; s.R[5] = s.D[7]; s.R[8] = s.D[6]; s.D[6] = s.L[0]; s.D[7] = s.L[3]; s.D[8] = s.L[6]; s.L[0] = t[2]; s.L[3] = t[1]; s.L[6] = t[0]; }
   else if (base === 'M') {
-    // M = L layer (x = -1 in R convention), opposite direction to L
     const t = [s.U[1], s.U[4], s.U[7]];
-    s.U[1] = s.F[1]; s.U[4] = s.F[4]; s.U[7] = s.F[7];
-    s.F[1] = s.D[1]; s.F[4] = s.D[4]; s.F[7] = s.D[7];
-    s.D[1] = s.B[7]; s.D[4] = s.B[4]; s.D[7] = s.B[1];
-    s.B[7] = t[0]; s.B[4] = t[1]; s.B[1] = t[2];
+    s.U[1] = s.B[7]; s.U[4] = s.B[4]; s.U[7] = s.B[1];
+    s.B[7] = s.D[1]; s.B[4] = s.D[4]; s.B[1] = s.D[7];
+    s.D[1] = s.F[1]; s.D[4] = s.F[4]; s.D[7] = s.F[7];
+    s.F[1] = t[0]; s.F[4] = t[1]; s.F[7] = t[2];
   }
 }
 
@@ -450,11 +450,16 @@ function getStickerColor(face, x, y, z) {
 function isStickerVisible(stage, face, x, y, z) {
   const ptype = getPieceType(x, y, z);
   if (ptype === 'core') return false;
+  if (isAnimating) return true;
 
   if (stage === 'cross') {
     if (ptype === 'corner') return false;
-    if (ptype === 'center') return true;
-    if (ptype === 'edge') return getPieceStickerColors(x, y, z).includes('#ffffff');
+    if (ptype === 'center') return true; // centers for guidance
+    if (ptype === 'edge') {
+      // Hide D-layer edges that are NOT part of the cross bottom
+      // Actually show all edges EXCEPT on U face
+      return true;
+    }
   }
   if (stage === 'f2l') {
     const color = getStickerColor(face, x, y, z);
@@ -483,8 +488,9 @@ function isStickerVisible(stage, face, x, y, z) {
 function isPaintable(stage, face, x, y, z) {
   const ptype = getPieceType(x, y, z);
   if (ptype === 'center' || ptype === 'core') return false;
+  if (isAnimating) return false;
   if (!isStickerVisible(stage, face, x, y, z)) return false;
-  if (stage === 'cross') return ptype === 'edge' && getPieceStickerColors(x, y, z).includes('#ffffff');
+  if (stage === 'cross') return ptype === 'edge';
   if (stage === 'f2l') {
     if (ptype === 'edge' && y === -1) return false; // cross locked
     return true;
