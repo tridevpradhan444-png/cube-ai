@@ -232,19 +232,20 @@ html,body{
     <div class="practice-scroll">
       <div class="stage-card">
         <div class="stage-card-title" id="stage-title">CROSS</div>
-        <div class="stage-card-desc" id="stage-desc">Only white edges scrambled. Paint any edge piece white + side color.</div>
+        <div class="stage-card-desc" id="stage-desc">Build the white cross. Tap a sticker, pick a color to move it there. Only visible edge stickers participate.</div>
       </div>
       <div>
-        <div class="slabel">Scramble</div>
+        <div class="slabel">Scramble <span style="color:var(--g3);font-size:10px;">— type moves or generate</span></div>
         <div class="sinput-row">
-          <input class="sinput" id="pscramble-input" placeholder="Tap Scramble to generate..." readonly>
-          <button class="btn" id="scramble-btn" onclick="handleScrambleBtn()">Scramble</button>
+          <input class="sinput" id="pscramble-input" placeholder="e.g. R U R' U' F2 L..." spellcheck="false" autocomplete="off">
+          <button class="btn btn-o" onclick="handleGenerateBtn()">Gen</button>
+          <button class="btn" onclick="handleApplyBtn()">Apply</button>
         </div>
       </div>
       <div class="btn-row">
         <button class="btn btn-o" onclick="resetPCube()">Reset</button>
-        <button class="btn btn-o" onclick="rotateCube90()">90°</button>
-        <button class="btn" onclick="handleSolutionBtn()">Solution</button>
+        <button class="btn btn-o" onclick="rotateCube90()">View</button>
+        <button class="btn" onclick="handleSolutionBtn()">Solve</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center;">
         <span style="font-size:10px;letter-spacing:2px;color:var(--g3);">SPEED</span>
