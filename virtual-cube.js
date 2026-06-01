@@ -59,11 +59,14 @@ class VirtualCube {
         this.settings = {
             advanced: false,
             vibration: false,
+            sound: true,
             blindfold: false,
             inspection: false,
             theme: 'standard',
             sound: true
         };
+
+        this.audioCtx = null;
 
         this.themes = {
             standard: { U: 0xffd700, D: 0xffffff, F: 0x00c853, B: 0x2979ff, R: 0xff6d00, L: 0xf44336 },
@@ -332,6 +335,7 @@ class VirtualCube {
         }
 
         this._vibrate(15);
+        if (!isUndo) this._playMoveSound();
 
         // Update logical state immediately
         const isRotation = ['X', 'Y', 'Z'].includes(moveStr[0].toUpperCase());
@@ -676,6 +680,29 @@ class VirtualCube {
             btn.addEventListener('mouseup', e => { e.stopPropagation(); this._onBtnUp(btn); });
         });
 
+        const popup = document.getElementById('vc-popup');
+        if (popup) {
+            const opts = popup.querySelectorAll('.vc-option');
+            const onPick = (sel) => (e) => {
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+                const base = popup.dataset.baseMove;
+                if (!base) return;
+                this._setPopupSelection(sel);
+                this.applyMove(sel === 'prime' ? base + "'" : base);
+                this._hidePopup();
+                this.activeBtn = null;
+            };
+            if (opts[0]) {
+                opts[0].addEventListener('touchstart', onPick('normal'), { passive: false });
+                opts[0].addEventListener('mousedown', onPick('normal'));
+            }
+            if (opts[1]) {
+                opts[1].addEventListener('touchstart', onPick('prime'), { passive: false });
+                opts[1].addEventListener('mousedown', onPick('prime'));
+            }
+        }
+
         // Drag on canvas — touch
         this.container.addEventListener('touchstart', e => {
             if (e.target.closest('.vc-btn,.vc-icon-btn,.vc-popup')) return;
@@ -759,6 +786,7 @@ class VirtualCube {
 
     _showPopup(move, btn) {
         const popup = document.getElementById('vc-popup');
+        if (!popup) return;
         popup.dataset.baseMove = move;
         const opts = popup.querySelectorAll('.vc-option');
         opts[0].textContent = move;

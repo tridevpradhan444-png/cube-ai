@@ -421,6 +421,16 @@ function getPieceType(x, y, z) {
   return 'core';
 }
 
+function getPieceStickerColors(x, y, z) {
+  const colors = [];
+  for (const fm of FACE_MAP_STATIC) {
+    const cv = fm.axis === 'x' ? x : fm.axis === 'y' ? y : z;
+    if (cv !== fm.val) continue;
+    colors.push(getStickerColor(fm.face, x, y, z));
+  }
+  return colors;
+}
+
 function getStickerIndex(face, x, y, z) {
   let row, col;
   if (face === 'U') { row = 1 - z; col = x + 1; } else if (face === 'D') { row = z + 1; col = x + 1; }
@@ -443,7 +453,6 @@ function isStickerVisible(stage, face, x, y, z) {
   if (isAnimating) return true;
 
   if (stage === 'cross') {
-    // Only white-side edge stickers visible, no yellow, no corners
     if (ptype === 'corner') return false;
     if (ptype === 'center') return true; // centers for guidance
     if (ptype === 'edge') {
@@ -864,8 +873,8 @@ function handleApplyBtn() {
 
   currentScrambleStr = val;
   applyStageDefaults(pStage);
-  cubeState = applyMoves(cubeState, currentScrambleStr);
-  animateMoves(currentScrambleStr, () => { buildMesh(); renderNet(); });
+  buildMesh(); renderNet();
+  animateMoves(currentScrambleStr);
 }
 
 function resetPCube() {
@@ -1142,8 +1151,6 @@ function animateMoves(movesStr, onDone) {
   if (isAnimating) { if (onDone) onDone(); return; }
   isAnimating = true;
   const moves = movesStr.trim().split(/\s+/).filter(m => m);
-  // Update cubeState IMMEDIATELY to final state — but animate visually
-  // This ensures logical state always matches
   let idx = 0;
 
   function doNext() {
@@ -1163,12 +1170,10 @@ function animateMoves(movesStr, onDone) {
     const ov = document.getElementById('move-overlay');
     if (ov) { ov.textContent = move; ov.classList.add('show'); }
 
-    // Update cube state BEFORE animating so state is always accurate
-    cubeState = applyMove(cubeState, move);
-
     animateSingleMove(move, () => {
-      // Rebuild mesh from updated state after each move
+      cubeState = applyMove(cubeState, move);
       buildMesh();
+      renderNet();
       idx++;
       setTimeout(doNext, 30);
     });
