@@ -718,47 +718,64 @@ let currentScrambleStr='';
 let currentSolution='';
 
 function initPScene(){
-  if(pStageInit) return;
-  pStageInit = true;
+  // If already initialized and canvas has size, just refresh
+  if(pStageInit && renderer){
+    const container = document.getElementById('cube-wrap');
+    if(container && container.clientWidth > 0){
+      const w=container.clientWidth, h=container.clientHeight;
+      camera.aspect=w/h; camera.updateProjectionMatrix();
+      renderer.setSize(w,h);
+      buildMesh(); renderPalette();
+    }
+    return;
+  }
 
-  const container = document.getElementById('cube-wrap');
-  const canvas = document.getElementById('practice-canvas');
-  if(!container||!canvas) return;
+  // Delay init by one frame so the screen is visible and canvas has real dimensions
+  requestAnimationFrame(()=>{
+    const container = document.getElementById('cube-wrap');
+    const canvas    = document.getElementById('practice-canvas');
+    if(!container||!canvas) return;
 
-  const w=container.clientWidth, h=container.clientHeight;
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x080808);
-  camera = new THREE.PerspectiveCamera(42,w/h,0.1,100);
-  camera.position.set(0,2.5,6);
-  camera.lookAt(0,0,0);
+    const w = container.clientWidth  || window.innerWidth;
+    const h = container.clientHeight || 280;
 
-  renderer = new THREE.WebGLRenderer({canvas,antialias:true});
-  renderer.setSize(w,h);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    if(pStageInit && renderer){ renderer.setSize(w,h); buildMesh(); renderPalette(); return; }
+    pStageInit = true;
 
-  scene.add(new THREE.AmbientLight(0xffffff,0.65));
-  const dl=new THREE.DirectionalLight(0xffffff,0.9); dl.position.set(3,8,6); scene.add(dl);
-  const dl2=new THREE.DirectionalLight(0xffffff,0.25); dl2.position.set(-3,-2,-4); scene.add(dl2);
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x080808);
+    camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 100);
+    camera.position.set(0, 2.5, 6);
+    camera.lookAt(0, 0, 0);
 
-  rootGroup = new THREE.Group(); scene.add(rootGroup);
-  cubeGroup = new THREE.Group(); rootGroup.add(cubeGroup);
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-  initPieceState();
-  buildMesh();
-  resetCubeAngle();
-  setupDrag();
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const dl  = new THREE.DirectionalLight(0xffffff, 0.9);  dl.position.set(3,8,6);   scene.add(dl);
+    const dl2 = new THREE.DirectionalLight(0xffffff, 0.25); dl2.position.set(-3,-2,-4); scene.add(dl2);
 
-  requestAnimationFrame(function loop(){
-    requestAnimationFrame(loop);
-    renderer.render(scene,camera);
+    rootGroup = new THREE.Group(); scene.add(rootGroup);
+    cubeGroup = new THREE.Group(); rootGroup.add(cubeGroup);
+
+    initPieceState();
+    buildMesh();
+    resetCubeAngle();
+    setupDrag();
+
+    requestAnimationFrame(function loop(){
+      requestAnimationFrame(loop);
+      renderer.render(scene, camera);
+    });
+
+    window.addEventListener('resize',()=>{
+      const w2=container.clientWidth, h2=container.clientHeight;
+      if(w2>0&&h2>0){ camera.aspect=w2/h2; camera.updateProjectionMatrix(); renderer.setSize(w2,h2); }
+    });
+
+    renderPalette();
   });
-
-  window.addEventListener('resize',()=>{
-    const w2=container.clientWidth,h2=container.clientHeight;
-    camera.aspect=w2/h2; camera.updateProjectionMatrix(); renderer.setSize(w2,h2);
-  });
-
-  renderPalette();
 }
 
 function resetCubeAngle(){
