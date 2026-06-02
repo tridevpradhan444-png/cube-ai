@@ -32,7 +32,7 @@ html,body{
 .screen.active{display:flex;}
 
 /* HAMBURGER */
-#hamburger{position:fixed;top:20px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
+#hamburger{position:fixed;top:16px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
 #hamburger span{display:block;height:2px;background:var(--w);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
 #hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
 #hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
@@ -115,71 +115,70 @@ html,body{
 #move-overlay.show{opacity:1;}
 
 /* Stage info bar */
-.stage-info-bar{padding:10px 14px;background:var(--bg2);border-bottom:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.stage-info-title{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--w);}
-.stage-info-desc{font-size:11px;color:var(--g2);flex:1;margin-left:10px;}
-.stage-info-btns{display:flex;gap:6px;flex-shrink:0;}
+.stage-info-bar{padding:14px 18px;background:var(--bg2);border-bottom:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.stage-info-title{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--w);}
+.stage-info-desc{font-size:12px;color:var(--g2);flex:1;margin-left:12px;line-height:1.5;}
+.stage-info-btns{display:flex;gap:8px;flex-shrink:0;}
 
 /* Controls row */
-.practice-controls{padding:8px 14px;border-bottom:var(--border);display:flex;gap:6px;flex-shrink:0;align-items:center;}
-.sinput{flex:1;background:var(--bg3);border:var(--border);padding:8px 10px;color:var(--w);font-family:var(--fb);font-size:12px;letter-spacing:1px;outline:none;}
+.practice-controls{padding:12px 18px;border-bottom:var(--border);display:flex;gap:8px;flex-shrink:0;align-items:center;}
+.sinput{flex:1;background:var(--bg3);border:var(--border);padding:10px 12px;color:var(--w);font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;}
 .sinput:focus{border-color:var(--g2);}
 .sinput::placeholder{color:var(--g3);}
-.btn{background:var(--w);color:var(--bg);border:none;padding:9px 14px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn{background:var(--w);color:var(--bg);border:none;padding:10px 16px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
 .btn:hover{background:var(--g1);}
 .btn:disabled{opacity:0.4;cursor:not-allowed;}
 .btn-o{background:transparent;color:var(--w);border:var(--border-w);}
 .btn-o:hover{background:var(--w);color:var(--bg);}
-.btn-sm{padding:6px 10px;font-size:10px;}
+.btn-sm{padding:8px 14px;font-size:11px;}
 
 /* Speed buttons */
-.speed-group{display:flex;gap:4px;align-items:center;margin-left:auto;}
-.speed-btn{background:transparent;color:var(--g3);border:var(--border);padding:5px 8px;font-family:var(--fb);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.speed-group{display:flex;gap:6px;align-items:center;margin-left:auto;}
+.speed-btn{background:transparent;color:var(--g3);border:var(--border);padding:6px 10px;font-family:var(--fb);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
 .speed-btn.active-speed{color:var(--w);border-color:var(--w);}
 
 /* Solution panel */
-#solution-panel{display:none;padding:8px 14px;border-bottom:var(--border);background:var(--bg2);}
+#solution-panel{display:none;padding:14px 18px;border-bottom:var(--border);background:var(--bg2);}
 #solution-panel.show{display:block;}
-.sol-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:6px;}
-.sol-moves{font-family:var(--fd);font-size:12px;letter-spacing:2px;color:var(--w);line-height:1.8;word-break:break-all;}
-.sol-move-item{display:inline-block;padding:2px 5px;margin:1px;border:var(--border);transition:all 0.2s;}
+.sol-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:8px;}
+.sol-moves{font-family:var(--fd);font-size:13px;letter-spacing:2px;color:var(--w);line-height:2;word-break:break-all;}
+.sol-move-item{display:inline-block;padding:3px 7px;margin:2px;border:var(--border);transition:all 0.2s;}
 .sol-move-item.current{background:var(--w);color:var(--bg);}
 .sol-move-item.done{color:var(--g3);border-color:var(--g4);}
 
 /* ═══════════════════════════════════
    PIECE PALETTE
    ═══════════════════════════════════ */
-#palette-section{flex-shrink:0;border-top:var(--border);background:var(--bg2);}
-.palette-header{padding:8px 14px 4px;display:flex;align-items:center;justify-content:space-between;}
-.palette-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);}
-.palette-hint{font-size:10px;color:var(--g3);}
-#piece-palette{display:flex;gap:6px;padding:6px 14px 10px;overflow-x:auto;flex-wrap:nowrap;}
+#palette-section{flex-shrink:0;border-top:2px solid var(--g4);background:var(--bg2);}
+.palette-header{padding:12px 18px 6px;display:flex;align-items:center;justify-content:space-between;}
+.palette-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g2);font-weight:600;}
+.palette-hint{font-size:11px;color:var(--g3);}
+#piece-palette{display:flex;gap:10px;padding:8px 18px 16px;overflow-x:auto;flex-wrap:nowrap;}
 #piece-palette::-webkit-scrollbar{height:3px;}
 #piece-palette::-webkit-scrollbar-thumb{background:var(--g3);border-radius:2px;}
 
 /* Individual piece cards in palette */
 .piece-card{
   flex-shrink:0;
-  width:56px;
+  width:72px;
   background:var(--bg3);
   border:1px solid var(--g4);
-  border-radius:4px;
-  padding:6px 4px;
+  border-radius:6px;
+  padding:10px 6px;
   cursor:pointer;
   transition:all 0.15s;
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
 }
-.piece-card:hover{border-color:var(--g2);}
-.piece-card.selected{border-color:var(--w);background:rgba(255,255,255,0.07);box-shadow:0 0 10px rgba(255,255,255,0.15);}
-.piece-card.placed{opacity:0.3;pointer-events:none;}
-.piece-icon{display:flex;gap:2px;align-items:center;justify-content:center;}
-.piece-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
-.piece-dot.corner-third{width:8px;height:8px;}
-.piece-label{font-size:8px;letter-spacing:0.5px;color:var(--g2);text-align:center;line-height:1.2;}
+.piece-card:hover{border-color:var(--g2);background:var(--bg4);}
+.piece-card.selected{border-color:var(--w);background:rgba(255,255,255,0.08);box-shadow:0 0 12px rgba(255,255,255,0.2);}
+.piece-card.placed{opacity:0.25;pointer-events:none;}
+.piece-icon{display:flex;gap:3px;align-items:center;justify-content:center;}
+.piece-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
+.piece-dot.corner-third{width:11px;height:11px;}
+.piece-label{font-size:9px;letter-spacing:0.5px;color:var(--g2);text-align:center;line-height:1.3;font-family:var(--fb);}
 
 /* Validity / warning bar */
-#validity-bar{padding:6px 14px;font-size:11px;letter-spacing:0.5px;display:none;flex-shrink:0;}
+#validity-bar{padding:8px 18px;font-size:12px;letter-spacing:0.5px;display:none;flex-shrink:0;}
 #validity-bar.warn{display:block;color:#ffaa44;background:rgba(255,165,0,0.1);border-top:1px solid rgba(255,165,0,0.3);}
 #validity-bar.ok{display:block;color:#00c853;background:rgba(0,200,83,0.08);border-top:1px solid rgba(0,200,83,0.2);}
 
@@ -226,18 +225,55 @@ html,body{
       <div class="nav-item" onclick="showScreen('history');closeDrawer()"><span class="nav-icon">📋</span>History</div>
       <div class="nav-item" onclick="showScreen('virtual-cube');closeDrawer()">
         <span class="nav-icon">
-          <!-- Rubik's Cube SVG icon -->
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 1L16 5V13L9 17L2 13V5L9 1Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
-            <path d="M9 1V9M9 9L16 5M9 9L2 5M9 9V17" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-            <rect x="5.5" y="2.5" width="2.5" height="2.5" rx="0.4" fill="#f44336" opacity="0.9"/>
-            <rect x="10" y="2.5" width="2.5" height="2.5" rx="0.4" fill="#ffd700" opacity="0.9"/>
-            <rect x="12.5" y="6" width="2.5" height="2.5" rx="0.4" fill="#ff6d00" opacity="0.9"/>
-            <rect x="12.5" y="9.5" width="2.5" height="2.5" rx="0.4" fill="#ff6d00" opacity="0.9"/>
-            <rect x="3" y="6" width="2.5" height="2.5" rx="0.4" fill="#f44336" opacity="0.9"/>
-            <rect x="3" y="9.5" width="2.5" height="2.5" rx="0.4" fill="#f44336" opacity="0.9"/>
-            <rect x="5.5" y="11" width="2.5" height="2.5" rx="0.4" fill="#00c853" opacity="0.9"/>
-            <rect x="10" y="11" width="2.5" height="2.5" rx="0.4" fill="#2979ff" opacity="0.9"/>
+          <svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Isometric Rubik's cube — top, right, left faces -->
+            <!-- Top face (yellow) -->
+            <polygon points="50,4 96,28 50,52 4,28" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
+            <!-- Top face grid lines -->
+            <line x1="50" y1="4"  x2="50" y2="52" stroke="#000" stroke-width="1"/>
+            <line x1="34" y1="12" x2="34" y2="44" stroke="#000" stroke-width="1"/>
+            <line x1="66" y1="12" x2="66" y2="44" stroke="#000" stroke-width="1"/>
+            <line x1="4"  y1="28" x2="96" y2="28" stroke="#000" stroke-width="1"/>
+            <line x1="20" y1="20" x2="80" y2="20" stroke="#000" stroke-width="1"/>
+            <line x1="20" y1="36" x2="80" y2="36" stroke="#000" stroke-width="1"/>
+            <!-- Top stickers -->
+            <polygon points="50,6 63,13 50,20 37,13" fill="#ffd700"/>
+            <polygon points="65,14 78,21 65,28 52,21" fill="#ffd700"/>
+            <polygon points="35,14 48,21 35,28 22,21" fill="#ffd700"/>
+            <polygon points="50,22 63,29 50,36 37,29" fill="#ffd700"/>
+            <polygon points="65,30 78,37 65,44 52,37" fill="#ffd700"/>
+            <polygon points="35,30 48,37 35,44 22,37" fill="#ffd700"/>
+            <polygon points="50,38 63,45 50,52 37,45" fill="#ffd700"/>
+            <polygon points="65,6 78,13 65,20 52,13"  fill="#ffd700"/>
+            <polygon points="35,6 48,13 35,20 22,13"  fill="#ffd700"/>
+            <!-- Right face (blue/orange) -->
+            <polygon points="50,52 96,28 96,72 50,96" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
+            <line x1="50" y1="52" x2="50" y2="96" stroke="#000" stroke-width="1"/>
+            <line x1="66" y1="44" x2="66" y2="88" stroke="#000" stroke-width="1"/>
+            <line x1="82" y1="36" x2="82" y2="80" stroke="#000" stroke-width="1"/>
+            <line x1="50" y1="68" x2="96" y2="44" stroke="#000" stroke-width="1"/>
+            <line x1="50" y1="82" x2="96" y2="58" stroke="#000" stroke-width="1"/>
+            <!-- Right stickers -->
+            <polygon points="52,53 65,46 78,53 65,60" fill="#ff6d00"/>
+            <polygon points="68,45 81,38 94,45 81,52" fill="#ff6d00"/>
+            <polygon points="52,69 65,62 78,69 65,76" fill="#ff6d00"/>
+            <polygon points="68,61 81,54 94,61 81,68" fill="#ff6d00"/>
+            <polygon points="52,85 65,78 78,85 65,92" fill="#ff6d00"/>
+            <polygon points="68,77 81,70 94,77 81,84" fill="#ff6d00"/>
+            <!-- Left face (red) -->
+            <polygon points="50,52 4,28 4,72 50,96" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
+            <line x1="50" y1="52" x2="50" y2="96" stroke="#000" stroke-width="1"/>
+            <line x1="34" y1="44" x2="34" y2="88" stroke="#000" stroke-width="1"/>
+            <line x1="18" y1="36" x2="18" y2="80" stroke="#000" stroke-width="1"/>
+            <line x1="50" y1="68" x2="4" y2="44" stroke="#000" stroke-width="1"/>
+            <line x1="50" y1="82" x2="4" y2="58" stroke="#000" stroke-width="1"/>
+            <!-- Left stickers -->
+            <polygon points="48,53 35,46 22,53 35,60" fill="#f44336"/>
+            <polygon points="32,45 19,38 6,45 19,52" fill="#f44336"/>
+            <polygon points="48,69 35,62 22,69 35,76" fill="#f44336"/>
+            <polygon points="32,61 19,54 6,61 19,68" fill="#f44336"/>
+            <polygon points="48,85 35,78 22,85 35,92" fill="#f44336"/>
+            <polygon points="32,77 19,70 6,77 19,84" fill="#f44336"/>
           </svg>
         </span>Virtual Cube</div>
       <div class="nav-item" onclick="showScreen('practice');closeDrawer()"><span class="nav-icon">🎯</span>Practice</div>
@@ -301,6 +337,7 @@ html,body{
       <div class="stage-info-desc" id="stage-desc">Build the white cross. Select a piece from the palette, tap its slot on the cube.</div>
       <div class="stage-info-btns">
         <button class="btn btn-o btn-sm" onclick="resetPCube()">Reset</button>
+        <button class="btn btn-o btn-sm" onclick="rotateCube90()">90°</button>
         <button class="btn btn-sm" onclick="handleSolutionBtn()">Solve</button>
       </div>
     </div>

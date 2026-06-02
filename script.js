@@ -588,19 +588,27 @@ function getCubieFaceColors(x, y, z, slotId){
 // Determine if a cubie at (x,y,z) is relevant to the current stage
 function getCubieRole(x,y,z){
   const isCenter = (Math.abs(x)+Math.abs(y)+Math.abs(z))===1;
-  const isEdge = (Math.abs(x)+Math.abs(y)+Math.abs(z))===2;
+  const isEdge   = (Math.abs(x)+Math.abs(y)+Math.abs(z))===2;
   const isCorner = Math.abs(x)===1&&Math.abs(y)===1&&Math.abs(z)===1;
 
   if(isCenter) return 'center';
 
-  // Find if this position has a slot
+  // Active slot for this stage
   for(const slot of (SLOT_DEFS[pStage]||[])){
     if(slot.pos.x===x && slot.pos.y===y && slot.pos.z===z) return 'slot';
   }
 
-  // Special: cross layer is always shown in f2l (as solved)
-  if(pStage==='f2l' && y===-1 && isEdge) return 'cross-solved';
-  if(pStage==='f2l' && y===-1 && isCenter) return 'center';
+  // Cross: show ALL edges as tappable gray slots
+  if(pStage==='cross' && isEdge) return 'slot-empty';
+
+  // F2L: cross bottom edges shown solved; all other edges/corners as gray
+  if(pStage==='f2l'){
+    if(y===-1 && isEdge) return 'cross-solved';
+    if(isEdge || isCorner) return 'slot-empty';
+  }
+
+  // OLL/PLL: middle layer edges shown as gray for visual completeness
+  if((pStage==='oll'||pStage==='pll') && y===0 && isEdge) return 'slot-empty';
 
   return 'irrelevant';
 }
@@ -637,9 +645,16 @@ function buildMesh(){
       else if(z===1) faceColors['F'] = FACE_COLORS['F'];
       else if(z===-1) faceColors['B'] = FACE_COLORS['B'];
     } else if(role==='slot'){
-      // Find slotId for this position
       const slotDef = SLOT_DEFS[pStage].find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
       if(slotDef) faceColors = getCubieFaceColors(x,y,z,slotDef.slotId);
+    } else if(role==='slot-empty'){
+      // Gray placeholder — all exterior faces dim gray so user can see the slot
+      if(x===1) faceColors['R']='#222222';
+      if(x===-1) faceColors['L']='#222222';
+      if(y===1) faceColors['U']='#222222';
+      if(y===-1) faceColors['D']='#222222';
+      if(z===1) faceColors['F']='#222222';
+      if(z===-1) faceColors['B']='#222222';
     } else if(role==='cross-solved'){
       faceColors = getSolvedCrossColors(x,y,z);
     }
@@ -652,7 +667,8 @@ function buildMesh(){
 
     const mesh = new THREE.Mesh(geo, mats);
     mesh.position.set(x,y,z);
-    mesh.userData = {x,y,z, slotId: role==='slot' ? SLOT_DEFS[pStage].find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z)?.slotId : null};
+    const slotDef = SLOT_DEFS[pStage].find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
+    mesh.userData = {x, y, z, slotId: role==='slot' ? slotDef?.slotId : null};
     cubeGroup.add(mesh);
   }
 }
@@ -857,8 +873,11 @@ function handleApplyBtn(){
 }
 
 function handleSolutionBtn(){
-  if(!currentSolution){showToast('Apply a scramble first');return;}
-  showSolutionMoves(currentSolution);
+  if(!currentScrambleStr){showToast('Apply a scramble first');return;}
+  // Show the original scramble — this IS the case setup
+  // The user is building the case, so the scramble shows how to set it up on a real cube
+  showSolutionMoves(currentScrambleStr);
+  showToast('Scramble to reach this case');
 }
 
 function showSolutionMoves(movesStr){
