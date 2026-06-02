@@ -421,48 +421,53 @@ function selectPalettePiece(pieceId){
 function handleSlotTap(slotId){
   const slot = getSlotDef(slotId);
   if(!slot) return;
-
   const current = slotState[slotId];
 
-  // If a piece is selected from palette — place it
+  // Place selected piece
   if(selectedPieceId && paletteState[selectedPieceId]==='palette'){
-    // If slot already has a piece, return it to palette first
-    if(current){
-      paletteState[current.pieceId] = 'palette';
-    }
+    if(current) paletteState[current.pieceId] = 'palette';
     slotState[slotId] = { pieceId: selectedPieceId, orientation: 0 };
     paletteState[selectedPieceId] = 'placed';
     selectedPieceId = null;
-    buildMesh();
-    renderPalette();
-    validateState();
+    rebuildCubeStateFromSlots();
+    buildMesh(); renderPalette(); validateState();
+    autoRegisterPaintedScramble();
     return;
   }
 
-  // If no piece selected but slot has a piece — cycle orientation (except PLL) or return to palette on double tap
+  // Cycle orientation on placed piece
   if(current){
     const piece = getPieceById(current.pieceId);
     if(!piece) return;
-
     if(pStage==='pll'){
-      // PLL: orientation locked, tap returns piece to palette
       paletteState[current.pieceId] = 'palette';
       slotState[slotId] = null;
     } else {
-      // Cycle orientation
       const maxOrient = piece.type==='edge' ? 2 : 3;
-      const nextOrient = (current.orientation + 1) % maxOrient;
-      slotState[slotId] = { pieceId: current.pieceId, orientation: nextOrient };
-      showToast('Orientation: ' + nextOrient);
+      slotState[slotId] = { pieceId: current.pieceId, orientation: (current.orientation+1)%maxOrient };
+      showToast('Orientation: ' + slotState[slotId].orientation);
     }
-    buildMesh();
-    renderPalette();
-    validateState();
+    rebuildCubeStateFromSlots();
+    buildMesh(); renderPalette(); validateState();
+    autoRegisterPaintedScramble();
     return;
   }
 
-  // Empty slot, nothing selected
   showToast('Select a piece from the palette first');
+}
+
+// Painting auto-registers as current scramble
+// Updates the scramble input field so user can see it, and marks state ready for Solve
+function autoRegisterPaintedScramble(){
+  // The current cubeState IS the painted state — store it as the active case
+  // No scramble string needed; solveCurrentState() reads cubeState directly
+  currentScrambleStr = '__painted__';
+  const inp = document.getElementById('pscramble-input');
+  if(inp) inp.value = '(painted cube state)';
+  inp.style.color = 'var(--cY)';
+  // Clear any old solution display
+  const sp = document.getElementById('solution-panel');
+  if(sp) sp.classList.remove('show');
 }
 
 function validateState(){
@@ -470,34 +475,74 @@ function validateState(){
   if(!bar) return;
   const placed = Object.values(slotState).filter(v=>v!==null).length;
   const total = SLOT_DEFS[pStage].length;
-  if(placed===0){
-    bar.className=''; bar.style.display='none'; return;
-  }
+  if(placed===0){ bar.className=''; bar.style.display='none'; return; }
   if(placed===total){
-    bar.textContent='✓ All pieces placed';
+    bar.textContent='✓ All pieces placed — tap Solution to solve';
     bar.className='ok'; bar.style.display='block';
   } else {
-    bar.textContent=`${placed}/${total} pieces placed`;
+    bar.textContent=`${placed} of ${total} pieces placed`;
     bar.className='warn'; bar.style.display='block';
   }
 }
 
 // ═══════════════════════════════════════════════════════
-//  PALETTE RENDER
+//  PALETTE RENDER — grouped by type, uses piece-palette-inner
 // ═══════════════════════════════════════════════════════
 function renderPalette(){
-  const container = document.getElementById('piece-palette');
+  const container = document.getElementById('piece-palette-inner');
   if(!container) return;
-  const pieces = getAllPieces(pStage);
-  container.innerHTML = pieces.map(p=>{
-    const placed = paletteState[p.id]==='placed';
-    const sel = selectedPieceId===p.id;
-    const dots = p.colors.map(col=>`<div class="piece-dot${p.type==='corner'?' corner-third':''}" style="background:${col}"></div>`).join('');
-    return `<div class="piece-card${placed?' placed':''}${sel?' selected':''}" onclick="selectPalettePiece('${p.id}')">
-      <div class="piece-icon">${dots}</div>
-      <div class="piece-label">${p.label}</div>
+
+  const stageDef = STAGE_PIECES[pStage];
+  const edges   = stageDef.edges   || [];
+  const corners = stageDef.corners || [];
+
+  let html = '';
+
+  // For Cross: edges only
+  if(pStage === 'cross'){
+    html += `<div class="palette-group">
+      <div class="palette-group-label">White Edges</div>
+      <div class="palette-row">${edges.map(p => pieceCardHTML(p)).join('')}</div>
     </div>`;
-  }).join('');
+  }
+
+  // For F2L: corners first then edges
+  if(pStage === 'f2l'){
+    html += `<div class="palette-group">
+      <div class="palette-group-label">Corners</div>
+      <div class="palette-row">${corners.map(p => pieceCardHTML(p)).join('')}</div>
+    </div>
+    <div class="palette-group">
+      <div class="palette-group-label">Edges</div>
+      <div class="palette-row">${edges.map(p => pieceCardHTML(p)).join('')}</div>
+    </div>`;
+  }
+
+  // For OLL/PLL: corners then edges
+  if(pStage === 'oll' || pStage === 'pll'){
+    html += `<div class="palette-group">
+      <div class="palette-group-label">Corners</div>
+      <div class="palette-row">${corners.map(p => pieceCardHTML(p)).join('')}</div>
+    </div>
+    <div class="palette-group">
+      <div class="palette-group-label">Edges</div>
+      <div class="palette-row">${edges.map(p => pieceCardHTML(p)).join('')}</div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function pieceCardHTML(p){
+  const placed = paletteState[p.id] === 'placed';
+  const sel    = selectedPieceId === p.id;
+  const dots   = p.colors.map(col =>
+    `<div class="piece-dot${p.type==='corner'?' sm':''}" style="background:${col}"></div>`
+  ).join('');
+  return `<div class="piece-card${placed?' placed':''}${sel?' selected':''}" onclick="selectPalettePiece('${p.id}')">
+    <div class="piece-icon">${dots}</div>
+    <div class="piece-label">${p.label}</div>
+  </div>`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -731,20 +776,25 @@ function initPScene(){
 
 function resetCubeAngle(){
   if(!rootGroup) return;
-  rootGroup.quaternion.setFromEuler(new THREE.Euler(0.3,0,0));
+  // Nice isometric-style tilt: 20° down, 25° right
+  const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -0.36);
+  const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),  0.44);
+  rootGroup.quaternion.copy(qY.multiply(qX));
 }
 
 function rotateCube90(){
   if(!rootGroup||isAnimating) return;
-  const startQ=rootGroup.quaternion.clone();
-  const delta=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2);
-  const endQ=delta.clone().multiply(startQ);
-  const dur=350,start=Date.now();
+  const startQ = rootGroup.quaternion.clone();
+  // Rotate only around world Y axis — preserves X tilt exactly
+  const worldY  = new THREE.Vector3(0,1,0);
+  const delta   = new THREE.Quaternion().setFromAxisAngle(worldY, Math.PI/2);
+  const endQ    = delta.clone().multiply(startQ);
+  const dur=380, start=Date.now();
   function step(){
-    const p=Math.min((Date.now()-start)/dur,1);
-    const e=p<0.5?2*p*p:(1-Math.pow(-2*p+2,2)/2);
-    rootGroup.quaternion.slerpQuaternions(startQ,endQ,e);
-    if(p<1)requestAnimationFrame(step);
+    const p = Math.min((Date.now()-start)/dur, 1);
+    const e = p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+    rootGroup.quaternion.slerpQuaternions(startQ, endQ, e);
+    if(p<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
@@ -838,7 +888,8 @@ function setPStage(stage){
 function resetPCube(){
   isAnimating=false;
   currentScrambleStr=''; currentSolution='';
-  const inp=document.getElementById('pscramble-input'); if(inp) inp.value='';
+  const inp=document.getElementById('pscramble-input');
+  if(inp){ inp.value=''; inp.style.color=''; }
   const sp=document.getElementById('solution-panel'); if(sp) sp.classList.remove('show');
   const vb=document.getElementById('validity-bar'); if(vb){vb.style.display='none';vb.className='';}
   const ov=document.getElementById('move-overlay'); if(ov){ov.classList.remove('show');ov.textContent='';}
@@ -861,15 +912,19 @@ function handleGenerateBtn(){
 }
 
 function handleApplyBtn(){
-  const inp=document.getElementById('pscramble-input');
-  const s=(inp?inp.value.trim():'')||currentScrambleStr;
-  if(!s){showToast('Generate a scramble first');return;}
-  currentScrambleStr=s;
-  currentSolution=invertMoves(s);
-  // Reset piece state, apply scramble visually via animation
-  initPieceState();
-  buildMesh(); renderPalette();
-  showToast('Scrambling...');
+  const inp = document.getElementById('pscramble-input');
+  const s   = (inp ? inp.value.trim() : '') || currentScrambleStr;
+  if(!s){ showToast('Generate a scramble first'); return; }
+  currentScrambleStr = s;
+  // Reset to solved state, then animate the scramble
+  initCubeState();
+  buildMesh();
+  showToast('Applying scramble...');
+  animateMoves(s, ()=>{
+    cubeState = applyMoves(cubeState, s);
+    buildMesh();
+    showToast('Done — tap Solution to solve');
+  });
 }
 
 function handleSolutionBtn(){

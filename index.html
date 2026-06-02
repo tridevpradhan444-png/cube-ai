@@ -30,9 +30,11 @@ html,body{
 #app{width:100%;height:100%;position:relative;}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden;background:transparent;}
 .screen.active{display:flex;}
+/* Practice screen needs scroll */
+#screen-practice.active{display:flex;overflow:hidden;}
 
 /* HAMBURGER */
-#hamburger{position:fixed;top:10px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
+#hamburger{position:fixed;top:16px;left:16px;z-index:1000;width:40px;height:40px;display:flex;flex-direction:column;justify-content:center;gap:6px;cursor:pointer;padding:4px;}
 #hamburger span{display:block;height:2px;background:var(--w);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);}
 #hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg);}
 #hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
@@ -100,87 +102,93 @@ html,body{
 .history-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--g3);}
 
 /* ═══════════════════════════════════
-   PRACTICE — PIECE PALETTE SYSTEM
+   PRACTICE — Reference layout
    ═══════════════════════════════════ */
 #screen-practice{background:transparent;}
 .practice-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:var(--border);flex-shrink:0;}
-.ptab{padding:13px 4px;text-align:center;font-family:var(--fb);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
+.ptab{padding:14px 4px;text-align:center;font-family:var(--fb);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
 .ptab.active{color:var(--w);border-bottom-color:var(--w);}
-.practice-body{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
-/* 3D Cube viewport */
-#cube-wrap{width:100%;flex-shrink:0;background:transparent;position:relative;}
+/* The practice body scrolls as a whole */
+.practice-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.practice-body::-webkit-scrollbar{width:2px;}
+.practice-body::-webkit-scrollbar-thumb{background:var(--g3);}
+
+/* 3D cube viewport — fixed height, doesn't scroll */
+#cube-wrap{width:100%;height:280px;flex-shrink:0;background:transparent;position:relative;}
 #practice-canvas{width:100%;height:100%;display:block;}
-#move-overlay{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:var(--fd);font-size:18px;font-weight:700;letter-spacing:3px;color:var(--w);background:rgba(0,0,0,0.6);padding:4px 16px;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+#move-overlay{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-family:var(--fd);font-size:20px;font-weight:700;letter-spacing:3px;color:var(--w);background:rgba(0,0,0,0.7);padding:5px 18px;opacity:0;transition:opacity 0.2s;pointer-events:none;border-radius:2px;}
 #move-overlay.show{opacity:1;}
+/* Reset view button */
+.cube-reset-btn{position:absolute;bottom:10px;right:12px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.4;z-index:5;background:rgba(0,0,0,0.3);border-radius:50%;}
+.cube-reset-btn:hover{opacity:0.8;}
 
-/* Stage info bar */
-.stage-info-bar{padding:14px 18px;background:var(--bg2);border-bottom:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.stage-info-title{font-family:var(--fd);font-size:12px;font-weight:700;letter-spacing:2px;color:var(--w);}
-.stage-info-desc{font-size:12px;color:var(--g2);flex:1;margin-left:12px;line-height:1.5;}
-.stage-info-btns{display:flex;gap:8px;flex-shrink:0;}
-
-/* Controls row */
-.practice-controls{padding:12px 18px;border-bottom:var(--border);display:flex;gap:8px;flex-shrink:0;align-items:center;}
-.sinput{flex:1;background:var(--bg3);border:var(--border);padding:10px 12px;color:var(--w);font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;}
-.sinput:focus{border-color:var(--g2);}
-.sinput::placeholder{color:var(--g3);}
-.btn{background:var(--w);color:var(--bg);border:none;padding:10px 16px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+/* Stage card — below cube */
+.stage-card{background:var(--bg2);border-bottom:var(--border);padding:20px 20px 16px;}
+.stage-card-title{font-family:var(--fd);font-size:14px;font-weight:900;letter-spacing:2px;margin-bottom:8px;color:var(--w);}
+.stage-card-desc{font-size:13px;color:var(--g2);line-height:1.6;margin-bottom:16px;}
+/* 3 main action buttons row */
+.action-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.btn{background:var(--w);color:var(--bg);border:none;padding:14px 10px;font-family:var(--fb);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;text-align:center;}
 .btn:hover{background:var(--g1);}
+.btn:active{transform:scale(0.97);}
 .btn:disabled{opacity:0.4;cursor:not-allowed;}
 .btn-o{background:transparent;color:var(--w);border:var(--border-w);}
 .btn-o:hover{background:var(--w);color:var(--bg);}
-.btn-sm{padding:8px 14px;font-size:11px;}
 
-/* Speed buttons */
-.speed-group{display:flex;gap:6px;align-items:center;margin-left:auto;}
-.speed-btn{background:transparent;color:var(--g3);border:var(--border);padding:6px 10px;font-family:var(--fb);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
-.speed-btn.active-speed{color:var(--w);border-color:var(--w);}
+/* Scramble section */
+.scramble-section{padding:16px 20px;border-bottom:var(--border);}
+.slabel{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:8px;display:block;}
+.sinput-row{display:flex;gap:8px;}
+.sinput{flex:1;background:var(--bg3);border:var(--border);padding:13px 12px;color:var(--w);font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;min-width:0;}
+.sinput:focus{border-color:var(--g2);}
+.sinput::placeholder{color:var(--g3);}
+.btn-sm{padding:12px 16px;font-size:11px;}
+
+/* Speed section */
+.speed-section{padding:12px 20px;border-bottom:var(--border);display:flex;align-items:center;gap:10px;}
+.speed-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);}
+.speed-btn{background:transparent;color:var(--g3);border:var(--border);padding:8px 16px;font-family:var(--fb);font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.speed-btn.active-speed{color:var(--w);border-color:var(--w);background:rgba(255,255,255,0.05);}
 
 /* Solution panel */
-#solution-panel{display:none;padding:14px 18px;border-bottom:var(--border);background:var(--bg2);}
+#solution-panel{display:none;padding:16px 20px;border-bottom:var(--border);background:var(--bg2);}
 #solution-panel.show{display:block;}
-.sol-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:8px;}
-.sol-moves{font-family:var(--fd);font-size:13px;letter-spacing:2px;color:var(--w);line-height:2;word-break:break-all;}
-.sol-move-item{display:inline-block;padding:3px 7px;margin:2px;border:var(--border);transition:all 0.2s;}
+.sol-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:10px;}
+.sol-moves{font-family:var(--fd);font-size:13px;letter-spacing:1px;color:var(--w);line-height:2;word-break:break-all;}
+.sol-move-item{display:inline-block;padding:4px 8px;margin:2px;border:var(--border);transition:all 0.2s;}
 .sol-move-item.current{background:var(--w);color:var(--bg);}
 .sol-move-item.done{color:var(--g3);border-color:var(--g4);}
+
+/* Validity bar */
+#validity-bar{padding:10px 20px;font-size:12px;letter-spacing:0.5px;display:none;}
+#validity-bar.warn{display:block;color:#ffaa44;background:rgba(255,165,0,0.08);border-bottom:1px solid rgba(255,165,0,0.25);}
+#validity-bar.ok{display:block;color:#00c853;background:rgba(0,200,83,0.06);border-bottom:1px solid rgba(0,200,83,0.2);}
 
 /* ═══════════════════════════════════
    PIECE PALETTE
    ═══════════════════════════════════ */
-#palette-section{flex-shrink:0;border-top:2px solid var(--g4);background:var(--bg2);}
-.palette-header{padding:12px 18px 6px;display:flex;align-items:center;justify-content:space-between;}
+#palette-section{padding:0 0 40px 0;}
+.palette-header{padding:16px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:var(--border);}
 .palette-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g2);font-weight:600;}
 .palette-hint{font-size:11px;color:var(--g3);}
-#piece-palette{display:flex;gap:10px;padding:8px 18px 16px;overflow-x:auto;flex-wrap:nowrap;}
-#piece-palette::-webkit-scrollbar{height:3px;}
-#piece-palette::-webkit-scrollbar-thumb{background:var(--g3);border-radius:2px;}
-
-/* Individual piece cards in palette */
+/* Palette rows for corners/edges */
+.palette-group{padding:10px 20px 4px;}
+.palette-group-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--g3);margin-bottom:8px;}
+.palette-row{display:flex;gap:10px;flex-wrap:wrap;}
 .piece-card{
-  flex-shrink:0;
-  width:72px;
-  background:var(--bg3);
-  border:1px solid var(--g4);
-  border-radius:6px;
-  padding:10px 6px;
-  cursor:pointer;
-  transition:all 0.15s;
+  width:76px;min-height:70px;
+  background:var(--bg2);border:1px solid var(--g4);border-radius:6px;
+  padding:10px 6px 8px;cursor:pointer;transition:all 0.15s;
   display:flex;flex-direction:column;align-items:center;gap:6px;
 }
-.piece-card:hover{border-color:var(--g2);background:var(--bg4);}
-.piece-card.selected{border-color:var(--w);background:rgba(255,255,255,0.08);box-shadow:0 0 12px rgba(255,255,255,0.2);}
-.piece-card.placed{opacity:0.25;pointer-events:none;}
+.piece-card:hover{border-color:var(--g2);background:var(--bg3);}
+.piece-card.selected{border-color:var(--w);background:rgba(255,255,255,0.08);box-shadow:0 0 14px rgba(255,255,255,0.2);}
+.piece-card.placed{opacity:0.2;pointer-events:none;}
 .piece-icon{display:flex;gap:3px;align-items:center;justify-content:center;}
-.piece-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
-.piece-dot.corner-third{width:11px;height:11px;}
-.piece-label{font-size:9px;letter-spacing:0.5px;color:var(--g2);text-align:center;line-height:1.3;font-family:var(--fb);}
-
-/* Validity / warning bar */
-#validity-bar{padding:8px 18px;font-size:12px;letter-spacing:0.5px;display:none;flex-shrink:0;}
-#validity-bar.warn{display:block;color:#ffaa44;background:rgba(255,165,0,0.1);border-top:1px solid rgba(255,165,0,0.3);}
-#validity-bar.ok{display:block;color:#00c853;background:rgba(0,200,83,0.08);border-top:1px solid rgba(0,200,83,0.2);}
+.piece-dot{width:16px;height:16px;border-radius:3px;flex-shrink:0;}
+.piece-dot.sm{width:12px;height:12px;}
+.piece-label{font-size:9px;letter-spacing:0.5px;color:var(--g2);text-align:center;line-height:1.3;font-family:var(--fb);font-weight:600;}
 
 /* SETTINGS */
 #screen-settings{background:transparent;}
@@ -321,37 +329,42 @@ html,body{
     <div class="ptab" onclick="setPStage('pll')">PLL</div>
   </div>
   <div class="practice-body">
-    <!-- 3D cube viewport — height set by JS based on stage -->
-    <div id="cube-wrap" style="height:240px;">
+    <!-- 3D Cube -->
+    <div id="cube-wrap" style="height:280px;">
       <canvas id="practice-canvas"></canvas>
       <div id="move-overlay"></div>
-      <!-- Reset view button -->
-      <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.4;z-index:5;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <div class="cube-reset-btn" onclick="resetCubeAngle()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </div>
     </div>
 
-    <!-- Stage info + action buttons -->
-    <div class="stage-info-bar">
-      <div class="stage-info-title" id="stage-title">CROSS</div>
-      <div class="stage-info-desc" id="stage-desc">Build the white cross. Select a piece from the palette, tap its slot on the cube.</div>
-      <div class="stage-info-btns">
-        <button class="btn btn-o btn-sm" onclick="resetPCube()">Reset</button>
-        <button class="btn btn-o btn-sm" onclick="rotateCube90()">90°</button>
-        <button class="btn btn-sm" onclick="handleSolutionBtn()">Solve</button>
+    <!-- Stage card: title + desc + 3 action buttons -->
+    <div class="stage-card">
+      <div class="stage-card-title" id="stage-title">CROSS</div>
+      <div class="stage-card-desc" id="stage-desc">Build the white cross. Select a piece from the palette, then tap its slot on the cube.</div>
+      <div class="action-btns">
+        <button class="btn btn-o" onclick="resetPCube()">Reset</button>
+        <button class="btn btn-o" onclick="rotateCube90()">90°</button>
+        <button class="btn" onclick="handleSolutionBtn()">Solution</button>
       </div>
     </div>
 
-    <!-- Scramble controls -->
-    <div class="practice-controls">
-      <input class="sinput" id="pscramble-input" placeholder="Scramble moves..." spellcheck="false" autocomplete="off">
-      <button class="btn btn-o btn-sm" onclick="handleGenerateBtn()">Gen</button>
-      <button class="btn btn-sm" onclick="handleApplyBtn()">Apply</button>
-      <div class="speed-group">
-        <button class="speed-btn" data-speed="slow" onclick="setSpeed('slow')">S</button>
-        <button class="speed-btn active-speed" data-speed="normal" onclick="setSpeed('normal')">N</button>
-        <button class="speed-btn" data-speed="fast" onclick="setSpeed('fast')">F</button>
+    <!-- Scramble section -->
+    <div class="scramble-section">
+      <span class="slabel">Scramble</span>
+      <div class="sinput-row">
+        <input class="sinput" id="pscramble-input" placeholder="Enter or generate scramble..." spellcheck="false" autocomplete="off">
+        <button class="btn btn-o btn-sm" onclick="handleGenerateBtn()">Scramble</button>
+        <button class="btn btn-sm" onclick="handleApplyBtn()">Apply</button>
       </div>
+    </div>
+
+    <!-- Speed -->
+    <div class="speed-section">
+      <span class="speed-label">Speed</span>
+      <button class="speed-btn" data-speed="slow" onclick="setSpeed('slow')">Slow</button>
+      <button class="speed-btn active-speed" data-speed="normal" onclick="setSpeed('normal')">Normal</button>
+      <button class="speed-btn" data-speed="fast" onclick="setSpeed('fast')">Fast</button>
     </div>
 
     <!-- Solution display -->
@@ -367,11 +380,10 @@ html,body{
     <div id="palette-section">
       <div class="palette-header">
         <div class="palette-label">Piece Palette</div>
-        <div class="palette-hint" id="palette-hint">Select a piece, then tap its slot on the cube</div>
+        <div class="palette-hint" id="palette-hint">Select a piece → tap its slot</div>
       </div>
-      <div id="piece-palette"></div>
+      <div id="piece-palette-inner"></div>
     </div>
-
   </div>
 </div>
 
@@ -416,26 +428,21 @@ html,body{
   </div>
 </div>
 
-</div><!-- end #app -->
-
-<!-- VIRTUAL CUBE SCREEN — outside #app so it overlays properly -->
+<!-- VIRTUAL CUBE — inside #app so .screen CSS applies -->
 <div id="screen-virtual-cube" class="screen">
   <div class="screen-header"><span>Virtual Cube</span></div>
   <div id="vc-canvas-container">
     <canvas id="vc-canvas"></canvas>
     <div class="vc-top-bar">
       <div style="display:flex;justify-content:space-between;align-items:center;pointer-events:auto;">
-        <div style="flex:1;">
-          <div id="vc-history">No moves yet</div>
-          <div id="vc-scramble-text" onclick="window.vCube&&window.vCube.toggleScramble()" style="font-size:11px;color:var(--g3);cursor:pointer;margin-top:4px;display:none;">Tap to show scramble</div>
-        </div>
+        <div style="flex:1;"><div id="vc-history">No moves yet</div></div>
         <div id="vc-timer-display" style="font-family:var(--fd);font-size:24px;color:var(--w);margin-left:15px;">0.00</div>
       </div>
       <div class="vc-action-row">
-        <div class="vc-icon-btn" onclick="vcUndo()" title="Undo"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcRedo()" title="Redo"><svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcScramble()" title="Scramble"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcReset()" title="Reset"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcUndo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcRedo()"><svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcScramble()"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcReset()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
       </div>
     </div>
     <div class="vc-controls">
@@ -463,6 +470,8 @@ html,body{
     </div>
   </div>
 </div>
+
+</div><!-- end #app -->
 
 <link rel="stylesheet" href="virtual-cube.css">
 <script src="virtual-cube.js"></script>

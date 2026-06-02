@@ -1,16 +1,6 @@
 /* Virtual Cube Screen Styles */
-#screen-virtual-cube {
-    background: transparent;
-    position: relative;
-    height: 100%;
-    width: 100%;
-    display: none;
-    flex-direction: column;
-}
-
-#screen-virtual-cube.active {
-    display: flex;
-}
+/* NOTE: #screen-virtual-cube is now inside #app so .screen CSS handles display/position */
+/* We only need the container and control styles here */
 
 #vc-canvas-container {
     flex: 1;
@@ -57,14 +47,8 @@
 }
 #vc-history::-webkit-scrollbar { display: none; }
 
-.vc-history-move {
-    opacity: 0.6;
-}
-.vc-history-move.latest {
-    opacity: 1;
-    color: #4CAF50;
-    font-weight: bold;
-}
+.vc-history-move { opacity: 0.6; }
+.vc-history-move.latest { opacity: 1; color: #4CAF50; font-weight: bold; }
 
 .vc-action-row {
     display: flex;
@@ -86,7 +70,7 @@
     transition: all 0.2s;
 }
 .vc-icon-btn:active { background: rgba(255, 255, 255, 0.2); }
-.vc-icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+.vc-icon-btn svg { width: 20px; height: 20px; fill: currentColor; stroke: currentColor; }
 
 /* Control Overlays */
 .vc-controls {
@@ -99,15 +83,6 @@
     align-items: center;
     padding: 20px;
     transition: opacity 0.5s ease;
-}
-
-#vc-scramble-text {
-    display: block !important;
-    opacity: 0.1;
-    transition: opacity 0.3s;
-}
-#vc-scramble-text.visible {
-    opacity: 1;
 }
 
 .vc-btn-group {
@@ -159,79 +134,37 @@
     gap: 10px;
     pointer-events: auto;
 }
-.vc-rotations .vc-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
-}
+.vc-rotations .vc-btn { width: 44px; height: 44px; font-size: 16px; }
 
 /* Selection Popup */
 .vc-popup {
     position: absolute;
-    left: 0;
-    top: 0;
-    width: 0;
-    height: 0;
-    display: block;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(8, 8, 8, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 5px;
+    display: none;
+    flex-direction: column;
+    gap: 5px;
     z-index: 100;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.12s ease;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-
-.vc-popup.show { opacity: 1; }
+.vc-popup.show { display: flex; }
 
 .vc-option {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.8);
+    padding: 12px 24px;
+    color: var(--g2);
     font-family: var(--fd);
-    font-size: 16px;
-    letter-spacing: 1px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: translate(-50%, -50%) scale(0.6);
-    opacity: 0;
-    transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    font-size: 18px;
+    text-align: center;
+    border-radius: 4px;
 }
+.vc-option.selected { background: var(--w); color: var(--bg); }
 
-.vc-popup.show .vc-option { opacity: 1; }
-.vc-popup.show .vc-option:nth-child(1) { transform: translate(-50%, -85px) scale(1); }
-.vc-popup.show .vc-option:nth-child(2) { transform: translate(-50%, 85px) scale(1); }
-
-.vc-option.selected {
-    background: var(--w);
-    color: var(--bg);
-    border-color: rgba(255, 255, 255, 0.5);
-}
-
-.vc-scroll-hint {
-    position: absolute;
-    pointer-events: none;
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.2);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.vc-btn:active .vc-scroll-hint {
-    opacity: 1;
-}
-
-.vc-scroll-hint.up { top: -15px; left: 50%; transform: translateX(-50%); }
-.vc-scroll-hint.down { bottom: -15px; left: 50%; transform: translateX(-50%); }
-
-/* Slice Controls (Advanced Mode) */
+/* Slice Controls */
 #vc-slice-controls {
     position: absolute;
     bottom: 20px;
@@ -242,8 +175,4 @@
     pointer-events: auto;
 }
 #vc-slice-controls.active { display: flex; }
-#vc-slice-controls .vc-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 16px;
-}
+#vc-slice-controls .vc-btn { width: 44px; height: 44px; font-size: 16px; }
