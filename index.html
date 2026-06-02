@@ -17,6 +17,7 @@
   --w:#ffffff;--g1:#e0e0e0;--g2:#888888;--g3:#444444;--g4:#2a2a2a;
   --border:1px solid #2a2a2a;--border-w:1px solid #ffffff;
   --fd:'Orbitron',monospace;--fb:'Rajdhani',sans-serif;
+  --cY:#ffd700;--cW:#ffffff;--cG:#00c853;--cB:#2979ff;--cR:#f44336;--cO:#ff6d00;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{
@@ -49,17 +50,23 @@ html,body{
 .drawer-nav{flex:1;display:flex;flex-direction:column;}
 .nav-item{padding:18px 28px;font-family:var(--fb);font-size:15px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;color:var(--g2);border-left:2px solid transparent;transition:all 0.2s ease;display:flex;align-items:center;gap:16px;}
 .nav-item:hover,.nav-item.active{color:var(--w);border-left-color:var(--w);background:rgba(255,255,255,0.03);}
-.nav-icon{font-size:16px;width:22px;text-align:center;}
+.nav-icon{font-size:16px;width:22px;text-align:center;display:flex;align-items:center;justify-content:center;}
 .drawer-footer{padding:20px 28px 0;border-top:var(--border);font-size:10px;letter-spacing:1px;color:var(--g3);text-transform:uppercase;}
 
-/* SCREEN HEADER */
-.screen-header{padding:16px 20px 16px 64px;border-bottom:var(--border);font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;min-height:56px;flex-shrink:0;}
+/* SCREEN HEADER — consistent across all pages */
+.screen-header{
+  padding:0 20px 0 64px;
+  border-bottom:var(--border);
+  font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:space-between;
+  height:56px;min-height:56px;flex-shrink:0;
+}
 .header-action{font-family:var(--fb);font-size:11px;letter-spacing:2px;color:var(--g2);cursor:pointer;text-transform:uppercase;padding:6px 12px;border:var(--border);}
 .header-action:hover{color:var(--w);border-color:var(--w);}
 
 /* TIMER */
-#screen-timer{padding-top:60px;}
-#screen-timer::before{content:'CUBE AI';position:absolute;top:26px;left:64px;font-family:var(--fd);font-size:18px;font-weight:900;color:var(--w);letter-spacing:3px;pointer-events:none;z-index:10;}
+#screen-timer{padding-top:56px;}
+#screen-timer::before{content:'CUBE AI';position:absolute;top:0;left:64px;height:56px;line-height:56px;font-family:var(--fd);font-size:18px;font-weight:900;color:var(--w);letter-spacing:3px;pointer-events:none;z-index:10;}
 .timer-scramble{padding:10px 30px;text-align:center;font-family:var(--fb);font-size:15px;font-weight:600;letter-spacing:1.5px;color:var(--g1);display:flex;align-items:center;justify-content:center;min-height:60px;flex-shrink:0;}
 .timer-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
 #timer-display{font-family:var(--fd);font-size:clamp(52px,14vw,88px);font-weight:900;letter-spacing:-2px;color:var(--w);transition:color 0.15s ease;position:relative;cursor:default;}
@@ -92,48 +99,89 @@ html,body{
 .solve-del:hover{color:var(--w);}
 .history-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--g3);}
 
-/* PRACTICE */
+/* ═══════════════════════════════════
+   PRACTICE — PIECE PALETTE SYSTEM
+   ═══════════════════════════════════ */
 #screen-practice{background:transparent;}
 .practice-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:var(--border);flex-shrink:0;}
 .ptab{padding:13px 4px;text-align:center;font-family:var(--fb);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
 .ptab.active{color:var(--w);border-bottom-color:var(--w);}
 .practice-body{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-#cube-wrap{width:100%;height:220px;flex-shrink:0;background:transparent;position:relative;}
+
+/* 3D Cube viewport */
+#cube-wrap{width:100%;flex-shrink:0;background:transparent;position:relative;}
 #practice-canvas{width:100%;height:100%;display:block;}
 #move-overlay{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-family:var(--fd);font-size:18px;font-weight:700;letter-spacing:3px;color:var(--w);background:rgba(0,0,0,0.6);padding:4px 16px;opacity:0;transition:opacity 0.2s;pointer-events:none;}
 #move-overlay.show{opacity:1;}
-.practice-scroll{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
-.practice-scroll::-webkit-scrollbar{width:2px;}
-.stage-card{background:var(--bg2);border:var(--border);padding:14px;}
-.stage-card-title{font-family:var(--fd);font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:6px;}
-.stage-card-desc{font-size:12px;color:var(--g2);line-height:1.6;}
-.sinput-row{display:flex;gap:8px;}
-.sinput{flex:1;background:var(--bg3);border:var(--border);padding:11px 12px;color:var(--w);font-family:var(--fb);font-size:13px;letter-spacing:1px;outline:none;}
+
+/* Stage info bar */
+.stage-info-bar{padding:10px 14px;background:var(--bg2);border-bottom:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.stage-info-title{font-family:var(--fd);font-size:11px;font-weight:700;letter-spacing:2px;color:var(--w);}
+.stage-info-desc{font-size:11px;color:var(--g2);flex:1;margin-left:10px;}
+.stage-info-btns{display:flex;gap:6px;flex-shrink:0;}
+
+/* Controls row */
+.practice-controls{padding:8px 14px;border-bottom:var(--border);display:flex;gap:6px;flex-shrink:0;align-items:center;}
+.sinput{flex:1;background:var(--bg3);border:var(--border);padding:8px 10px;color:var(--w);font-family:var(--fb);font-size:12px;letter-spacing:1px;outline:none;}
 .sinput:focus{border-color:var(--g2);}
 .sinput::placeholder{color:var(--g3);}
-.btn{background:var(--w);color:var(--bg);border:none;padding:11px 16px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.btn{background:var(--w);color:var(--bg);border:none;padding:9px 14px;font-family:var(--fb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
 .btn:hover{background:var(--g1);}
 .btn:disabled{opacity:0.4;cursor:not-allowed;}
 .btn-o{background:transparent;color:var(--w);border:var(--border-w);}
 .btn-o:hover{background:var(--w);color:var(--bg);}
-.btn-row{display:flex;gap:8px;}
-.btn-row .btn,.btn-row .btn-o{flex:1;text-align:center;}
-.slabel{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:6px;}
-.cpalette{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.cswatch{width:30px;height:30px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
-.cswatch.sel{border-color:var(--w);transform:scale(1.15);box-shadow:0 0 8px rgba(255,255,255,0.3);}
-#net-wrap{background:var(--bg2);border:var(--border);padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;}
-.net-label{font-size:10px;letter-spacing:2px;color:var(--g3);text-transform:uppercase;align-self:flex-start;}
-#cube-net{display:inline-block;}
-#mismatch-warn{display:none;background:rgba(244,67,54,0.15);border:1px solid rgba(244,67,54,0.4);padding:8px 12px;font-size:11px;color:#ff6b6b;letter-spacing:1px;}
-#mismatch-warn.show{display:block;}
-#solution-panel{display:none;background:var(--bg2);border:var(--border);padding:12px;}
+.btn-sm{padding:6px 10px;font-size:10px;}
+
+/* Speed buttons */
+.speed-group{display:flex;gap:4px;align-items:center;margin-left:auto;}
+.speed-btn{background:transparent;color:var(--g3);border:var(--border);padding:5px 8px;font-family:var(--fb);font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s;}
+.speed-btn.active-speed{color:var(--w);border-color:var(--w);}
+
+/* Solution panel */
+#solution-panel{display:none;padding:8px 14px;border-bottom:var(--border);background:var(--bg2);}
 #solution-panel.show{display:block;}
-.sol-label{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:8px;}
-.sol-moves{font-family:var(--fd);font-size:13px;letter-spacing:2px;color:var(--w);line-height:1.8;word-break:break-all;}
-.sol-move-item{display:inline-block;padding:2px 6px;margin:2px;border:var(--border);transition:all 0.2s;}
+.sol-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);margin-bottom:6px;}
+.sol-moves{font-family:var(--fd);font-size:12px;letter-spacing:2px;color:var(--w);line-height:1.8;word-break:break-all;}
+.sol-move-item{display:inline-block;padding:2px 5px;margin:1px;border:var(--border);transition:all 0.2s;}
 .sol-move-item.current{background:var(--w);color:var(--bg);}
 .sol-move-item.done{color:var(--g3);border-color:var(--g4);}
+
+/* ═══════════════════════════════════
+   PIECE PALETTE
+   ═══════════════════════════════════ */
+#palette-section{flex-shrink:0;border-top:var(--border);background:var(--bg2);}
+.palette-header{padding:8px 14px 4px;display:flex;align-items:center;justify-content:space-between;}
+.palette-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--g3);}
+.palette-hint{font-size:10px;color:var(--g3);}
+#piece-palette{display:flex;gap:6px;padding:6px 14px 10px;overflow-x:auto;flex-wrap:nowrap;}
+#piece-palette::-webkit-scrollbar{height:3px;}
+#piece-palette::-webkit-scrollbar-thumb{background:var(--g3);border-radius:2px;}
+
+/* Individual piece cards in palette */
+.piece-card{
+  flex-shrink:0;
+  width:56px;
+  background:var(--bg3);
+  border:1px solid var(--g4);
+  border-radius:4px;
+  padding:6px 4px;
+  cursor:pointer;
+  transition:all 0.15s;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  position:relative;
+}
+.piece-card:hover{border-color:var(--g2);}
+.piece-card.selected{border-color:var(--w);background:rgba(255,255,255,0.07);box-shadow:0 0 10px rgba(255,255,255,0.15);}
+.piece-card.placed{opacity:0.3;pointer-events:none;}
+.piece-icon{display:flex;gap:2px;align-items:center;justify-content:center;}
+.piece-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.piece-dot.corner-third{width:8px;height:8px;}
+.piece-label{font-size:8px;letter-spacing:0.5px;color:var(--g2);text-align:center;line-height:1.2;}
+
+/* Validity / warning bar */
+#validity-bar{padding:6px 14px;font-size:11px;letter-spacing:0.5px;display:none;flex-shrink:0;}
+#validity-bar.warn{display:block;color:#ffaa44;background:rgba(255,165,0,0.1);border-top:1px solid rgba(255,165,0,0.3);}
+#validity-bar.ok{display:block;color:#00c853;background:rgba(0,200,83,0.08);border-top:1px solid rgba(0,200,83,0.2);}
 
 /* SETTINGS */
 #screen-settings{background:transparent;}
@@ -172,14 +220,29 @@ html,body{
   <div id="drawer-overlay" onclick="closeDrawer()"></div>
   <div id="drawer-panel">
     <div class="drawer-logo">CUBE AI</div>
-    <div class="drawer-tagline">CONNECT YOUR CUBE TO YOUR PHONE</div>
+    <div class="drawer-tagline">SPEEDCUBING TRAINER</div>
     <nav class="drawer-nav">
       <div class="nav-item active" onclick="showScreen('timer');closeDrawer()"><span class="nav-icon">⏱</span>Timer</div>
       <div class="nav-item" onclick="showScreen('history');closeDrawer()"><span class="nav-icon">📋</span>History</div>
+      <div class="nav-item" onclick="showScreen('virtual-cube');closeDrawer()">
+        <span class="nav-icon">
+          <!-- Rubik's Cube SVG icon -->
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 1L16 5V13L9 17L2 13V5L9 1Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M9 1V9M9 9L16 5M9 9L2 5M9 9V17" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+            <rect x="5.5" y="2.5" width="2.5" height="2.5" rx="0.4" fill="#f44336" opacity="0.9"/>
+            <rect x="10" y="2.5" width="2.5" height="2.5" rx="0.4" fill="#ffd700" opacity="0.9"/>
+            <rect x="12.5" y="6" width="2.5" height="2.5" rx="0.4" fill="#ff6d00" opacity="0.9"/>
+            <rect x="12.5" y="9.5" width="2.5" height="2.5" rx="0.4" fill="#ff6d00" opacity="0.9"/>
+            <rect x="3" y="6" width="2.5" height="2.5" rx="0.4" fill="#f44336" opacity="0.9"/>
+            <rect x="3" y="9.5" width="2.5" height="2.5" rx="0.4" fill="#f44336" opacity="0.9"/>
+            <rect x="5.5" y="11" width="2.5" height="2.5" rx="0.4" fill="#00c853" opacity="0.9"/>
+            <rect x="10" y="11" width="2.5" height="2.5" rx="0.4" fill="#2979ff" opacity="0.9"/>
+          </svg>
+        </span>Virtual Cube</div>
       <div class="nav-item" onclick="showScreen('practice');closeDrawer()"><span class="nav-icon">🎯</span>Practice</div>
       <div class="nav-item" onclick="showScreen('learn');closeDrawer()"><span class="nav-icon">📖</span>Learn</div>
       <div class="nav-item" onclick="showScreen('settings');closeDrawer()"><span class="nav-icon">⚙</span>Settings</div>
-      <div class="nav-item" onclick="showScreen('virtual-cube');closeDrawer()"><span class="nav-icon">🧊</span>Virtual Cube</div>
       <div class="nav-item" onclick="showScreen('privacy');closeDrawer()"><span class="nav-icon">🔒</span>Privacy</div>
     </nav>
     <div class="drawer-footer">CUBE AI v1.0 · Free</div>
@@ -214,7 +277,7 @@ html,body{
 
 <!-- PRACTICE -->
 <div id="screen-practice" class="screen">
-  <div class="screen-header" style="padding-left:64px;"><span>Practice</span></div>
+  <div class="screen-header"><span>Practice</span></div>
   <div class="practice-tabs">
     <div class="ptab active" onclick="setPStage('cross')">Cross</div>
     <div class="ptab" onclick="setPStage('f2l')">F2L</div>
@@ -222,59 +285,62 @@ html,body{
     <div class="ptab" onclick="setPStage('pll')">PLL</div>
   </div>
   <div class="practice-body">
-    <div id="cube-wrap">
+    <!-- 3D cube viewport — height set by JS based on stage -->
+    <div id="cube-wrap" style="height:240px;">
       <canvas id="practice-canvas"></canvas>
       <div id="move-overlay"></div>
-      <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.5;">
+      <!-- Reset view button -->
+      <div onclick="resetCubeAngle()" style="position:absolute;bottom:8px;right:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0.4;z-index:5;">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </div>
     </div>
-    <div class="practice-scroll">
-      <div class="stage-card">
-        <div class="stage-card-title" id="stage-title">CROSS</div>
-        <div class="stage-card-desc" id="stage-desc">Build the white cross. Tap a sticker, pick a color to move it there. Only visible edge stickers participate.</div>
-      </div>
-      <div>
-        <div class="slabel">Scramble <span style="color:var(--g3);font-size:10px;">— type moves or generate</span></div>
-        <div class="sinput-row">
-          <input class="sinput" id="pscramble-input" placeholder="e.g. R U R' U' F2 L..." spellcheck="false" autocomplete="off">
-          <button class="btn btn-o" onclick="handleGenerateBtn()">Gen</button>
-          <button class="btn" onclick="handleApplyBtn()">Apply</button>
-        </div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-o" onclick="resetPCube()">Reset</button>
-        <button class="btn btn-o" onclick="rotateCube90()">View</button>
-        <button class="btn" onclick="handleSolutionBtn()">Solve</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <span style="font-size:10px;letter-spacing:2px;color:var(--g3);">SPEED</span>
-        <button class="btn btn-o speed-btn" data-speed="slow" onclick="setSpeed('slow')" style="padding:6px 10px;font-size:10px;">Slow</button>
-        <button class="btn speed-btn active-speed" data-speed="normal" onclick="setSpeed('normal')" style="padding:6px 10px;font-size:10px;">Normal</button>
-        <button class="btn btn-o speed-btn" data-speed="fast" onclick="setSpeed('fast')" style="padding:6px 10px;font-size:10px;">Fast</button>
-      </div>
-      <div id="solution-panel">
-        <div class="sol-label">Solution</div>
-        <div class="sol-moves" id="sol-moves-display"></div>
-      </div>
-      <div id="mismatch-warn">⚠ Invalid cube state — check your colors</div>
-      <div id="missing-warn" style="display:none;background:rgba(255,165,0,0.15);border:1px solid rgba(255,165,0,0.4);padding:8px 12px;font-size:11px;color:#ffaa44;letter-spacing:1px;"></div>
-      <div>
-        <div class="slabel">Paint Stickers <span id="paint-restrict" style="color:var(--g3);"></span></div>
-        <div class="cpalette" id="cpalette"></div>
-        <div style="margin-top:6px;font-size:11px;color:var(--g3);letter-spacing:0.5px;">Tap sticker on cube to paint · tap again to unpaint</div>
-      </div>
-      <div id="net-wrap">
-        <div class="net-label">Live Cube Net</div>
-        <div id="cube-net"></div>
+
+    <!-- Stage info + action buttons -->
+    <div class="stage-info-bar">
+      <div class="stage-info-title" id="stage-title">CROSS</div>
+      <div class="stage-info-desc" id="stage-desc">Build the white cross. Select a piece from the palette, tap its slot on the cube.</div>
+      <div class="stage-info-btns">
+        <button class="btn btn-o btn-sm" onclick="resetPCube()">Reset</button>
+        <button class="btn btn-sm" onclick="handleSolutionBtn()">Solve</button>
       </div>
     </div>
+
+    <!-- Scramble controls -->
+    <div class="practice-controls">
+      <input class="sinput" id="pscramble-input" placeholder="Scramble moves..." spellcheck="false" autocomplete="off">
+      <button class="btn btn-o btn-sm" onclick="handleGenerateBtn()">Gen</button>
+      <button class="btn btn-sm" onclick="handleApplyBtn()">Apply</button>
+      <div class="speed-group">
+        <button class="speed-btn" data-speed="slow" onclick="setSpeed('slow')">S</button>
+        <button class="speed-btn active-speed" data-speed="normal" onclick="setSpeed('normal')">N</button>
+        <button class="speed-btn" data-speed="fast" onclick="setSpeed('fast')">F</button>
+      </div>
+    </div>
+
+    <!-- Solution display -->
+    <div id="solution-panel">
+      <div class="sol-label">Solution</div>
+      <div class="sol-moves" id="sol-moves-display"></div>
+    </div>
+
+    <!-- Validity bar -->
+    <div id="validity-bar"></div>
+
+    <!-- Piece Palette -->
+    <div id="palette-section">
+      <div class="palette-header">
+        <div class="palette-label">Piece Palette</div>
+        <div class="palette-hint" id="palette-hint">Select a piece, then tap its slot on the cube</div>
+      </div>
+      <div id="piece-palette"></div>
+    </div>
+
   </div>
 </div>
 
 <!-- LEARN -->
 <div id="screen-learn" class="screen">
-  <div class="screen-header" style="padding-left:64px;"><span>Learn</span></div>
+  <div class="screen-header"><span>Learn</span></div>
   <div style="flex:1;overflow:hidden;">
     <iframe src="learn.html" style="width:100%;height:100%;border:none;"></iframe>
   </div>
@@ -282,7 +348,7 @@ html,body{
 
 <!-- SETTINGS -->
 <div id="screen-settings" class="screen">
-  <div class="screen-header" style="padding-left:64px;"><span>Settings</span></div>
+  <div class="screen-header"><span>Settings</span></div>
   <div class="settings-body">
     <div class="sgroup-label">Timer</div>
     <div class="srow"><div class="sinfo"><div class="sname">Inspection Time</div><div class="sdesc">15 sec WCA inspection before solve</div></div><div class="toggle" id="tog-inspection" onclick="toggleS('inspection')"><div class="tknob"></div></div></div>
@@ -293,11 +359,9 @@ html,body{
     <div class="sgroup-label">Virtual Cube</div>
     <div class="srow"><div class="sinfo"><div class="sname">Advanced Mode</div><div class="sdesc">Show slice move buttons (E, S, M)</div></div><div class="toggle" id="tog-vc-advanced" onclick="toggleVCSetting('advanced')"><div class="tknob"></div></div></div>
     <div class="srow"><div class="sinfo"><div class="sname">Vibration</div><div class="sdesc">Haptic feedback on moves</div></div><div class="toggle" id="tog-vc-vibration" onclick="toggleVCSetting('vibration')"><div class="tknob"></div></div></div>
-    <div class="srow"><div class="sinfo"><div class="sname">Move Sound</div><div class="sdesc">Play a sound on every move</div></div><div class="toggle on" id="tog-vc-sound" onclick="toggleVCSetting('sound')"><div class="tknob"></div></div></div>
     <div class="srow"><div class="sinfo"><div class="sname">Blindfold Mode</div><div class="sdesc">Hide all cube colors</div></div><div class="toggle" id="tog-vc-blindfold" onclick="toggleVCSetting('blindfold')"><div class="tknob"></div></div></div>
     <div class="srow"><div class="sinfo"><div class="sname">Inspection</div><div class="sdesc">15s inspection for Virtual Cube</div></div><div class="toggle" id="tog-vc-inspection" onclick="toggleVCSetting('inspection')"><div class="tknob"></div></div></div>
     <div class="srow"><div class="sinfo"><div class="sname">Cube Theme</div><div class="sdesc">Change the color scheme</div></div><select class="ssel" id="sel-vc-theme" onchange="updateVCTheme(this.value)"><option value="standard">Standard</option><option value="neon">Neon</option><option value="pastel">Pastel</option></select></div>
-    
     <div class="sgroup-label">Data</div>
     <div class="srow"><div class="sinfo"><div class="sname">Reset All Solves</div><div class="sdesc">Cannot be undone</div></div><button class="btn btn-o" style="font-size:11px;padding:8px 14px;" onclick="clearAllSolves()">Reset</button></div>
   </div>
@@ -305,7 +369,7 @@ html,body{
 
 <!-- PRIVACY -->
 <div id="screen-privacy" class="screen">
-  <div class="screen-header" style="padding-left:64px;"><span>Privacy</span></div>
+  <div class="screen-header"><span>Privacy</span></div>
   <div class="privacy-body">
     <p>Last updated: 2025</p>
     <h2>Overview</h2><p>CUBE AI is a free speedcubing timer and trainer. All data stays on your device.</p>
@@ -317,61 +381,45 @@ html,body{
 
 </div><!-- end #app -->
 
-<!-- VIRTUAL CUBE SCREEN -->
+<!-- VIRTUAL CUBE SCREEN — outside #app so it overlays properly -->
 <div id="screen-virtual-cube" class="screen">
-  <div class="screen-header" style="padding-left:64px;"><span>Virtual Cube</span></div>
+  <div class="screen-header"><span>Virtual Cube</span></div>
   <div id="vc-canvas-container">
     <canvas id="vc-canvas"></canvas>
-    
-    <!-- Top Bar: History & Actions -->
     <div class="vc-top-bar">
-      <div style="display: flex; justify-content: space-between; align-items: center; pointer-events: auto;">
-        <div style="flex: 1;">
+      <div style="display:flex;justify-content:space-between;align-items:center;pointer-events:auto;">
+        <div style="flex:1;">
           <div id="vc-history">No moves yet</div>
-          <div id="vc-scramble-text" onclick="window.vCube.toggleScramble()" style="font-size: 11px; color: var(--g3); cursor: pointer; margin-top: 4px; display: none;">Tap to show scramble</div>
+          <div id="vc-scramble-text" onclick="window.vCube&&window.vCube.toggleScramble()" style="font-size:11px;color:var(--g3);cursor:pointer;margin-top:4px;display:none;">Tap to show scramble</div>
         </div>
-        <div id="vc-timer-display" style="font-family: var(--fd); font-size: 24px; color: var(--w); margin-left: 15px;">0.00</div>
+        <div id="vc-timer-display" style="font-family:var(--fd);font-size:24px;color:var(--w);margin-left:15px;">0.00</div>
       </div>
       <div class="vc-action-row">
         <div class="vc-icon-btn" onclick="vcUndo()" title="Undo"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></div>
         <div class="vc-icon-btn" onclick="vcRedo()" title="Redo"><svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg></div>
         <div class="vc-icon-btn" onclick="vcScramble()" title="Scramble"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcReset()" title="Reset Orientation"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg></div>
+        <div class="vc-icon-btn" onclick="vcReset()" title="Reset"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg></div>
       </div>
     </div>
-
-    <!-- Controls Overlay -->
     <div class="vc-controls">
-      <div class="vc-btn-group vc-top">
-        <div class="vc-btn" data-move="U">U<div class="vc-scroll-hint up">U</div><div class="vc-scroll-hint down">U'</div></div>
-      </div>
-      
+      <div class="vc-btn-group vc-top"><div class="vc-btn" data-move="U">U</div></div>
       <div class="vc-middle">
-        <div class="vc-btn" data-move="L">L<div class="vc-scroll-hint up">L</div><div class="vc-scroll-hint down">L'</div></div>
-        <div class="vc-btn" data-move="F">F<div class="vc-scroll-hint up">F</div><div class="vc-scroll-hint down">F'</div></div>
-        <div class="vc-btn" data-move="R">R<div class="vc-scroll-hint up">R</div><div class="vc-scroll-hint down">R'</div></div>
+        <div class="vc-btn" data-move="L">L</div>
+        <div class="vc-btn" data-move="F">F</div>
+        <div class="vc-btn" data-move="R">R</div>
       </div>
-      
-      <div class="vc-btn-group vc-bottom">
-        <div class="vc-btn" data-move="D">D<div class="vc-scroll-hint up">D</div><div class="vc-scroll-hint down">D'</div></div>
-      </div>
+      <div class="vc-btn-group vc-bottom"><div class="vc-btn" data-move="D">D</div></div>
     </div>
-
-    <!-- Rotations Cluster -->
-    <!-- Slice Controls (Advanced Mode) -->
-    <div id="vc-slice-controls" class="vc-rotations" style="right: auto; left: 20px; display: none;">
+    <div id="vc-slice-controls" class="vc-rotations" style="right:auto;left:20px;display:none;">
       <div class="vc-btn" data-move="M">M</div>
       <div class="vc-btn" data-move="E">E</div>
       <div class="vc-btn" data-move="S">S</div>
     </div>
-
     <div class="vc-rotations">
       <div class="vc-btn" data-move="X">X</div>
       <div class="vc-btn" data-move="Y">Y</div>
       <div class="vc-btn" data-move="Z">Z</div>
     </div>
-
-    <!-- Selection Popup -->
     <div id="vc-popup" class="vc-popup">
       <div class="vc-option">R</div>
       <div class="vc-option">R'</div>
