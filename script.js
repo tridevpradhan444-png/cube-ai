@@ -815,7 +815,7 @@ function setupDrag(){
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
   },{passive:true});
 
-  canvas.addEventListener('touchmove',e=>{
+  canvas.addEventListener('touchmove',e=>{e.preventdefault();
     if(!isDragging) return;
     const dx=e.touches[0].clientX-prevMouse.x, dy=e.touches[0].clientY-prevMouse.y;
     const distFromStart=Math.sqrt((e.touches[0].clientX-touchStartPos.x)**2+(e.touches[0].clientY-touchStartPos.y)**2);
@@ -825,7 +825,7 @@ function setupDrag(){
     const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
     rootGroup.quaternion.premultiply(qY).premultiply(qX);
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
-  },{passive:true});
+  },{passive:false);
 
   canvas.addEventListener('touchend',e=>{
     const dist=Math.sqrt((e.changedTouches[0].clientX-touchStartPos.x)**2+(e.changedTouches[0].clientY-touchStartPos.y)**2);
