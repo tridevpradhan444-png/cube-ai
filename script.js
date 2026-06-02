@@ -546,174 +546,161 @@ function pieceCardHTML(p){
 }
 
 // ═══════════════════════════════════════════════════════
-//  BUILD 3D MESH FROM PIECE STATE
+//  PIECE → CUBE STATE WRITER
+//  Single source of truth: cubeState drives everything
 // ═══════════════════════════════════════════════════════
 
-// Map slot to which face stickers are relevant for it, and what color each face sticker should be
-// Returns: { face -> color } for all 6 faces of this cubie
-function getCubieFaceColors(x, y, z, slotId){
-  const slot = getSlotDef(slotId);
-  const current = slotState[slotId];
-  const piece = current ? getPieceById(current.pieceId) : null;
-  const orientation = current ? current.orientation : 0;
+// Face index lookup — given a position (x,y,z) on a face, return the sticker index 0-8
+// Layout per face (standard WCA orientation, white bottom, green front):
+// U face: viewed from above,  row0=back(z=-1), row2=front(z=1), col0=left(x=-1), col2=right(x=1)
+// D face: viewed from below,  row0=front(z=1), row2=back(z=-1)
+// F face: viewed from front,  row0=top(y=1),   row2=bottom(y=-1)
+// B face: viewed from back,   row0=top(y=1),   row2=bottom(y=-1), cols mirrored
+// R face: viewed from right,  row0=top(y=1),   row2=bottom(y=-1), col0=front(z=1), col2=back(z=-1)
+// L face: viewed from left,   row0=top(y=1),   row2=bottom(y=-1), col0=back(z=-1), col2=front(z=1)
+function getStickerIdx(face, x, y, z){
+  let row, col;
+  if(face==='U'){ row = z+1; col = x+1; }       // row: z-1=0,z=1,z+1=2
+  else if(face==='D'){ row = 1-z; col = x+1; }
+  else if(face==='F'){ row = 1-y; col = x+1; }
+  else if(face==='B'){ row = 1-y; col = 1-x; }
+  else if(face==='R'){ row = 1-y; col = 1-z; }
+  else              { row = 1-y; col = z+1; }   // L
+  return Math.max(0, Math.min(8, row*3 + col));
+}
 
-  // Default: all faces dark (interior)
-  const faceColors = { R:C.DARK, L:C.DARK, U:C.DARK, D:C.DARK, F:C.DARK, B:C.DARK };
+// Write one piece placement into cubeState
+function writePieceToState(slotId, pieceId, orientation){
+  const slot  = getSlotDef(slotId);
+  const piece = getPieceById(pieceId);
+  if(!slot || !piece) return;
+  const {x, y, z} = slot.pos;
 
-  // Determine which faces are exterior for this position
-  const exteriorFaces = [];
-  if(x===1) exteriorFaces.push('R');
-  if(x===-1) exteriorFaces.push('L');
-  if(y===1) exteriorFaces.push('U');
-  if(y===-1) exteriorFaces.push('D');
-  if(z===1) exteriorFaces.push('F');
-  if(z===-1) exteriorFaces.push('B');
+  if(piece.type === 'edge'){
+    // colors[0] = primary face color, colors[1] = secondary face color
+    // orientation 0 = normal, 1 = flipped
+    const [c0, c1] = orientation === 0
+      ? [piece.colors[0], piece.colors[1]]
+      : [piece.colors[1], piece.colors[0]];
 
-  if(!piece){
-    // No piece placed — show gray for relevant exterior faces
-    for(const f of exteriorFaces) faceColors[f] = C.GRAY;
-    return faceColors;
-  }
-
-  // Assign colors to faces based on piece type and orientation
-  if(piece.type==='edge'){
-    // Edge has 2 colors. orientation 0 or 1 (flip)
-    // The "primary" color goes on the face that's toward the main face direction
-    // The "secondary" goes on the adjacent face
-    const [c0, c1] = orientation===0 ? [piece.colors[0], piece.colors[1]] : [piece.colors[1], piece.colors[0]];
-    // Primary face assignment by position:
-    if(y===-1){
-      // Bottom layer edge
-      faceColors['D'] = c0;
-      if(z===1) faceColors['F'] = c1;
-      else if(z===-1) faceColors['B'] = c1;
-      else if(x===1) faceColors['R'] = c1;
-      else if(x===-1) faceColors['L'] = c1;
-    } else if(y===0){
-      // Middle layer edge
-      if(z===1 && x===1){ faceColors['F']=c0; faceColors['R']=c1; }
-      else if(z===1 && x===-1){ faceColors['F']=c0; faceColors['L']=c1; }
-      else if(z===-1 && x===1){ faceColors['B']=c0; faceColors['R']=c1; }
-      else if(z===-1 && x===-1){ faceColors['B']=c0; faceColors['L']=c1; }
-    } else if(y===1){
-      // Top layer edge
-      faceColors['U'] = c0;
-      if(z===1) faceColors['F'] = c1;
-      else if(z===-1) faceColors['B'] = c1;
-      else if(x===1) faceColors['R'] = c1;
-      else if(x===-1) faceColors['L'] = c1;
+    // Determine the two exterior faces for this edge position
+    let fPrimary, fSecondary;
+    if(y === -1){
+      fPrimary = 'D';
+      fSecondary = z===1 ? 'F' : z===-1 ? 'B' : x===1 ? 'R' : 'L';
+    } else if(y === 1){
+      fPrimary = 'U';
+      fSecondary = z===1 ? 'F' : z===-1 ? 'B' : x===1 ? 'R' : 'L';
+    } else { // y === 0, middle layer
+      if(z===1)       { fPrimary='F'; fSecondary = x===1?'R':'L'; }
+      else if(z===-1) { fPrimary='B'; fSecondary = x===1?'R':'L'; }
+      else if(x===1)  { fPrimary='R'; fSecondary = 'F'; } // shouldn't happen for standard edges
+      else            { fPrimary='L'; fSecondary = 'F'; }
     }
-  } else if(piece.type==='corner'){
-    // Corner has 3 colors. orientation cycles 0/1/2
-    const cols = [
+    cubeState[fPrimary][getStickerIdx(fPrimary, x, y, z)]     = c0;
+    cubeState[fSecondary][getStickerIdx(fSecondary, x, y, z)] = c1;
+
+  } else if(piece.type === 'corner'){
+    // 3 colors, orientation cycles which color faces which axis
+    const c = [
       piece.colors[orientation % 3],
       piece.colors[(orientation+1) % 3],
-      piece.colors[(orientation+2) % 3]
+      piece.colors[(orientation+2) % 3],
     ];
-    // Primary (cols[0]) -> y face, secondary (cols[1]) -> z face, tertiary (cols[2]) -> x face
-    if(y===-1){ faceColors['D']=cols[0]; }
-    else if(y===1){ faceColors['U']=cols[0]; }
-    if(z===1){ faceColors['F']=cols[1]; }
-    else if(z===-1){ faceColors['B']=cols[1]; }
-    if(x===1){ faceColors['R']=cols[2]; }
-    else if(x===-1){ faceColors['L']=cols[2]; }
+    // c[0] → y-axis face (U or D)
+    // c[1] → z-axis face (F or B)
+    // c[2] → x-axis face (R or L)
+    const fy = y === 1 ? 'U' : 'D';
+    const fz = z === 1 ? 'F' : 'B';
+    const fx = x === 1 ? 'R' : 'L';
+    cubeState[fy][getStickerIdx(fy, x, y, z)] = c[0];
+    cubeState[fz][getStickerIdx(fz, x, y, z)] = c[1];
+    cubeState[fx][getStickerIdx(fx, x, y, z)] = c[2];
   }
-
-  // Make sure interior faces stay dark
-  for(const f of ['R','L','U','D','F','B']){
-    const axis = f==='R'||f==='L' ? 'x' : f==='U'||f==='D' ? 'y' : 'z';
-    const val = (f==='R'||f==='U'||f==='F') ? 1 : -1;
-    const pos = axis==='x'?x : axis==='y'?y : z;
-    if(pos !== val) faceColors[f] = C.DARK;
-  }
-
-  return faceColors;
 }
 
-// Determine if a cubie at (x,y,z) is relevant to the current stage
-function getCubieRole(x,y,z){
-  const isCenter = (Math.abs(x)+Math.abs(y)+Math.abs(z))===1;
-  const isEdge   = (Math.abs(x)+Math.abs(y)+Math.abs(z))===2;
-  const isCorner = Math.abs(x)===1&&Math.abs(y)===1&&Math.abs(z)===1;
+// Rebuild cubeState from scratch based on current slotState
+// This is the master sync function — call after every palette interaction
+function rebuildCubeStateFromSlots(){
+  initCubeState(); // start solved
 
-  if(isCenter) return 'center';
-
-  // Active slot for this stage
-  for(const slot of (SLOT_DEFS[pStage]||[])){
-    if(slot.pos.x===x && slot.pos.y===y && slot.pos.z===z) return 'slot';
+  // F2L: write the solved cross into bottom layer first
+  if(pStage === 'f2l'){
+    const cross = [
+      {x:0,y:-1,z:1,  fP:'D',fS:'F', cP:C.W, cS:C.G},
+      {x:1,y:-1,z:0,  fP:'D',fS:'R', cP:C.W, cS:C.O},
+      {x:0,y:-1,z:-1, fP:'D',fS:'B', cP:C.W, cS:C.B},
+      {x:-1,y:-1,z:0, fP:'D',fS:'L', cP:C.W, cS:C.R},
+    ];
+    for(const e of cross){
+      cubeState[e.fP][getStickerIdx(e.fP,e.x,e.y,e.z)] = e.cP;
+      cubeState[e.fS][getStickerIdx(e.fS,e.x,e.y,e.z)] = e.cS;
+    }
   }
 
-  // Cross: show ALL edges as tappable gray slots
-  if(pStage==='cross' && isEdge) return 'slot-empty';
-
-  // F2L: cross bottom edges shown solved; all other edges/corners as gray
-  if(pStage==='f2l'){
-    if(y===-1 && isEdge) return 'cross-solved';
-    if(isEdge || isCorner) return 'slot-empty';
+  // Write all placed pieces
+  for(const [slotId, val] of Object.entries(slotState)){
+    if(val) writePieceToState(slotId, val.pieceId, val.orientation);
   }
-
-  // OLL/PLL: middle layer edges shown as gray for visual completeness
-  if((pStage==='oll'||pStage==='pll') && y===0 && isEdge) return 'slot-empty';
-
-  return 'irrelevant';
 }
 
-// Get face colors for "solved" cross pieces (f2l stage)
-function getSolvedCrossColors(x,y,z){
-  const faceColors = { R:C.DARK, L:C.DARK, U:C.DARK, D:C.DARK, F:C.DARK, B:C.DARK };
-  faceColors['D'] = C.W;
-  if(z===1) faceColors['F'] = C.G;
-  else if(z===-1) faceColors['B'] = C.B;
-  else if(x===1) faceColors['R'] = C.O;
-  else if(x===-1) faceColors['L'] = C.R;
-  return faceColors;
-}
-
+// ─── Build 3D mesh directly from cubeState ───────────────
+// This replaces the old slot-based mesh builder
+// cubeState is always the single source of truth
 function buildMesh(){
   if(!cubeGroup) return;
   while(cubeGroup.children.length) cubeGroup.remove(cubeGroup.children[0]);
 
-  const gap = 0.06;
-  const geo = new THREE.BoxGeometry(1-gap,1-gap,1-gap);
-  const FACE_ORDER = ['R','L','U','D','F','B']; // Three.js BoxGeometry face order
+  const gap = 0.055;
+  const geo = new THREE.BoxGeometry(1-gap, 1-gap, 1-gap);
+  // Three.js BoxGeometry material order: +X(R), -X(L), +Y(U), -Y(D), +Z(F), -Z(B)
+  const FACE_ORDER = ['R','L','U','D','F','B'];
 
-  for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
-    const role = getCubieRole(x,y,z);
-    let faceColors = { R:C.DARK, L:C.DARK, U:C.DARK, D:C.DARK, F:C.DARK, B:C.DARK };
-
-    if(role==='center'){
-      // Show center with face color
-      if(x===1) faceColors['R'] = FACE_COLORS['R'];
-      else if(x===-1) faceColors['L'] = FACE_COLORS['L'];
-      else if(y===1) faceColors['U'] = FACE_COLORS['U'];
-      else if(y===-1) faceColors['D'] = FACE_COLORS['D'];
-      else if(z===1) faceColors['F'] = FACE_COLORS['F'];
-      else if(z===-1) faceColors['B'] = FACE_COLORS['B'];
-    } else if(role==='slot'){
-      const slotDef = SLOT_DEFS[pStage].find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
-      if(slotDef) faceColors = getCubieFaceColors(x,y,z,slotDef.slotId);
-    } else if(role==='slot-empty'){
-      // Gray placeholder — all exterior faces dim gray so user can see the slot
-      if(x===1) faceColors['R']='#222222';
-      if(x===-1) faceColors['L']='#222222';
-      if(y===1) faceColors['U']='#222222';
-      if(y===-1) faceColors['D']='#222222';
-      if(z===1) faceColors['F']='#222222';
-      if(z===-1) faceColors['B']='#222222';
-    } else if(role==='cross-solved'){
-      faceColors = getSolvedCrossColors(x,y,z);
+  for(let x=-1; x<=1; x++) for(let y=-1; y<=1; y++) for(let z=-1; z<=1; z++){
+    const role = getCubieRole(x, y, z);
+    if(role === 'irrelevant'){
+      // Still render as pure black so cube looks solid
+      const mat = new THREE.MeshLambertMaterial({color:0x0a0a0a});
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, y, z);
+      mesh.userData = {x, y, z, slotId: null};
+      cubeGroup.add(mesh);
+      continue;
     }
-    // irrelevant: stays all dark
 
-    const mats = FACE_ORDER.map(f=>{
-      const col = faceColors[f] || C.DARK;
-      return new THREE.MeshLambertMaterial({color: parseInt(col.replace('#',''),16)});
+    const mats = FACE_ORDER.map(face => {
+      // Check if this face is exterior for this cubie
+      const axis = face==='R'||face==='L' ? 'x' : face==='U'||face==='D' ? 'y' : 'z';
+      const val  = (face==='R'||face==='U'||face==='F') ? 1 : -1;
+      const pos  = axis==='x' ? x : axis==='y' ? y : z;
+      if(pos !== val) return new THREE.MeshLambertMaterial({color:0x0a0a0a}); // interior
+
+      // Get color from cubeState
+      const color = cubeState[face][getStickerIdx(face, x, y, z)];
+
+      // For stages: dim non-relevant stickers
+      let finalColor = color;
+      if(role === 'slot-empty'){
+        // Empty slot — show as darker gray
+        finalColor = '#1e1e1e';
+      } else if(role === 'center'){
+        // Centers always show their face color
+        finalColor = FACE_COLORS[face];
+      }
+      // role === 'slot' or 'cross-solved' → use cubeState color as-is
+
+      // Hide yellow on cross/f2l stages
+      if((pStage==='cross'||pStage==='f2l') && finalColor===C.Y) finalColor='#1e1e1e';
+
+      return new THREE.MeshLambertMaterial({
+        color: parseInt(finalColor.replace('#',''), 16)
+      });
     });
 
     const mesh = new THREE.Mesh(geo, mats);
-    mesh.position.set(x,y,z);
-    const slotDef = SLOT_DEFS[pStage].find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
-    mesh.userData = {x, y, z, slotId: role==='slot' ? slotDef?.slotId : null};
+    mesh.position.set(x, y, z);
+    const slotDef = SLOT_DEFS[pStage]?.find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
+    mesh.userData = {x, y, z, slotId: slotDef ? slotDef.slotId : null};
     cubeGroup.add(mesh);
   }
 }
