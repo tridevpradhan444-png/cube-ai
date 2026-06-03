@@ -469,13 +469,14 @@ function handleSlotTap(slotId){
 // Painting auto-registers as current scramble
 // Updates the scramble input field so user can see it, and marks state ready for Solve
 function autoRegisterPaintedScramble(){
-  // The current cubeState IS the painted state — store it as the active case
-  // No scramble string needed; solveCurrentState() reads cubeState directly
   currentScrambleStr = '__painted__';
+
   const inp = document.getElementById('pscramble-input');
-  if(inp) inp.value = '(painted cube state)';
-  inp.style.color = 'var(--cY)';
-  // Clear any old solution display
+  if(inp){
+    inp.value = '(painted cube state)';
+    inp.style.color = 'var(--cY)';
+  }
+
   const sp = document.getElementById('solution-panel');
   if(sp) sp.classList.remove('show');
 }
