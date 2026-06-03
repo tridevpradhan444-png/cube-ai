@@ -579,79 +579,54 @@ function getStickerIdx(face, x, y, z){
   return Math.max(0, Math.min(8, row*3 + col));
 }
 
-// Write one piece placement into cubeState
 function writePieceToState(slotId, pieceId, orientation){
   const slot  = getSlotDef(slotId);
   const piece = getPieceById(pieceId);
-  if(!slot || !piece) return;
-  const {x, y, z} = slot.pos;
+  if(!slot||!piece||!pCR) return;
+  const {x,y,z}=slot.pos;
+  const s=pCR.state.s;
 
-  if(piece.type === 'edge'){
-    // colors[0] = primary face color, colors[1] = secondary face color
-    // orientation 0 = normal, 1 = flipped
-    const [c0, c1] = orientation === 0
-      ? [piece.colors[0], piece.colors[1]]
-      : [piece.colors[1], piece.colors[0]];
-
-    // Determine the two exterior faces for this edge position
-    let fPrimary, fSecondary;
-    if(y === -1){
-      fPrimary = 'D';
-      fSecondary = z===1 ? 'F' : z===-1 ? 'B' : x===1 ? 'R' : 'L';
-    } else if(y === 1){
-      fPrimary = 'U';
-      fSecondary = z===1 ? 'F' : z===-1 ? 'B' : x===1 ? 'R' : 'L';
-    } else { // y === 0, middle layer
-      if(z===1)       { fPrimary='F'; fSecondary = x===1?'R':'L'; }
-      else if(z===-1) { fPrimary='B'; fSecondary = x===1?'R':'L'; }
-      else if(x===1)  { fPrimary='R'; fSecondary = 'F'; } // shouldn't happen for standard edges
-      else            { fPrimary='L'; fSecondary = 'F'; }
+  if(piece.type==='edge'){
+    const [c0,c1]=orientation===0?[piece.colors[0],piece.colors[1]]:[piece.colors[1],piece.colors[0]];
+    let fP,fS;
+    if(y===-1){fP='D';fS=z===1?'F':z===-1?'B':x===1?'R':'L';}
+    else if(y===1){fP='U';fS=z===1?'F':z===-1?'B':x===1?'R':'L';}
+    else{
+      if(z===1)      {fP='F';fS=x===1?'R':'L';}
+      else if(z===-1){fP='B';fS=x===1?'R':'L';}
+      else           {fP='R';fS='F';}
     }
-    cubeState[fPrimary][getStickerIdx(fPrimary, x, y, z)]     = c0;
-    cubeState[fSecondary][getStickerIdx(fSecondary, x, y, z)] = c1;
-
-  } else if(piece.type === 'corner'){
-    // 3 colors, orientation cycles which color faces which axis
-    const c = [
-      piece.colors[orientation % 3],
-      piece.colors[(orientation+1) % 3],
-      piece.colors[(orientation+2) % 3],
-    ];
-    // c[0] → y-axis face (U or D)
-    // c[1] → z-axis face (F or B)
-    // c[2] → x-axis face (R or L)
-    const fy = y === 1 ? 'U' : 'D';
-    const fz = z === 1 ? 'F' : 'B';
-    const fx = x === 1 ? 'R' : 'L';
-    cubeState[fy][getStickerIdx(fy, x, y, z)] = c[0];
-    cubeState[fz][getStickerIdx(fz, x, y, z)] = c[1];
-    cubeState[fx][getStickerIdx(fx, x, y, z)] = c[2];
+    s[fP][getStickerIdx(fP,x,y,z)]=c0;
+    s[fS][getStickerIdx(fS,x,y,z)]=c1;
+  } else if(piece.type==='corner'){
+    const c=[piece.colors[orientation%3],piece.colors[(orientation+1)%3],piece.colors[(orientation+2)%3]];
+    const fy=y===1?'U':'D', fz=z===1?'F':'B', fx=x===1?'R':'L';
+    s[fy][getStickerIdx(fy,x,y,z)]=c[0];
+    s[fz][getStickerIdx(fz,x,y,z)]=c[1];
+    s[fx][getStickerIdx(fx,x,y,z)]=c[2];
   }
 }
 
-// Rebuild cubeState from scratch based on current slotState
-// This is the master sync function — call after every palette interaction
+// Rebuild cube state from current piece placements
 function rebuildCubeStateFromSlots(){
-  initCubeState(); // start solved
-
-  // F2L: write the solved cross into bottom layer first
-  if(pStage === 'f2l'){
-    const cross = [
-      {x:0,y:-1,z:1,  fP:'D',fS:'F', cP:C.W, cS:C.G},
-      {x:1,y:-1,z:0,  fP:'D',fS:'R', cP:C.W, cS:C.O},
-      {x:0,y:-1,z:-1, fP:'D',fS:'B', cP:C.W, cS:C.B},
-      {x:-1,y:-1,z:0, fP:'D',fS:'L', cP:C.W, cS:C.R},
-    ];
-    for(const e of cross){
-      cubeState[e.fP][getStickerIdx(e.fP,e.x,e.y,e.z)] = e.cP;
-      cubeState[e.fS][getStickerIdx(e.fS,e.x,e.y,e.z)] = e.cS;
-    }
+  if(!pCR) return;
+  pCR.state.reset();
+  // F2L: write solved cross first
+  if(pStage==='f2l'){
+    const f=pCR.state.s;
+    // D-F edge
+    f.D[7]='#ffffff'; f.F[7]='#00c853';
+    // D-R edge
+    f.D[5]='#ffffff'; f.R[7]='#ff6d00';
+    // D-B edge
+    f.D[1]='#ffffff'; f.B[7]='#2979ff';
+    // D-L edge
+    f.D[3]='#ffffff'; f.L[7]='#f44336';
   }
-
-  // Write all placed pieces
-  for(const [slotId, val] of Object.entries(slotState)){
+  for(const [slotId,val] of Object.entries(slotState)){
     if(val) writePieceToState(slotId, val.pieceId, val.orientation);
   }
+  pCR.setFilter(_practiceFilter());
 }
 
 // ─── Build 3D mesh directly from cubeState ───────────────
@@ -716,170 +691,125 @@ function buildMesh(){
 }
 
 // ═══════════════════════════════════════════════════════
-//  PRACTICE 3D SCENE
+//  PRACTICE 3D — uses shared CubeRenderer from virtual-cube.js
 // ═══════════════════════════════════════════════════════
-let pStageInit=false;
-let scene,camera,renderer,rootGroup,cubeGroup;
-let isDragging=false,prevMouse={x:0,y:0},dragMoved=false,touchStartPos={x:0,y:0};
-const DRAG_SPEED=0.007;
-let animSpeed=600;
-let isAnimating=false;
-let currentScrambleStr='';
-let currentSolution='';
+let pCR = null;
+let pStageInit = false;
+let animSpeed = 400;
+let isAnimating = false;
+let currentScrambleStr = '';
+let currentSolution = '';
 
 function initPScene(){
-  // If already initialized and canvas has size, just refresh
-  if(pStageInit && renderer){
-    const container = document.getElementById('cube-wrap');
-    if(container && container.clientWidth > 0){
-      const w=container.clientWidth, h=container.clientHeight;
-      camera.aspect=w/h; camera.updateProjectionMatrix();
-      renderer.setSize(w,h);
-      buildMesh(); renderPalette();
-    }
-    return;
+  if(!window.CubeRenderer){ setTimeout(initPScene,150); return; }
+  const canvas = document.getElementById('practice-canvas');
+  if(!canvas) return;
+  if(pCR){
+    pCR.setFilter(_practiceFilter());
+    renderPalette(); return;
   }
+  pStageInit=true;
+  pCR = new window.CubeRenderer(canvas,{tiltX:-0.38,tiltY:0.42,fov:40,camZ:8});
+  pCR.state.reset();
 
-  // Delay init by one frame so the screen is visible and canvas has real dimensions
-  requestAnimationFrame(()=>{
-    const container = document.getElementById('cube-wrap');
-    const canvas    = document.getElementById('practice-canvas');
-    if(!container||!canvas) return;
-
-    const w = container.clientWidth  || window.innerWidth;
-    const h = container.clientHeight || 280;
-
-    if(pStageInit && renderer){ renderer.setSize(w,h); buildMesh(); renderPalette(); return; }
-    pStageInit = true;
-
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x080808);
-    camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 100);
-    camera.position.set(0, 2.5, 6);
-    camera.lookAt(0, 0, 0);
-
-    renderer = new THREE.WebGLRenderer({canvas, antialias:true});
-    renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-    const dl  = new THREE.DirectionalLight(0xffffff, 0.9);  dl.position.set(3,8,6);   scene.add(dl);
-    const dl2 = new THREE.DirectionalLight(0xffffff, 0.25); dl2.position.set(-3,-2,-4); scene.add(dl2);
-
-    rootGroup = new THREE.Group(); scene.add(rootGroup);
-    cubeGroup = new THREE.Group(); rootGroup.add(cubeGroup);
-
-    initPieceState();
-    buildMesh();
-    resetCubeAngle();
-    setupDrag();
-
-    requestAnimationFrame(function loop(){
-      requestAnimationFrame(loop);
-      renderer.render(scene, camera);
-    });
-
-    window.addEventListener('resize',()=>{
-      const w2=container.clientWidth, h2=container.clientHeight;
-      if(w2>0&&h2>0){ camera.aspect=w2/h2; camera.updateProjectionMatrix(); renderer.setSize(w2,h2); }
-    });
-
-    renderPalette();
+  canvas.addEventListener('click',e=>{
+    const r=canvas.getBoundingClientRect();
+    _practiceTap(e.clientX-r.left,e.clientY-r.top,r.width,r.height);
   });
+  canvas.addEventListener('touchend',e=>{
+    e.preventDefault();
+    const r=canvas.getBoundingClientRect();
+    _practiceTap(e.changedTouches[0].clientX-r.left,e.changedTouches[0].clientY-r.top,r.width,r.height);
+  },{passive:false});
+  canvas.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+
+  initPieceState();
+  pCR.setFilter(_practiceFilter());
+  renderPalette();
 }
 
-function resetCubeAngle(){
-  if(!rootGroup) return;
-  // Nice isometric-style tilt: 20° down, 25° right
-  const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), -0.36);
-  const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),  0.44);
-  rootGroup.quaternion.copy(qY.multiply(qX));
+function _practiceFilter(){
+  return (face,x,y,z,color)=>{
+    const role=getCubieRole(x,y,z);
+    if(role==='irrelevant') return '#111111';
+    if(role==='slot-empty') return '#1e1e1e';
+    if(role==='center') return window.CUBE_COLORS[face];
+    if(role==='cross-solved'){
+      if(face==='D') return '#ffffff';
+      if(face==='F') return '#00c853';
+      if(face==='B') return '#2979ff';
+      if(face==='R') return '#ff6d00';
+      if(face==='L') return '#f44336';
+      return '#111111';
+    }
+    if((pStage==='cross'||pStage==='f2l')&&color==='#ffd700') return '#111111';
+    return color;
+  };
 }
+
+function _practiceTap(cx,cy,w,h){
+  if(!pCR) return;
+  const raycaster=new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2((cx/w)*2-1,-(cy/h)*2+1),pCR.camera);
+  const meshes=[];
+  pCR.cubies.forEach(c=>c.group.children.forEach(ch=>{if(ch.isMesh) meshes.push({mesh:ch,cubie:c});}));
+  const hits=raycaster.intersectObjects(meshes.map(m=>m.mesh));
+  if(!hits.length) return;
+  const entry=meshes.find(m=>m.mesh===hits[0].object);
+  if(!entry) return;
+  const {x,y,z}=entry.cubie;
+  const slot=SLOT_DEFS[pStage]?.find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
+  if(slot) handleSlotTap(slot.slotId);
+  else if(selectedPieceId) showToast('Tap a highlighted slot');
+}
+
+function resetCubeAngle(){ if(pCR) pCR._applyTilt(); }
 
 function rotateCube90(){
-  if(!rootGroup||isAnimating) return;
-  const startQ = rootGroup.quaternion.clone();
-  // Rotate only around world Y axis — preserves X tilt exactly
-  const worldY  = new THREE.Vector3(0,1,0);
-  const delta   = new THREE.Quaternion().setFromAxisAngle(worldY, Math.PI/2);
-  const endQ    = delta.clone().multiply(startQ);
-  const dur=380, start=Date.now();
+  if(!pCR) return;
+  const startQ=pCR.rootGroup.quaternion.clone();
+  const endQ=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2).multiply(startQ);
+  const t0=Date.now(),dur=380;
   function step(){
-    const p = Math.min((Date.now()-start)/dur, 1);
-    const e = p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
-    rootGroup.quaternion.slerpQuaternions(startQ, endQ, e);
+    const p=Math.min((Date.now()-t0)/dur,1),e=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    pCR.rootGroup.quaternion.slerpQuaternions(startQ,endQ,e);
     if(p<1) requestAnimationFrame(step);
   }
   requestAnimationFrame(step);
 }
 
-// ═══════════════════════════════════════════════════════
-//  DRAG & TAP
-// ═══════════════════════════════════════════════════════
-function setupDrag(){
-  const canvas=document.getElementById('practice-canvas');
-
-  canvas.addEventListener('touchstart',e=>{
-    isDragging=true; dragMoved=false;
-    touchStartPos={x:e.touches[0].clientX,y:e.touches[0].clientY};
-    prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
-  },{passive:true});
-
-  canvas.addEventListener('touchmove',e=>{
-    if(!isDragging) return;
-    const dx=e.touches[0].clientX-prevMouse.x, dy=e.touches[0].clientY-prevMouse.y;
-    const distFromStart=Math.sqrt((e.touches[0].clientX-touchStartPos.x)**2+(e.touches[0].clientY-touchStartPos.y)**2);
-    if(distFromStart>8) dragMoved=true;
-    if(!dragMoved) return;
-    const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*DRAG_SPEED);
-    const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
-    rootGroup.quaternion.premultiply(qY).premultiply(qX);
-    prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
-  },{passive:true});
-
-  canvas.addEventListener('touchend',e=>{
-    const dist=Math.sqrt((e.changedTouches[0].clientX-touchStartPos.x)**2+(e.changedTouches[0].clientY-touchStartPos.y)**2);
-    if(dist<10) handleTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
-    isDragging=false; dragMoved=false;
-  });
-
-  canvas.addEventListener('mousedown',e=>{isDragging=true;dragMoved=false;prevMouse={x:e.clientX,y:e.clientY};touchStartPos={x:e.clientX,y:e.clientY};});
-  canvas.addEventListener('mousemove',e=>{
-    if(!isDragging) return; dragMoved=true;
-    const dx=e.clientX-prevMouse.x, dy=e.clientY-prevMouse.y;
-    const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),dx*DRAG_SPEED);
-    const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
-    rootGroup.quaternion.premultiply(qY).premultiply(qX);
-    prevMouse={x:e.clientX,y:e.clientY};
-  });
-  canvas.addEventListener('mouseup',e=>{
-    if(Math.sqrt((e.clientX-touchStartPos.x)**2+(e.clientY-touchStartPos.y)**2)<5)
-      handleTap(e.clientX,e.clientY);
-    isDragging=false; dragMoved=false;
-  });
+function buildMesh(){
+  if(!pCR) return;
+  pCR._buildCubies();
+  pCR.setFilter(_practiceFilter());
 }
 
-function handleTap(clientX,clientY){
-  if(!scene||!camera||!cubeGroup) return;
-  const canvas=document.getElementById('practice-canvas');
-  const raycaster=new THREE.Raycaster();
-  const rect=canvas.getBoundingClientRect();
-  const mouse=new THREE.Vector2(
-    ((clientX-rect.left)/rect.width)*2-1,
-    -((clientY-rect.top)/rect.height)*2+1
-  );
-  raycaster.setFromCamera(mouse,camera);
-  const hits=raycaster.intersectObjects(cubeGroup.children,false);
-  if(!hits.length) return;
-
-  const hit=hits[0];
-  const {slotId} = hit.object.userData;
-  if(!slotId){
-    // Tapped irrelevant piece
-    if(selectedPieceId) showToast('Tap a highlighted slot');
-    return;
+function animateMoves(movesStr,onDone){
+  if(!pCR){if(onDone)onDone();return;}
+  isAnimating=true;
+  const moves=movesStr.trim().split(/\s+/).filter(m=>m&&!m.startsWith('['));
+  let idx=0;
+  function doNext(){
+    if(!isAnimating){if(onDone)onDone();return;}
+    if(idx>=moves.length){
+      isAnimating=false;
+      document.querySelectorAll('.sol-move-item').forEach(el=>el.classList.add('done'));
+      const ov=document.getElementById('move-overlay');if(ov)ov.classList.remove('show');
+      if(onDone)onDone();return;
+    }
+    const mv=moves[idx];
+    document.querySelectorAll('.sol-move-item').forEach((el,i)=>{
+      el.classList.toggle('done',i<idx);el.classList.toggle('current',i===idx);
+    });
+    const ov=document.getElementById('move-overlay');
+    if(ov){ov.textContent=mv;ov.classList.add('show');}
+    pCR.state.move(mv);
+    pCR.animateMove(mv,animSpeed,()=>{
+      pCR.setFilter(_practiceFilter());
+      idx++;setTimeout(doNext,30);
+    });
   }
-  handleSlotTap(slotId);
+  doNext();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -927,26 +857,30 @@ function handleGenerateBtn(){
 
 function handleApplyBtn(){
   const inp = document.getElementById('pscramble-input');
-  const s   = (inp ? inp.value.trim() : '') || currentScrambleStr;
+  const s = (inp ? inp.value.trim() : '') || currentScrambleStr;
   if(!s){ showToast('Generate a scramble first'); return; }
   currentScrambleStr = s;
-  // Reset to solved state, then animate the scramble
-  initCubeState();
-  buildMesh();
+  if(!pCR){ showToast('Cube not ready'); return; }
+  // Reset to solved, then animate scramble
+  pCR.state.reset();
+  pCR._buildCubies();
+  pCR.setFilter(_practiceFilter());
   showToast('Applying scramble...');
-  animateMoves(s, ()=>{
-    cubeState = applyMoves(cubeState, s);
-    buildMesh();
-    showToast('Done — tap Solution to solve');
-  });
+  animateMoves(s, ()=>{ showToast('Done — tap Solution to solve'); });
 }
 
 function handleSolutionBtn(){
-  if(!currentScrambleStr){showToast('Apply a scramble first');return;}
-  // Show the original scramble — this IS the case setup
-  // The user is building the case, so the scramble shows how to set it up on a real cube
-  showSolutionMoves(currentScrambleStr);
-  showToast('Scramble to reach this case');
+  const placed = Object.values(slotState).filter(v=>v!==null).length;
+  if(placed===0 && !currentScrambleStr){showToast('Place pieces or apply a scramble first');return;}
+  showToast('Solving...');
+  setTimeout(async ()=>{
+    const sol = await solveCurrentState();
+    if(!sol && sol!==''){showToast('Could not solve — check piece placement');return;}
+    if(sol===''){showToast('Already solved!');return;}
+    currentSolution=sol;
+    showSolutionMoves(sol);
+    animateMoves(sol,()=>{ pCR.setFilter(_practiceFilter()); });
+  },50);
 }
 
 function showSolutionMoves(movesStr){
@@ -1018,8 +952,8 @@ async function solveCurrentState(){
     showToast('Solving...');
     return await solveWithCubingJS(scramble);
   }
-  if(pStage==='oll') return solveOLL(cubeState);
-  if(pStage==='pll') return solvePLL(cubeState);
+  if(pStage==='oll') return solveOLL(pCR?.state?.s || {});
+  if(pStage==='pll') return solvePLL(pCR?.state?.s || {});
   return null;
 }
 
