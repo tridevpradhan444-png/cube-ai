@@ -11,6 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module" src="virtual-cube.js"></script>
+<script type="module" src="script.js"></script>
 <style>
 :root{
   --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;
@@ -71,7 +73,7 @@ html,body{
 #screen-timer::before{content:'CUBE AI';position:absolute;top:0;left:64px;height:56px;line-height:56px;font-family:var(--fd);font-size:18px;font-weight:900;color:var(--w);letter-spacing:3px;pointer-events:none;z-index:10;}
 .timer-scramble{padding:10px 30px;text-align:center;font-family:var(--fb);font-size:15px;font-weight:600;letter-spacing:1.5px;color:var(--g1);display:flex;align-items:center;justify-content:center;min-height:60px;flex-shrink:0;}
 .timer-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;}
-#timer-display{font-family:var(--fd);font-size:clamp(52px,14vw,88px);font-weight:900;letter-spacing:-2px;color:var(--w);transition:color 0.15s ease;position:relative;cursor:default;}
+#timer-display{font-family:var(--fd);font-size:clamp(40px,11vw,88px);font-weight:900;letter-spacing:-2px;color:var(--w);transition:color 0.15s ease;position:relative;cursor:default;}
 #timer-display.holding{color:#444;}
 #timer-display.ready{color:var(--w);}
 .timer-glow{position:absolute;inset:-20px;background:radial-gradient(ellipse,rgba(255,255,255,0.03) 0%,transparent 70%);pointer-events:none;}
@@ -233,55 +235,37 @@ html,body{
       <div class="nav-item" onclick="showScreen('history');closeDrawer()"><span class="nav-icon">📋</span>History</div>
       <div class="nav-item" onclick="showScreen('virtual-cube');closeDrawer()">
         <span class="nav-icon">
-          <svg width="20" height="20" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <!-- Isometric Rubik's cube — top, right, left faces -->
-            <!-- Top face (yellow) -->
-            <polygon points="50,4 96,28 50,52 4,28" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
-            <!-- Top face grid lines -->
-            <line x1="50" y1="4"  x2="50" y2="52" stroke="#000" stroke-width="1"/>
-            <line x1="34" y1="12" x2="34" y2="44" stroke="#000" stroke-width="1"/>
-            <line x1="66" y1="12" x2="66" y2="44" stroke="#000" stroke-width="1"/>
-            <line x1="4"  y1="28" x2="96" y2="28" stroke="#000" stroke-width="1"/>
-            <line x1="20" y1="20" x2="80" y2="20" stroke="#000" stroke-width="1"/>
-            <line x1="20" y1="36" x2="80" y2="36" stroke="#000" stroke-width="1"/>
-            <!-- Top stickers -->
-            <polygon points="50,6 63,13 50,20 37,13" fill="#ffd700"/>
-            <polygon points="65,14 78,21 65,28 52,21" fill="#ffd700"/>
-            <polygon points="35,14 48,21 35,28 22,21" fill="#ffd700"/>
-            <polygon points="50,22 63,29 50,36 37,29" fill="#ffd700"/>
-            <polygon points="65,30 78,37 65,44 52,37" fill="#ffd700"/>
-            <polygon points="35,30 48,37 35,44 22,37" fill="#ffd700"/>
-            <polygon points="50,38 63,45 50,52 37,45" fill="#ffd700"/>
-            <polygon points="65,6 78,13 65,20 52,13"  fill="#ffd700"/>
-            <polygon points="35,6 48,13 35,20 22,13"  fill="#ffd700"/>
-            <!-- Right face (blue/orange) -->
-            <polygon points="50,52 96,28 96,72 50,96" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
-            <line x1="50" y1="52" x2="50" y2="96" stroke="#000" stroke-width="1"/>
-            <line x1="66" y1="44" x2="66" y2="88" stroke="#000" stroke-width="1"/>
-            <line x1="82" y1="36" x2="82" y2="80" stroke="#000" stroke-width="1"/>
-            <line x1="50" y1="68" x2="96" y2="44" stroke="#000" stroke-width="1"/>
-            <line x1="50" y1="82" x2="96" y2="58" stroke="#000" stroke-width="1"/>
+          <svg width="22" height="22" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <!-- Top face -->
+            <polygon points="50,8 92,30 50,52 8,30" fill="#222"/>
+            <!-- Top stickers 3x3 -->
+            <polygon points="50,11 63,18 50,25 37,18" fill="#ffd700"/>
+            <polygon points="64,19 77,26 64,33 51,26" fill="#ffd700"/>
+            <polygon points="36,19 49,26 36,33 23,26" fill="#ffd700"/>
+            <polygon points="50,27 63,34 50,41 37,34" fill="#ffd700"/>
+            <polygon points="64,35 77,42 64,49 51,42" fill="#ffd700"/>
+            <polygon points="36,35 49,42 36,49 23,42" fill="#ffd700"/>
+            <polygon points="50,43 63,50 50,57 37,50" fill="#ffd700"/>
+            <polygon points="64,11 77,18 64,25 51,18" fill="#ffd700"/>
+            <polygon points="36,11 49,18 36,25 23,18" fill="#ffd700"/>
+            <!-- Right face -->
+            <polygon points="92,30 92,72 50,94 50,52" fill="#1a1a1a"/>
             <!-- Right stickers -->
-            <polygon points="52,53 65,46 78,53 65,60" fill="#ff6d00"/>
-            <polygon points="68,45 81,38 94,45 81,52" fill="#ff6d00"/>
-            <polygon points="52,69 65,62 78,69 65,76" fill="#ff6d00"/>
-            <polygon points="68,61 81,54 94,61 81,68" fill="#ff6d00"/>
-            <polygon points="52,85 65,78 78,85 65,92" fill="#ff6d00"/>
-            <polygon points="68,77 81,70 94,77 81,84" fill="#ff6d00"/>
-            <!-- Left face (red) -->
-            <polygon points="50,52 4,28 4,72 50,96" fill="#1a1a1a" stroke="#000" stroke-width="1.5"/>
-            <line x1="50" y1="52" x2="50" y2="96" stroke="#000" stroke-width="1"/>
-            <line x1="34" y1="44" x2="34" y2="88" stroke="#000" stroke-width="1"/>
-            <line x1="18" y1="36" x2="18" y2="80" stroke="#000" stroke-width="1"/>
-            <line x1="50" y1="68" x2="4" y2="44" stroke="#000" stroke-width="1"/>
-            <line x1="50" y1="82" x2="4" y2="58" stroke="#000" stroke-width="1"/>
+            <polygon points="53,54 65,48 77,54 65,60" fill="#ff6d00"/>
+            <polygon points="69,46 81,40 93,46 81,52" fill="#ff6d00"/>
+            <polygon points="53,62 65,56 77,62 65,68" fill="#ff6d00"/>
+            <polygon points="69,54 81,48 93,54 81,60" fill="#ff6d00"/>
+            <polygon points="53,70 65,64 77,70 65,76" fill="#ff6d00"/>
+            <polygon points="69,62 81,56 93,62 81,68" fill="#ff6d00"/>
+            <!-- Left face -->
+            <polygon points="8,30 8,72 50,94 50,52" fill="#111"/>
             <!-- Left stickers -->
-            <polygon points="48,53 35,46 22,53 35,60" fill="#f44336"/>
-            <polygon points="32,45 19,38 6,45 19,52" fill="#f44336"/>
-            <polygon points="48,69 35,62 22,69 35,76" fill="#f44336"/>
-            <polygon points="32,61 19,54 6,61 19,68" fill="#f44336"/>
-            <polygon points="48,85 35,78 22,85 35,92" fill="#f44336"/>
-            <polygon points="32,77 19,70 6,77 19,84" fill="#f44336"/>
+            <polygon points="47,54 35,48 23,54 35,60" fill="#f44336"/>
+            <polygon points="31,46 19,40 7,46 19,52" fill="#f44336"/>
+            <polygon points="47,62 35,56 23,62 35,68" fill="#f44336"/>
+            <polygon points="31,54 19,48 7,54 19,60" fill="#f44336"/>
+            <polygon points="47,70 35,64 23,70 35,76" fill="#f44336"/>
+            <polygon points="31,62 19,56 7,62 19,68" fill="#f44336"/>
           </svg>
         </span>Virtual Cube</div>
       <div class="nav-item" onclick="showScreen('practice');closeDrawer()"><span class="nav-icon">🎯</span>Practice</div>
@@ -474,8 +458,6 @@ html,body{
 </div><!-- end #app -->
 
 <link rel="stylesheet" href="virtual-cube.css">
-<script src="virtual-cube.js"></script>
 <div id="toast"></div>
-<script src="script.js"></script>
 </body>
 </html>

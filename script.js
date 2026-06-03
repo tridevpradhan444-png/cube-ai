@@ -1,4 +1,11 @@
 // ═══════════════════════════════════════════════════════
+//  CUBING.JS — industry-standard cube solver via CDN
+// ═══════════════════════════════════════════════════════
+import { cube3x3x3 } from 'https://cdn.cubing.net/js/cubing/puzzles';
+import { randomScrambleForEvent } from 'https://cdn.cubing.net/js/cubing/scramble';
+import { experimentalSolve3x3x3IgnoringCenters } from 'https://cdn.cubing.net/js/cubing/search';
+
+// ═══════════════════════════════════════════════════════
 //  CONSTANTS & DATA
 // ═══════════════════════════════════════════════════════
 const FACE_COLORS = {U:'#ffd700',D:'#ffffff',F:'#00c853',B:'#2979ff',R:'#ff6d00',L:'#f44336'};
@@ -815,7 +822,7 @@ function setupDrag(){
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
   },{passive:true});
 
-  canvas.addEventListener('touchmove',e=>{e.preventdefault();
+  canvas.addEventListener('touchmove',e=>{
     if(!isDragging) return;
     const dx=e.touches[0].clientX-prevMouse.x, dy=e.touches[0].clientY-prevMouse.y;
     const distFromStart=Math.sqrt((e.touches[0].clientX-touchStartPos.x)**2+(e.touches[0].clientY-touchStartPos.y)**2);
@@ -825,7 +832,7 @@ function setupDrag(){
     const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),dy*DRAG_SPEED);
     rootGroup.quaternion.premultiply(qY).premultiply(qX);
     prevMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
-  },{passive:false);
+  },{passive:true});
 
   canvas.addEventListener('touchend',e=>{
     const dist=Math.sqrt((e.changedTouches[0].clientX-touchStartPos.x)**2+(e.changedTouches[0].clientY-touchStartPos.y)**2);
@@ -987,6 +994,88 @@ function showToast(msg){
   t.textContent=msg; t.classList.add('show');
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
 }
+
+// ═══════════════════════════════════════════════════════
+//  SOLVERS — cubing.js for cross/f2l, lookup for oll/pll
+// ═══════════════════════════════════════════════════════
+async function solveWithCubingJS(scrambleStr){
+  try{
+    const { experimentalSolve3x3x3IgnoringCenters } = await import('https://cdn.cubing.net/js/cubing/search');
+    const solution = await experimentalSolve3x3x3IgnoringCenters(scrambleStr);
+    return solution.toString();
+  }catch(e){ console.error('cubing.js solver error:',e); return null; }
+}
+
+async function solveCurrentState(){
+  rebuildCubeStateFromSlots();
+  const scramble = (currentScrambleStr && currentScrambleStr!=='__painted__') ? currentScrambleStr : null;
+
+  if(pStage==='cross'||pStage==='f2l'){
+    if(!scramble){ showToast('Apply a scramble first'); return null; }
+    showToast('Solving...');
+    return await solveWithCubingJS(scramble);
+  }
+  if(pStage==='oll') return solveOLL(cubeState);
+  if(pStage==='pll') return solvePLL(cubeState);
+  return null;
+}
+
+function solveOLL(state){
+  function isOLLSolved(s){ return s.U.every(c=>c===C.Y); }
+  if(isOLLSolved(state)) return '';
+  const OLL_ALGS=["R U R' U' R' F R F'","F R U R' U' F'","f R U R' U' f'","R U R' U R U2 R'","R U2 R' U' R U' R'","r U R' U R U2 r'","r U2 R' U' R U' r'","F R U R' U' R U R' U' F'","r U R' U' r' R U R' U'","R U R' U' M' U R U' r'","F U R U' R' F'","R' U' R U' R' U R U' R' U2 R","R U R' U R U' R' U R U2 R'","r' U' R U' R' U2 r","F R' F' R2 r' U R U' R' U' M'","R' U' F' U F R","L U F' U' L' U L F L'","R U2 R2 U' R2 U' R2 U2 R","r' U' R U' R' U R U' R' U2 r","R U R' U R U2 R' F R U R' U' F'"];
+  for(const alg of OLL_ALGS){
+    for(const pre of ['','U',"U'","U2"]){
+      let s=pre?applyMoves(cloneState(state),pre):cloneState(state);
+      s=applyMoves(s,alg);
+      if(isOLLSolved(s)) return (pre?pre+' ':'')+alg;
+    }
+  }
+  return 'OLL not recognized';
+}
+
+function solvePLL(state){
+  if(!state.U.every(c=>c===C.Y)) return 'Solve OLL first';
+  const PLL_ALGS=[
+    {name:'Ua',alg:"M2 U M U2 M' U M2"},{name:'Ub',alg:"M2 U' M U2 M' U' M2"},
+    {name:'H', alg:"M2 U M2 U2 M2 U M2"},{name:'Z',alg:"M2 U M2 U M' U2 M2 U2 M'"},
+    {name:'T', alg:"R U R' U' R' F R2 U' R' U' R U R' F'"},
+    {name:'Jb',alg:"R U R' F' R U R' U' R' F R2 U' R'"},
+    {name:'Y', alg:"F R U' R' U' R U R' F' R U R' U' R' F R F'"},
+    {name:'Aa',alg:"x R' U R' D2 R U' R' D2 R2 x'"},{name:'Ab',alg:"x R2 D2 R U R' D2 R U' R x'"},
+  ];
+  function isPLLSolved(s){ return ['F','B','R','L'].every(f=>s[f][0]===s[f][1]&&s[f][1]===s[f][2]); }
+  if(isPLLSolved(state)) return '';
+  for(const {name,alg} of PLL_ALGS){
+    for(const pre of ['','U',"U'","U2"]){
+      let s=pre?applyMoves(cloneState(state),pre):cloneState(state);
+      s=applyMoves(s,alg);
+      for(const auf of ['','U',"U'","U2"]){
+        const sf=auf?applyMoves(cloneState(s),auf):cloneState(s);
+        if(isPLLSolved(sf)) return [pre,`[${name}] ${alg}`,auf].filter(Boolean).join(' ');
+      }
+    }
+  }
+  return 'PLL not recognized';
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPOSE GLOBALS (required because script is type=module)
+// ═══════════════════════════════════════════════════════
+Object.assign(window,{
+  showScreen,toggleDrawer,closeDrawer,
+  setPStage,resetPCube,rotateCube90,resetCubeAngle,
+  handleSolutionBtn,handleGenerateBtn,handleApplyBtn,
+  setSpeed,selectPalettePiece,
+  deleteLastSolve,clearAllSolves,delSolve,
+  saveS,toggleS,
+  toggleVCSetting,updateVCTheme,
+  vcUndo:()=>window.vCube?.undo(),
+  vcRedo:()=>window.vCube?.redo(),
+  vcScramble:()=>window.vCube?.scramble(),
+  vcReset:()=>window.vCube?.reset(),
+  initVirtualCube,
+});
 
 // ═══════════════════════════════════════════════════════
 //  INIT

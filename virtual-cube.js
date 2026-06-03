@@ -1,562 +1,719 @@
-/**
- * Virtual Cube Module
- * Fixed: proper init on screen show, no showScreen override conflict,
- * correct canvas container sizing, improved button handling
- */
+// ═══════════════════════════════════════════════════════
+//  VIRTUAL CUBE — Complete rewrite
+//  - Proper sticker colors using internal state array
+//  - Fixed R/L/F/B/U/D buttons
+//  - Fixed X/Y/Z (whole cube rotation, no tilt change)
+//  - Fixed double-tap → smooth R2
+//  - Fixed default tilt toward user
+//  - Fixed timer overflow
+//  - Records R2/U2 etc correctly
+//  - Semi-circle button animation
+// ═══════════════════════════════════════════════════════
 
+// Color constants
+const VC_COLORS = {
+  U: '#ffd700', // Yellow top
+  D: '#ffffff', // White bottom
+  F: '#00c853', // Green front
+  B: '#2979ff', // Blue back
+  R: '#ff6d00', // Orange right
+  L: '#f44336', // Red left
+  X: '#111111', // Hidden/interior
+};
+
+// ── Internal cube state ──────────────────────────────
+// 6 faces × 9 stickers. Index layout per face:
+// 0 1 2
+// 3 4 5
+// 6 7 8
+class CubeState {
+  constructor() { this.reset(); }
+
+  reset() {
+    this.faces = {};
+    for (const [face, color] of Object.entries(VC_COLORS)) {
+      if (face === 'X') continue;
+      this.faces[face] = Array(9).fill(color);
+    }
+  }
+
+  clone() {
+    const c = new CubeState();
+    for (const f of Object.keys(this.faces))
+      c.faces[f] = [...this.faces[f]];
+    return c;
+  }
+
+  // Rotate face stickers clockwise
+  rotateFaceCW(f) {
+    const o = [...this.faces[f]];
+    this.faces[f] = [o[6],o[3],o[0], o[7],o[4],o[1], o[8],o[5],o[2]];
+  }
+
+  applyMove(move) {
+    const base  = move.replace(/['\d]/g, '');
+    const prime = move.includes("'");
+    const double= move.includes('2');
+    const times = double ? 2 : prime ? 3 : 1;
+    for (let i = 0; i < times; i++) this._applyCW(base);
+  }
+
+  _applyCW(m) {
+    const f = this.faces;
+    if (m==='U') {
+      this.rotateFaceCW('U');
+      const t=[f.F[0],f.F[1],f.F[2]];
+      [f.F[0],f.F[1],f.F[2]]=[f.R[0],f.R[1],f.R[2]];
+      [f.R[0],f.R[1],f.R[2]]=[f.B[0],f.B[1],f.B[2]];
+      [f.B[0],f.B[1],f.B[2]]=[f.L[0],f.L[1],f.L[2]];
+      [f.L[0],f.L[1],f.L[2]]=t;
+    } else if (m==='D') {
+      this.rotateFaceCW('D');
+      const t=[f.F[6],f.F[7],f.F[8]];
+      [f.F[6],f.F[7],f.F[8]]=[f.L[6],f.L[7],f.L[8]];
+      [f.L[6],f.L[7],f.L[8]]=[f.B[6],f.B[7],f.B[8]];
+      [f.B[6],f.B[7],f.B[8]]=[f.R[6],f.R[7],f.R[8]];
+      [f.R[6],f.R[7],f.R[8]]=t;
+    } else if (m==='R') {
+      this.rotateFaceCW('R');
+      const t=[f.U[2],f.U[5],f.U[8]];
+      [f.U[2],f.U[5],f.U[8]]=[f.F[2],f.F[5],f.F[8]];
+      [f.F[2],f.F[5],f.F[8]]=[f.D[2],f.D[5],f.D[8]];
+      [f.D[2],f.D[5],f.D[8]]=[f.B[6],f.B[3],f.B[0]];
+      [f.B[6],f.B[3],f.B[0]]=t;
+    } else if (m==='L') {
+      this.rotateFaceCW('L');
+      const t=[f.U[0],f.U[3],f.U[6]];
+      [f.U[0],f.U[3],f.U[6]]=[f.B[8],f.B[5],f.B[2]];
+      [f.B[8],f.B[5],f.B[2]]=[f.D[0],f.D[3],f.D[6]];
+      [f.D[0],f.D[3],f.D[6]]=[f.F[0],f.F[3],f.F[6]];
+      [f.F[0],f.F[3],f.F[6]]=t;
+    } else if (m==='F') {
+      this.rotateFaceCW('F');
+      const t=[f.U[6],f.U[7],f.U[8]];
+      [f.U[6],f.U[7],f.U[8]]=[f.L[8],f.L[5],f.L[2]];
+      [f.L[2],f.L[5],f.L[8]]=[f.D[0],f.D[1],f.D[2]];
+      [f.D[0],f.D[1],f.D[2]]=[f.R[6],f.R[3],f.R[0]];
+      [f.R[0],f.R[3],f.R[6]]=t;
+    } else if (m==='B') {
+      this.rotateFaceCW('B');
+      const t=[f.U[0],f.U[1],f.U[2]];
+      [f.U[0],f.U[1],f.U[2]]=[f.R[2],f.R[5],f.R[8]];
+      [f.R[2],f.R[5],f.R[8]]=[f.D[8],f.D[7],f.D[6]];
+      [f.D[6],f.D[7],f.D[8]]=[f.L[0],f.L[3],f.L[6]];
+      [f.L[0],f.L[3],f.L[6]]=t;
+    } else if (m==='M') {
+      const t=[f.U[1],f.U[4],f.U[7]];
+      [f.U[1],f.U[4],f.U[7]]=[f.F[1],f.F[4],f.F[7]];
+      [f.F[1],f.F[4],f.F[7]]=[f.D[1],f.D[4],f.D[7]];
+      [f.D[1],f.D[4],f.D[7]]=[f.B[7],f.B[4],f.B[1]];
+      [f.B[7],f.B[4],f.B[1]]=t;
+    } else if (m==='E') {
+      const t=[f.F[3],f.F[4],f.F[5]];
+      [f.F[3],f.F[4],f.F[5]]=[f.R[3],f.R[4],f.R[5]];
+      [f.R[3],f.R[4],f.R[5]]=[f.B[3],f.B[4],f.B[5]];
+      [f.B[3],f.B[4],f.B[5]]=[f.L[3],f.L[4],f.L[5]];
+      [f.L[3],f.L[4],f.L[5]]=t;
+    } else if (m==='S') {
+      const t=[f.U[3],f.U[4],f.U[5]];
+      [f.U[3],f.U[4],f.U[5]]=[f.L[7],f.L[4],f.L[1]];
+      [f.L[1],f.L[4],f.L[7]]=[f.D[5],f.D[4],f.D[3]];
+      [f.D[3],f.D[4],f.D[5]]=[f.R[1],f.R[4],f.R[7]];
+      [f.R[1],f.R[4],f.R[7]]=t;
+    } else if (m==='X') {
+      // Whole cube: R + M' + L'
+      this._applyCW('R');
+      // M' = M × 3
+      for(let i=0;i<3;i++) this._applyCW('M');
+      // L' = L × 3
+      for(let i=0;i<3;i++) this._applyCW('L');
+    } else if (m==='Y') {
+      // Whole cube: U + E' + D'
+      this._applyCW('U');
+      for(let i=0;i<3;i++) this._applyCW('E');
+      for(let i=0;i<3;i++) this._applyCW('D');
+    } else if (m==='Z') {
+      // Whole cube: F + S + B'
+      this._applyCW('F');
+      this._applyCW('S');
+      for(let i=0;i<3;i++) this._applyCW('B');
+    }
+  }
+
+  isSolved() {
+    for (const [face, stickers] of Object.entries(this.faces)) {
+      if (!stickers.every(s => s === stickers[0])) return false;
+    }
+    return true;
+  }
+}
+
+// ── VirtualCube class ────────────────────────────────
 class VirtualCube {
   constructor() {
     this.container = document.getElementById('vc-canvas-container');
-    this.canvas = document.getElementById('vc-canvas');
-    if(!this.container || !this.canvas){ console.error('VirtualCube: canvas container not found'); return; }
+    this.canvas    = document.getElementById('vc-canvas');
+    if (!this.container || !this.canvas) { console.error('VC: missing elements'); return; }
 
-    // State
-    this.isMoving = false;
-    this.moveQueue = [];
-    this.history = [];
+    // Cube logic state
+    this.cubeState = new CubeState();
+    this.history   = [];
     this.redoStack = [];
-    this.heldButtons = new Set();
-    this.lastTapTime = 0;
-    this.lastTapMove = '';
-    this.holdTimer = null;
-    this.activeBtn = null;
-    this.startY = 0;
-    this.currentSelection = 'normal';
-    this.currentScramble = '';
+    this.moveQueue = [];
+    this.isMoving  = false;
 
     // Timer
     this.timerInterval = null;
-    this.startTime = 0;
-    this.isTiming = false;
-    this.isSolved = true;
-    this.inspectionTimer = null;
-    this.inspectionTimeLeft = 15;
+    this.timerStart    = 0;
+    this.isTiming      = false;
+
+    // Drag
+    this.isDragging = false;
+    this.prevPos    = { x: 0, y: 0 };
+
+    // Tilt quaternion — always preserved
+    // Default: cube tilted ~25° toward viewer
+    this.tiltAngle = -0.44; // X rotation in radians
 
     // Settings
-    this.settings = {
-      advanced: false,
-      vibration: false,
-      blindfold: false,
-      inspection: false,
-      theme: 'standard',
-      sound: true
-    };
-
-    this.themes = {
-      standard: [0xf44336, 0xff6d00, 0xffffff, 0xffd700, 0x00c853, 0x2979ff],
-      neon:     [0xff00ff, 0x00ffff, 0xffffff, 0xffff00, 0x00ff00, 0x0000ff],
-      pastel:   [0xffb3ba, 0xffdfba, 0xffffba, 0xbaffc9, 0xbae1ff, 0xa2a2d0]
-    };
-
-    // Camera drag
-    this.isDragging = false;
-    this.previousMousePosition = { x:0, y:0 };
+    this.settings = { advanced: false, vibration: false, blindfold: false, inspection: false, theme: 'standard' };
 
     this.initThree();
-    this.initCube();
+    this.buildCube();
+    this.setDefaultOrientation();
     this.initControls();
-    this.animate();
+    this.startRenderLoop();
   }
 
+  // ── Three.js setup ──────────────────────────────────
   initThree() {
-    const w = this.container.clientWidth || window.innerWidth;
-    const h = this.container.clientHeight || (window.innerHeight - 56);
+    const w = this.container.clientWidth  || window.innerWidth;
+    const h = this.container.clientHeight || window.innerHeight - 56;
 
-    this.scene = new THREE.Scene();
+    this.scene    = new THREE.Scene();
     this.scene.background = new THREE.Color(0x080808);
-
-    this.camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
-    this.camera.position.set(5, 5, 5);
+    this.camera   = new THREE.PerspectiveCamera(42, w/h, 0.1, 100);
+    this.camera.position.set(0, 0, 7);
     this.camera.lookAt(0, 0, 0);
 
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
     this.renderer.setSize(w, h);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-    const light = new THREE.DirectionalLight(0xffffff, 0.5);
-    light.position.set(10, 10, 10);
-    this.scene.add(light);
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+    dl.position.set(4, 8, 6);
+    this.scene.add(dl);
+    const dl2 = new THREE.DirectionalLight(0xffffff, 0.2);
+    dl2.position.set(-4, -2, -4);
+    this.scene.add(dl2);
+
+    // rootGroup = orientation (drag rotates this)
+    // cubeGroup = inside rootGroup, animation rotates pieces inside here
+    this.rootGroup = new THREE.Group();
+    this.cubeGroup = new THREE.Group();
+    this.rootGroup.add(this.cubeGroup);
+    this.scene.add(this.rootGroup);
 
     window.addEventListener('resize', () => {
       const nw = this.container.clientWidth;
       const nh = this.container.clientHeight;
-      if(nw>0 && nh>0){
-        this.camera.aspect = nw/nh;
+      if (nw > 0 && nh > 0) {
+        this.camera.aspect = nw / nh;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(nw, nh);
       }
     });
   }
 
-  initCube() {
-    if(this.cubeGroup) this.scene.remove(this.cubeGroup);
-    this.cubeGroup = new THREE.Group();
-    this.scene.add(this.cubeGroup);
+  // Set default orientation: tilted toward viewer, white on bottom
+  setDefaultOrientation() {
+    const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), this.tiltAngle);
+    this.rootGroup.quaternion.copy(qX);
+  }
+
+  // ── Build 3D cube meshes ─────────────────────────────
+  buildCube() {
+    // Clear existing
+    while (this.cubeGroup.children.length) this.cubeGroup.remove(this.cubeGroup.children[0]);
     this.cubies = [];
 
-    let faceColors = this.themes[this.settings.theme] || this.themes.standard;
-    if(this.settings.blindfold){
-      faceColors = [0x222222,0x222222,0x222222,0x222222,0x222222,0x222222];
-    }
+    const gap = 0.05;
+    const size = 1 - gap;
+    const geo  = new THREE.BoxGeometry(size, size, size);
 
-    const geometry = new THREE.BoxGeometry(0.93, 0.93, 0.93);
-    // Sticker overlay geometry (slightly larger)
-    const stickerGeo = new THREE.BoxGeometry(0.88, 0.88, 0.88);
+    // Face order for BoxGeometry materials: +X(R), -X(L), +Y(U), -Y(D), +Z(F), -Z(B)
+    const FACE_MAP = ['R','L','U','D','F','B'];
 
-    for(let x=-1;x<=1;x++) for(let y=-1;y<=1;y++) for(let z=-1;z<=1;z++){
-      // Black body
-      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-      const body = new THREE.Mesh(geometry, bodyMat);
-      body.position.set(x, y, z);
-
-      // Colored stickers
-      const mats = faceColors.map(color => new THREE.MeshLambertMaterial({ color }));
-      const cubie = new THREE.Mesh(stickerGeo, mats);
-      cubie.position.set(x, y, z);
-      cubie.userData = { origX:x, origY:y, origZ:z };
-
-      this.cubies.push(cubie);
-      this.cubeGroup.add(body);
-      this.cubeGroup.add(cubie);
-    }
-  }
-
-  updateSettings(key, value) {
-    this.settings[key] = value;
-    if(key==='blindfold'||key==='theme') this.initCube();
-    if(key==='advanced'){
-      const el = document.getElementById('vc-slice-controls');
-      if(el) el.style.display = value ? 'flex' : 'none';
+    for (let x = -1; x <= 1; x++) {
+      for (let y = -1; y <= 1; y++) {
+        for (let z = -1; z <= 1; z++) {
+          const mats = FACE_MAP.map((face, fi) => {
+            // Check if this face is exterior
+            const isExt = (fi===0&&x===1)||(fi===1&&x===-1)||
+                          (fi===2&&y===1)||(fi===3&&y===-1)||
+                          (fi===4&&z===1)||(fi===5&&z===-1);
+            const color = isExt ? parseInt(VC_COLORS[face].replace('#',''), 16) : 0x0d0d0d;
+            return new THREE.MeshLambertMaterial({ color });
+          });
+          const mesh = new THREE.Mesh(geo, mats);
+          mesh.position.set(x, y, z);
+          mesh.userData = { ox:x, oy:y, oz:z };
+          this.cubies.push(mesh);
+          this.cubeGroup.add(mesh);
+        }
+      }
     }
   }
 
+  // Update mesh colors from cubeState
+  updateColors() {
+    const f = this.cubeState.faces;
+    // Face sticker index → cubie position mapping
+    // For each face, map sticker index to (x,y,z) and which material slot
+    const FACE_CUBIE_MAP = {
+      U: [ // y=1 face, material index 2
+        {p:[-1,1,-1],m:2},{p:[0,1,-1],m:2},{p:[1,1,-1],m:2},
+        {p:[-1,1, 0],m:2},{p:[0,1, 0],m:2},{p:[1,1, 0],m:2},
+        {p:[-1,1, 1],m:2},{p:[0,1, 1],m:2},{p:[1,1, 1],m:2},
+      ],
+      D: [ // y=-1 face, material index 3
+        {p:[-1,-1, 1],m:3},{p:[0,-1, 1],m:3},{p:[1,-1, 1],m:3},
+        {p:[-1,-1, 0],m:3},{p:[0,-1, 0],m:3},{p:[1,-1, 0],m:3},
+        {p:[-1,-1,-1],m:3},{p:[0,-1,-1],m:3},{p:[1,-1,-1],m:3},
+      ],
+      F: [ // z=1 face, material index 4
+        {p:[-1, 1,1],m:4},{p:[0, 1,1],m:4},{p:[1, 1,1],m:4},
+        {p:[-1, 0,1],m:4},{p:[0, 0,1],m:4},{p:[1, 0,1],m:4},
+        {p:[-1,-1,1],m:4},{p:[0,-1,1],m:4},{p:[1,-1,1],m:4},
+      ],
+      B: [ // z=-1 face, material index 5
+        {p:[ 1, 1,-1],m:5},{p:[0, 1,-1],m:5},{p:[-1, 1,-1],m:5},
+        {p:[ 1, 0,-1],m:5},{p:[0, 0,-1],m:5},{p:[-1, 0,-1],m:5},
+        {p:[ 1,-1,-1],m:5},{p:[0,-1,-1],m:5},{p:[-1,-1,-1],m:5},
+      ],
+      R: [ // x=1 face, material index 0
+        {p:[1, 1, 1],m:0},{p:[1, 1, 0],m:0},{p:[1, 1,-1],m:0},
+        {p:[1, 0, 1],m:0},{p:[1, 0, 0],m:0},{p:[1, 0,-1],m:0},
+        {p:[1,-1, 1],m:0},{p:[1,-1, 0],m:0},{p:[1,-1,-1],m:0},
+      ],
+      L: [ // x=-1 face, material index 1
+        {p:[-1, 1,-1],m:1},{p:[-1, 1, 0],m:1},{p:[-1, 1, 1],m:1},
+        {p:[-1, 0,-1],m:1},{p:[-1, 0, 0],m:1},{p:[-1, 0, 1],m:1},
+        {p:[-1,-1,-1],m:1},{p:[-1,-1, 0],m:1},{p:[-1,-1, 1],m:1},
+      ],
+    };
+
+    for (const [faceName, map] of Object.entries(FACE_CUBIE_MAP)) {
+      const stickers = f[faceName];
+      map.forEach(({p, m}, idx) => {
+        const cubie = this.cubies.find(c =>
+          Math.round(c.position.x)===p[0] &&
+          Math.round(c.position.y)===p[1] &&
+          Math.round(c.position.z)===p[2]
+        );
+        if (cubie && stickers[idx]) {
+          cubie.material[m].color.setStyle(stickers[idx]);
+        }
+      });
+    }
+  }
+
+  // ── Controls ─────────────────────────────────────────
   initControls() {
-    // Face buttons
-    document.querySelectorAll('.vc-btn').forEach(btn => {
-      btn.addEventListener('touchstart', (e) => { e.preventDefault(); this.handleBtnStart(e, btn); }, { passive: false });
-      btn.addEventListener('touchmove',  (e) => { e.preventDefault(); this.handleBtnMove(e); },        { passive: false });
-      btn.addEventListener('touchend',   (e) => { e.preventDefault(); this.handleBtnEnd(e, btn); },    { passive: false });
-      // Mouse support
-      btn.addEventListener('mousedown', (e) => this.handleBtnStart(e, btn));
-      btn.addEventListener('mouseup',   (e) => this.handleBtnEnd(e, btn));
-    });
-
-    // Swipe to rotate camera
-    this.container.addEventListener('touchstart', (e) => {
-      if(e.target.closest('.vc-btn,.vc-icon-btn,.vc-popup')) return;
+    // Drag to rotate (camera orbit via rootGroup)
+    this.container.addEventListener('touchstart', e => {
+      if (e.target.closest('.vc-btn,.vc-icon-btn,.vc-popup')) return;
       this.isDragging = true;
-      this.previousMousePosition = { x: e.touches[0].pageX, y: e.touches[0].pageY };
+      this.prevPos = { x: e.touches[0].pageX, y: e.touches[0].pageY };
     }, { passive: true });
 
-    this.container.addEventListener('touchmove', (e) => {
-      if(!this.isDragging) return;
-      const dx = e.touches[0].pageX - this.previousMousePosition.x;
-      const dy = e.touches[0].pageY - this.previousMousePosition.y;
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-        this.toRadians(dy * 0.5), this.toRadians(dx * 0.5), 0, 'YXZ'
-      ));
-      this.cubeGroup.quaternion.multiplyQuaternions(q, this.cubeGroup.quaternion);
-      this.previousMousePosition = { x: e.touches[0].pageX, y: e.touches[0].pageY };
+    this.container.addEventListener('touchmove', e => {
+      if (!this.isDragging) return;
+      const dx = e.touches[0].pageX - this.prevPos.x;
+      const dy = e.touches[0].pageY - this.prevPos.y;
+      this.dragRotate(dx, dy);
+      this.prevPos = { x: e.touches[0].pageX, y: e.touches[0].pageY };
     }, { passive: true });
 
     this.container.addEventListener('touchend', () => { this.isDragging = false; });
 
-    // Mouse drag
-    this.container.addEventListener('mousedown', (e) => {
-      if(e.target.closest('.vc-btn,.vc-icon-btn,.vc-popup')) return;
+    this.container.addEventListener('mousedown', e => {
+      if (e.target.closest('.vc-btn,.vc-icon-btn,.vc-popup')) return;
       this.isDragging = true;
-      this.previousMousePosition = { x: e.pageX, y: e.pageY };
+      this.prevPos = { x: e.pageX, y: e.pageY };
     });
-    this.container.addEventListener('mousemove', (e) => {
-      if(!this.isDragging) return;
-      const dx = e.pageX - this.previousMousePosition.x;
-      const dy = e.pageY - this.previousMousePosition.y;
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-        this.toRadians(dy * 0.5), this.toRadians(dx * 0.5), 0, 'YXZ'
-      ));
-      this.cubeGroup.quaternion.multiplyQuaternions(q, this.cubeGroup.quaternion);
-      this.previousMousePosition = { x: e.pageX, y: e.pageY };
+    this.container.addEventListener('mousemove', e => {
+      if (!this.isDragging) return;
+      this.dragRotate(e.pageX - this.prevPos.x, e.pageY - this.prevPos.y);
+      this.prevPos = { x: e.pageX, y: e.pageY };
     });
     this.container.addEventListener('mouseup', () => { this.isDragging = false; });
+
+    // Move buttons
+    this._lastTapMove = '';
+    this._lastTapTime = 0;
+
+    document.querySelectorAll('.vc-btn').forEach(btn => {
+      btn.addEventListener('touchstart', e => { e.preventDefault(); this.handleBtnTap(btn); }, { passive: false });
+      btn.addEventListener('mousedown',  e => { e.preventDefault(); this.handleBtnTap(btn); });
+    });
+
+    // Popup options
+    document.querySelectorAll('.vc-option').forEach(opt => {
+      opt.addEventListener('touchstart', e => { e.preventDefault(); this.selectPopupOption(opt); }, { passive: false });
+      opt.addEventListener('mousedown',  () => this.selectPopupOption(opt));
+    });
   }
 
-  handleBtnStart(e, btn) {
+  dragRotate(dx, dy) {
+    const speed = 0.007;
+    // Only rotate around world Y (left/right drag) to preserve tilt
+    const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), dx * speed);
+    // Allow slight vertical drag too
+    const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), dy * speed);
+    this.rootGroup.quaternion.premultiply(qY).premultiply(qX);
+  }
+
+  handleBtnTap(btn) {
     const move = btn.dataset.move;
-    this.heldButtons.add(move);
-    this.activeBtn = btn;
-    this.startY = (e.touches ? e.touches[0].clientY : e.clientY);
-    this.vibrate(10);
+    if (!move) return;
 
-    this.holdTimer = setTimeout(() => {
-      if(this.heldButtons.has(move) && !['X','Y','Z'].includes(move)){
-        this.showPopup(move);
-      }
-    }, 350);
-  }
-
-  handleBtnMove(e) {
-    if(!this.activeBtn) return;
-    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-    const diff = this.startY - currentY;
-    if(Math.abs(diff) > 30) this.updateSelection(diff > 0 ? 'up' : 'down');
-  }
-
-  handleBtnEnd(e, btn) {
-    clearTimeout(this.holdTimer);
-    const move = btn.dataset.move;
-    const popup = document.getElementById('vc-popup');
-
-    if(popup && popup.classList.contains('show')){
-      this.executeSelectedMove();
-      this.hidePopup();
-    } else {
-      const currentTime = Date.now();
-      const isDouble = currentTime - this.lastTapTime < 280 && this.lastTapMove === move;
-      if(isDouble){
-        // Double tap = 180 degree (double move)
-        this.applyMove(move + '2');
-        this.lastTapTime = 0;
-      } else {
-        this.applyMove(move);
-        this.lastTapTime = currentTime;
-        this.lastTapMove = move;
-      }
+    // X/Y/Z — whole cube rotation, preserve tilt
+    if (['X','Y','Z'].includes(move)) {
+      this.applyMove(move);
+      return;
     }
-    this.heldButtons.delete(move);
-    this.activeBtn = null;
+
+    // Double tap within 280ms = double move (R2)
+    const now = Date.now();
+    if (move === this._lastTapMove && now - this._lastTapTime < 280) {
+      // Cancel any pending single
+      clearTimeout(this._singleTapTimer);
+      this._lastTapTime = 0;
+      this._lastTapMove = '';
+      this.applyMove(move + '2');
+      this.animateBtnRipple(btn);
+      return;
+    }
+
+    this._lastTapMove = move;
+    this._lastTapTime = now;
+
+    // Delay single tap slightly to allow double tap detection
+    this._singleTapTimer = setTimeout(() => {
+      if (this._lastTapMove === move) {
+        this.applyMove(move);
+        this._lastTapMove = '';
+      }
+    }, 150);
+
+    this.animateBtnRipple(btn);
   }
 
-  applyMove(move, isUndo=false) {
-    if(this.isMoving){
+  // Semi-circle ripple animation on button tap
+  animateBtnRipple(btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 200);
+  }
+
+  selectPopupOption(opt) {
+    const popup = document.getElementById('vc-popup');
+    if (!popup) return;
+    const move = opt.textContent.trim();
+    this.applyMove(move);
+    popup.classList.remove('show');
+  }
+
+  // ── Apply a move ─────────────────────────────────────
+  applyMove(move, isUndo = false) {
+    if (this.isMoving) {
       this.moveQueue.push({ move, isUndo });
       return;
     }
-    if(!isUndo && !this.isTiming && !['X','Y','Z'].includes(move[0])){
+
+    // Start timer on first non-rotation move
+    if (!isUndo && !this.isTiming && !['X','Y','Z'].includes(move[0])) {
       this.startTimer();
     }
-    this.vibrate(15);
-    if(this.settings.sound) this.playClickSound();
-    this.rotateFace(move, isUndo, animSpeed || 250);
-    if(!isUndo){
+
+    this.vibrate(12);
+
+    // Update internal state
+    if (!['X','Y','Z'].includes(move[0])) {
+      this.cubeState.applyMove(move);
+    }
+
+    // Record history
+    if (!isUndo) {
       this.history.push(move);
       this.redoStack = [];
       this.updateHistoryDisplay();
-      this.isSolved = false;
     }
+
+    // Animate 3D
+    this.animate3DMove(move, () => {
+      this.updateColors();
+
+      // Check solved
+      if (this.isTiming && !isUndo && this.cubeState.isSolved()) {
+        this.stopTimer();
+        const td = document.getElementById('vc-timer-display');
+        if (td) td.style.color = '#00c853';
+        if (typeof showToast === 'function') showToast('Solved! ' + (td ? td.textContent : ''));
+      }
+
+      // Next queued move
+      if (this.moveQueue.length > 0) {
+        const next = this.moveQueue.shift();
+        this.applyMove(next.move, next.isUndo);
+      }
+    });
   }
 
-  playClickSound(){
-    try{
-      const ctx = new(window.AudioContext||window.webkitAudioContext)();
-      const buf = ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);
-      const d = buf.getChannelData(0);
-      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3)*0.3;
-      const src = ctx.createBufferSource();
-      src.buffer=buf; src.connect(ctx.destination); src.start();
-    }catch(e){}
+  // ── 3D animation ─────────────────────────────────────
+  animate3DMove(move, onDone) {
+    this.isMoving = true;
+    const base   = move.replace(/['\d]/g, '');
+    const prime  = move.includes("'");
+    const double = move.includes('2');
+
+    // For X/Y/Z — rotate entire rootGroup smoothly
+    if (['X','Y','Z'].includes(base)) {
+      const axis  = base==='X' ? new THREE.Vector3(1,0,0)
+                  : base==='Y' ? new THREE.Vector3(0,1,0)
+                  :               new THREE.Vector3(0,0,1);
+      let angle = prime ? Math.PI/2 : double ? Math.PI : -Math.PI/2;
+
+      const startQ = this.rootGroup.quaternion.clone();
+      const deltaQ = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+      const endQ   = deltaQ.clone().multiply(startQ);
+
+      const dur = 350, start = Date.now();
+      const step = () => {
+        const p = Math.min((Date.now()-start)/dur, 1);
+        const e = p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+        this.rootGroup.quaternion.slerpQuaternions(startQ, endQ, e);
+        if (p < 1) { requestAnimationFrame(step); }
+        else { this.isMoving = false; onDone && onDone(); }
+      };
+      requestAnimationFrame(step);
+      return;
+    }
+
+    // Face/slice move — rotate relevant cubies
+    const axis     = this._getMoveAxis(base);
+    const layerVal = this._getMoveLayerVal(base);
+    let   angle    = prime ? Math.PI/2 : double ? Math.PI : -Math.PI/2;
+
+    const moving = this.cubeGroup.children.filter(c => {
+      const dot = Math.round(c.position.dot(axis));
+      return dot === layerVal;
+    });
+
+    if (!moving.length) { this.isMoving = false; onDone && onDone(); return; }
+
+    const saved = moving.map(m => ({ mesh:m, pos:m.position.clone(), quat:m.quaternion.clone() }));
+    const rotQ  = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+    const duration = typeof animSpeed !== 'undefined' ? animSpeed : 300;
+    const start    = Date.now();
+
+    const step = () => {
+      const elapsed  = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased    = progress<0.5 ? 2*progress*progress : 1-Math.pow(-2*progress+2,2)/2;
+      const interpQ  = new THREE.Quaternion().slerp(rotQ, eased);
+
+      saved.forEach(({ mesh, pos, quat }) => {
+        mesh.position.copy(pos.clone().applyQuaternion(interpQ));
+        mesh.quaternion.copy(interpQ.clone().multiply(quat));
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        // Snap to grid
+        saved.forEach(({ mesh, pos, quat }) => {
+          const fp = pos.clone().applyQuaternion(rotQ);
+          mesh.position.set(Math.round(fp.x), Math.round(fp.y), Math.round(fp.z));
+          mesh.quaternion.copy(rotQ.clone().multiply(quat));
+        });
+        this.isMoving = false;
+        onDone && onDone();
+      }
+    };
+    requestAnimationFrame(step);
   }
 
-  startTimer(){
-    if(this.settings.inspection && this.inspectionTimeLeft > 0) return;
-    this.isTiming = true;
-    this.startTime = Date.now();
-    this.timerInterval = setInterval(()=>{
-      const elapsed = Date.now()-this.startTime;
-      const el = document.getElementById('vc-timer-display');
-      if(el) el.textContent = this.formatTime(elapsed);
-    },50);
+  _getMoveAxis(base) {
+    if (['R','L','M','X'].includes(base)) return new THREE.Vector3(1,0,0);
+    if (['U','D','E','Y'].includes(base)) return new THREE.Vector3(0,1,0);
+    return new THREE.Vector3(0,0,1);
   }
 
-  stopTimer(){
-    clearInterval(this.timerInterval);
-    this.isTiming = false;
+  _getMoveLayerVal(base) {
+    if (base==='R') return 1;
+    if (base==='L'||base==='M') return -1;
+    if (base==='U') return 1;
+    if (base==='D'||base==='E') return -1;
+    if (base==='F'||base==='S') return 1;
+    if (base==='B') return -1;
+    return 0;
   }
 
-  formatTime(ms){
-    const s = Math.floor(ms/1000);
-    const cs = Math.floor((ms%1000)/10);
-    return `${s}.${cs.toString().padStart(2,'0')}`;
-  }
-
-  undo(){
-    if(!this.history.length) return;
+  // ── Undo / Redo ──────────────────────────────────────
+  undo() {
+    if (!this.history.length) return;
     const move = this.history.pop();
     this.redoStack.push(move);
-    const inv = move.includes("'") ? move.replace("'","") : move.endsWith("2") ? move : move+"'";
+    // Invert the move
+    let inv;
+    if (move.includes('2'))  inv = move; // 2 is its own inverse
+    else if (move.includes("'")) inv = move.replace("'", "");
+    else inv = move + "'";
     this.applyMove(inv, true);
     this.updateHistoryDisplay();
   }
 
-  redo(){
-    if(!this.redoStack.length) return;
+  redo() {
+    if (!this.redoStack.length) return;
     const move = this.redoStack.pop();
     this.applyMove(move);
   }
 
-  async scramble(){
+  // ── Scramble ─────────────────────────────────────────
+  async scramble() {
     this.stopTimer();
-    this.isSolved = false;
     const td = document.getElementById('vc-timer-display');
-    if(td){ td.textContent='0.00'; td.style.color='var(--w)'; }
+    if (td) { td.textContent = '0.00'; td.style.color = 'var(--w)'; }
 
     const moves = ['U','D','L','R','F','B'];
-    const mods = ["","'","2"];
-    let last='', scrambleMoves=[];
-    for(let i=0;i<20;i++){
-      let f; do{ f=moves[Math.floor(Math.random()*6)]; }while(f===last);
-      scrambleMoves.push(f+mods[Math.floor(Math.random()*3)]);
-      last=f;
+    const mods  = ["","'","2"];
+    let last = '', scrambleMoves = [];
+
+    for (let i = 0; i < 20; i++) {
+      let f;
+      do { f = moves[Math.floor(Math.random() * 6)]; } while (f === last);
+      scrambleMoves.push(f + mods[Math.floor(Math.random() * 3)]);
+      last = f;
     }
 
-    this.currentScramble = scrambleMoves.join(' ');
-    const el = document.getElementById('vc-scramble-text');
-    if(el){ el.textContent=this.currentScramble; el.classList.remove('visible'); el.style.display='block'; }
-
-    // Fast scramble
-    for(const move of scrambleMoves){
-      await this.rotateFaceAsync(move, 60);
-    }
-
-    this.history=[];
+    this.cubeState.reset();
+    this.buildCube(); // reset positions
+    this.history = [];
     this.updateHistoryDisplay();
 
-    if(this.settings.inspection) this.startInspection();
+    // Apply scramble to internal state
+    for (const m of scrambleMoves) this.cubeState.applyMove(m);
+    this.updateColors();
+
+    const el = document.getElementById('vc-scramble-text');
+    if (el) { el.textContent = scrambleMoves.join(' '); el.style.display = 'block'; }
+
+    if (typeof showToast === 'function') showToast('Scrambled!');
   }
 
-  rotateFaceAsync(move, duration){
-    return new Promise(resolve => {
-      this.rotateFace(move, false, duration, resolve);
-    });
+  reset() {
+    this.cubeState.reset();
+    this.buildCube();
+    this.setDefaultOrientation();
+    this.history = [];
+    this.redoStack = [];
+    this.updateHistoryDisplay();
+    this.stopTimer();
+    const td = document.getElementById('vc-timer-display');
+    if (td) { td.textContent = '0.00'; td.style.color = 'var(--w)'; }
+    if (typeof showToast === 'function') showToast('Reset');
   }
 
-  reset(){
-    // Reset cube orientation only
-    this.cubeGroup.quaternion.set(0,0,0,1);
-    showToast('Orientation reset');
+  // ── Timer ────────────────────────────────────────────
+  startTimer() {
+    this.isTiming  = true;
+    this.timerStart = Date.now();
+    this.timerInterval = setInterval(() => {
+      const ms = Date.now() - this.timerStart;
+      const s  = Math.floor(ms / 1000);
+      const cs = Math.floor((ms % 1000) / 10);
+      const td = document.getElementById('vc-timer-display');
+      if (td) td.textContent = `${s}.${String(cs).padStart(2,'0')}`;
+    }, 50);
   }
 
-  rotateFace(move, isUndo=false, duration=250, callback=null){
-    this.isMoving = true;
-    const face = move[0];
-    const isPrime = move.includes("'");
-    const isDouble = move.includes('2');
-
-    let angle = isPrime ? Math.PI/2 : -Math.PI/2;
-    if(isDouble) angle = Math.PI;
-
-    let axis = new THREE.Vector3();
-    let predicate = () => false;
-
-    switch(face){
-      case 'R': axis.set(1,0,0);  predicate = p => p.x > 0.5;              break;
-      case 'L': axis.set(1,0,0);  predicate = p => p.x < -0.5;             break;
-      case 'U': axis.set(0,1,0);  predicate = p => p.y > 0.5;              break;
-      case 'D': axis.set(0,1,0);  predicate = p => p.y < -0.5;             break;
-      case 'F': axis.set(0,0,1);  predicate = p => p.z > 0.5;              break;
-      case 'B': axis.set(0,0,1);  predicate = p => p.z < -0.5;             break;
-      case 'M': axis.set(1,0,0);  predicate = p => Math.abs(p.x) < 0.5;   break;
-      case 'E': axis.set(0,1,0);  predicate = p => Math.abs(p.y) < 0.5;   break;
-      case 'S': axis.set(0,0,1);  predicate = p => Math.abs(p.z) < 0.5;   break;
-      case 'X': axis.set(1,0,0);  predicate = () => true;                   break;
-      case 'Y': axis.set(0,1,0);  predicate = () => true;                   break;
-      case 'Z': axis.set(0,0,1);  predicate = () => true;                   break;
-      default: this.isMoving=false; if(callback) callback(); return;
-    }
-
-    // Invert direction for L/D/B/M faces
-    if(['L','D','B','M'].includes(face)) angle = -angle;
-
-    const group = new THREE.Group();
-    this.scene.add(group);
-
-    const movingCubies = this.cubies.filter(c => {
-      const wp = c.position.clone().applyMatrix4(this.cubeGroup.matrixWorld);
-      return predicate(wp);
-    });
-    movingCubies.forEach(c => group.add(c));
-
-    // Also move body cubies
-    const allMesh = [...this.cubeGroup.children];
-    const movingBodies = allMesh.filter(m => !this.cubies.includes(m)).filter(m => {
-      const wp = m.position.clone().applyMatrix4(this.cubeGroup.matrixWorld);
-      return predicate(wp);
-    });
-    movingBodies.forEach(m => group.add(m));
-
-    const rotAxis = ['R','L','X','M'].includes(face)?'x':['U','D','Y','E'].includes(face)?'y':'z';
-    const start = performance.now();
-
-    const tick = (time) => {
-      const progress = Math.min((time-start)/duration, 1);
-      const eased = progress<0.5 ? 2*progress*progress : 1-Math.pow(-2*progress+2,2)/2;
-      group.rotation[rotAxis] = angle * eased;
-
-      if(progress < 1){
-        requestAnimationFrame(tick);
-      } else {
-        group.rotation[rotAxis] = angle;
-        group.updateMatrixWorld(true);
-
-        [...movingCubies, ...movingBodies].forEach(c => {
-          c.applyMatrix4(group.matrixWorld);
-          this.cubeGroup.add(c);
-          c.position.set(
-            Math.round(c.position.x),
-            Math.round(c.position.y),
-            Math.round(c.position.z)
-          );
-        });
-
-        this.scene.remove(group);
-        this.isMoving = false;
-
-        if(this.isTiming && this.isStateSolved()){
-          this.stopTimer();
-          this.isSolved = true;
-          const td = document.getElementById('vc-timer-display');
-          if(td) td.style.color = '#00c853';
-          if(typeof showToast==='function') showToast('Solved! ' + (td?td.textContent:''));
-        }
-
-        if(callback) callback();
-        if(this.moveQueue.length > 0){
-          const next = this.moveQueue.shift();
-          this.rotateFace(next.move, next.isUndo, duration);
-        }
-      }
-    };
-    requestAnimationFrame(tick);
+  stopTimer() {
+    clearInterval(this.timerInterval);
+    this.isTiming = false;
   }
 
-  isStateSolved(){
-    // Check if all cubies are at near-integer positions with clean rotations
-    for(const cubie of this.cubies){
-      const r = cubie.rotation;
-      const snap = v => {
-        const mod = ((v % (Math.PI/2)) + Math.PI*2) % (Math.PI/2);
-        return mod < 0.1 || mod > Math.PI/2 - 0.1;
-      };
-      if(!snap(r.x)||!snap(r.y)||!snap(r.z)) return false;
-    }
-    return this.history.length > 0;
-  }
-
-  updateHistoryDisplay(){
+  // ── History display ──────────────────────────────────
+  updateHistoryDisplay() {
     const el = document.getElementById('vc-history');
-    if(!el) return;
-    if(!this.history.length){ el.textContent='No moves yet'; return; }
-    el.innerHTML = this.history.map((m,i)=>
-      `<span class="vc-history-move${i===this.history.length-1?' latest':''}">${m}</span>`
-    ).join(' ');
+    if (!el) return;
+    if (!this.history.length) { el.textContent = 'No moves yet'; return; }
+    el.innerHTML = this.history
+      .map((m, i) => `<span class="vc-history-move${i===this.history.length-1?' latest':''}">${m}</span>`)
+      .join(' ');
     el.scrollLeft = el.scrollWidth;
   }
 
-  showPopup(move){
-    const popup = document.getElementById('vc-popup');
-    if(!popup) return;
-    popup.dataset.baseMove = move;
-    const opts = popup.querySelectorAll('.vc-option');
-    if(opts[0]) opts[0].textContent = move;
-    if(opts[1]) opts[1].textContent = move+"'";
-    popup.classList.add('show');
-    this.updateSelection('up');
+  // ── Settings ─────────────────────────────────────────
+  updateSettings(key, value) {
+    this.settings[key] = value;
+    if (key === 'blindfold') { this.buildCube(); if (!value) this.updateColors(); }
+    if (key === 'advanced') {
+      const el = document.getElementById('vc-slice-controls');
+      if (el) el.style.display = value ? 'flex' : 'none';
+    }
   }
 
-  hidePopup(){
-    const p = document.getElementById('vc-popup');
-    if(p) p.classList.remove('show');
+  vibrate(ms) {
+    if (this.settings.vibration && navigator.vibrate) navigator.vibrate(ms);
   }
 
-  updateSelection(dir){
-    const opts = document.querySelectorAll('.vc-option');
-    opts.forEach(o => o.classList.remove('selected'));
-    if(dir==='up'){ if(opts[0]) opts[0].classList.add('selected'); this.currentSelection='normal'; }
-    else           { if(opts[1]) opts[1].classList.add('selected'); this.currentSelection='prime'; }
-  }
-
-  executeSelectedMove(){
-    const base = document.getElementById('vc-popup')?.dataset.baseMove || '';
-    this.applyMove(this.currentSelection==='prime' ? base+"'" : base);
-  }
-
-  toggleScramble(){
+  toggleScramble() {
     const el = document.getElementById('vc-scramble-text');
-    if(el) el.classList.toggle('visible');
+    if (el) el.classList.toggle('visible');
   }
 
-  startInspection(){
-    if(this.inspectionTimer) clearInterval(this.inspectionTimer);
-    this.inspectionTimeLeft = 15;
-    const td = document.getElementById('vc-timer-display');
-    if(td){ td.style.color='#ffaa44'; td.textContent=this.inspectionTimeLeft; }
-
-    this.inspectionTimer = setInterval(()=>{
-      this.inspectionTimeLeft--;
-      if(td) td.textContent = this.inspectionTimeLeft;
-      if(this.inspectionTimeLeft<=0){
-        clearInterval(this.inspectionTimer);
-        if(td){ td.style.color='#ff4444'; }
-        this.playAlertSound();
-        setTimeout(()=>{
-          if(td){ td.style.color='var(--w)'; td.textContent='0.00'; }
-          this.startTimer();
-        }, 900);
-      }
-    },1000);
+  // ── Render loop ──────────────────────────────────────
+  startRenderLoop() {
+    const loop = () => {
+      requestAnimationFrame(loop);
+      this.renderer.render(this.scene, this.camera);
+    };
+    loop();
   }
-
-  playAlertSound(){
-    try{
-      const ctx = new(window.AudioContext||window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type='sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.4);
-      osc.start(); osc.stop(ctx.currentTime+0.4);
-    }catch(e){}
-  }
-
-  vibrate(ms){ if(this.settings.vibration && navigator.vibrate) navigator.vibrate(ms); }
-  toRadians(deg){ return deg*(Math.PI/180); }
-  animate(){ requestAnimationFrame(()=>this.animate()); this.renderer.render(this.scene, this.camera); }
 }
 
-// ─── Global handlers ────────────────────────────────────
+// ── Global handlers ──────────────────────────────────
 function vcUndo()     { window.vCube?.undo(); }
 function vcRedo()     { window.vCube?.redo(); }
 function vcScramble() { window.vCube?.scramble(); }
 function vcReset()    { window.vCube?.reset(); }
 
-function initVirtualCube(){
-  if(window.vCube) return; // already initialized
-  // Small delay to allow the screen to be visible and have proper dimensions
-  setTimeout(()=>{
-    try{
-      window.vCube = new VirtualCube();
-    }catch(e){
-      console.error('VirtualCube init error:', e);
-    }
+function initVirtualCube() {
+  if (window.vCube) return;
+  setTimeout(() => {
+    try { window.vCube = new VirtualCube(); }
+    catch(e) { console.error('VirtualCube init error:', e); }
   }, 80);
 }
 
-function toggleVCSetting(key){
-  const btn = document.getElementById('tog-vc-'+key);
-  if(!btn) return;
+function toggleVCSetting(key) {
+  const btn = document.getElementById('tog-vc-' + key);
+  if (!btn) return;
   const isOn = btn.classList.toggle('on');
-  if(window.vCube) window.vCube.updateSettings(key, isOn);
+  window.vCube?.updateSettings(key, isOn);
 }
 
-function updateVCTheme(theme){
-  if(window.vCube) window.vCube.updateSettings('theme', theme);
+function updateVCTheme(theme) {
+  window.vCube?.updateSettings('theme', theme);
 }
 
-// animSpeed is defined in script.js — virtual cube reads it too
-// Use a local fallback
-Object.defineProperty(window, 'animSpeed', {
-  get(){ return window._animSpeed || 250; },
-  set(v){ window._animSpeed = v; },
-  configurable: true
-});
+// Expose globals for script.js compatibility
+window.vcUndo     = vcUndo;
+window.vcRedo     = vcRedo;
+window.vcScramble = vcScramble;
+window.vcReset    = vcReset;
+window.initVirtualCube   = initVirtualCube;
+window.toggleVCSetting   = toggleVCSetting;
+window.updateVCTheme     = updateVCTheme;
