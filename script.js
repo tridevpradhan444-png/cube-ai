@@ -137,8 +137,11 @@ function showScreen(name){
       item.classList.toggle('active', navNames[i]===name);
     });
     if(name==='history') renderHistory();
-    if(name==='practice') initPScene();
-    if(name==='virtual-cube') initVirtualCube();
+    if(name==='practice'){
+      // Wait for screen to be visible before init
+      requestAnimationFrame(()=>requestAnimationFrame(()=>initPScene()));
+    }
+    if(name==='virtual-cube') requestAnimationFrame(()=>requestAnimationFrame(()=>initVirtualCube()));
   }catch(e){console.error('showScreen:',e);}
 }
 function toggleDrawer(){ document.getElementById('drawer').classList.toggle('open'); document.getElementById('hamburger').classList.toggle('open'); }
