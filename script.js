@@ -1,9 +1,6 @@
 // ═══════════════════════════════════════════════════════
 //  CUBING.JS — industry-standard cube solver via CDN
 // ═══════════════════════════════════════════════════════
-import { cube3x3x3 } from 'https://cdn.cubing.net/js/cubing/puzzles';
-import { randomScrambleForEvent } from 'https://cdn.cubing.net/js/cubing/scramble';
-import { experimentalSolve3x3x3IgnoringCenters } from 'https://cdn.cubing.net/js/cubing/search';
 
 // ═══════════════════════════════════════════════════════
 //  CONSTANTS & DATA
@@ -469,14 +466,13 @@ function handleSlotTap(slotId){
 // Painting auto-registers as current scramble
 // Updates the scramble input field so user can see it, and marks state ready for Solve
 function autoRegisterPaintedScramble(){
+  // The current cubeState IS the painted state — store it as the active case
+  // No scramble string needed; solveCurrentState() reads cubeState directly
   currentScrambleStr = '__painted__';
-
   const inp = document.getElementById('pscramble-input');
-  if(inp){
-    inp.value = '(painted cube state)';
-    inp.style.color = 'var(--cY)';
-  }
-
+  if(inp) inp.value = '(painted cube state)';
+  inp.style.color = 'var(--cY)';
+  // Clear any old solution display
   const sp = document.getElementById('solution-panel');
   if(sp) sp.classList.remove('show');
 }
@@ -938,10 +934,14 @@ function showToast(msg){
 // ═══════════════════════════════════════════════════════
 async function solveWithCubingJS(scrambleStr){
   try{
-    const { experimentalSolve3x3x3IgnoringCenters } = await import('https://cdn.cubing.net/js/cubing/search');
-    const solution = await experimentalSolve3x3x3IgnoringCenters(scrambleStr);
-    return solution.toString();
-  }catch(e){ console.error('cubing.js solver error:',e); return null; }
+    const { experimentalSolve3x3x3IgnoringCenters } =
+      await import('https://cdn.cubing.net/js/cubing/search');
+    const sol = await experimentalSolve3x3x3IgnoringCenters(scrambleStr);
+    return sol.toString();
+  } catch(e){
+    console.warn('cubing.js solver unavailable, using fallback');
+    return invertMoves(scrambleStr);
+  }
 }
 
 async function solveCurrentState(){
