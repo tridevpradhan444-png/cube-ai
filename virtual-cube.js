@@ -136,7 +136,7 @@ class CubeState {
 class CubeRenderer {
   constructor(canvas, opts={}){
     this.canvas   = canvas;
-    this.opts     = Object.assign({ tiltX:-0.42, tiltY:0.4, fov:38, camZ:9 }, opts);
+    this.opts     = Object.assign({ tiltX:-0.35, tiltY:0.3, fov:32, camZ:11 }, opts);
     this.state    = new CubeState();
     this.scene    = null;
     this.camera   = null;
@@ -370,7 +370,7 @@ class VirtualCube {
     this.canvas    = document.getElementById('vc-canvas');
     if(!this.container||!this.canvas) return;
 
-    this.cr = new CubeRenderer(this.canvas, { tiltX:-0.42, tiltY:0.4, fov:38, camZ:9 });
+    this.cr = new CubeRenderer(this.canvas, { tiltX:-0.35, tiltY:0.3, fov:32, camZ:11 });
     this.history   = [];
     this.redoStack = [];
     this.queue     = [];
@@ -472,7 +472,7 @@ class VirtualCube {
     this._updateHist();
     const td=document.getElementById('vc-timer-display');
     if(td){td.textContent='0.00';td.style.color='var(--w)';}
-    if(typeof showToast==='function') showToast('Scrambled! '+seq.join(' '));
+    if(typeof showToast==='function') showToast('Scrambled!');
   }
 
   reset(){

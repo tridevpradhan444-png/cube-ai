@@ -135,10 +135,9 @@ function showScreen(name){
     });
     if(name==='history') renderHistory();
     if(name==='practice'){
-      // Wait for screen to be visible before init
-      requestAnimationFrame(()=>requestAnimationFrame(()=>initPScene()));
+      setTimeout(()=>initPScene(), 200);
     }
-    if(name==='virtual-cube') requestAnimationFrame(()=>requestAnimationFrame(()=>initVirtualCube()));
+    if(name==='virtual-cube') setTimeout(()=>initVirtualCube(), 100);
   }catch(e){console.error('showScreen:',e);}
 }
 function toggleDrawer(){ document.getElementById('drawer').classList.toggle('open'); document.getElementById('hamburger').classList.toggle('open'); }
@@ -638,13 +637,31 @@ let currentScrambleStr = '';
 let currentSolution = '';
 
 function initPScene(){
-  if(!window.CubeRenderer){ setTimeout(initPScene,150); return; }
+  if(!window.CubeRenderer){ setTimeout(initPScene,200); return; }
   const canvas = document.getElementById('practice-canvas');
-  if(!canvas) return;
+  const wrap   = document.getElementById('cube-wrap');
+  if(!canvas||!wrap) return;
+
+  // If already init and just switching stages — refresh filter
   if(pCR){
+    // Resize in case viewport changed
+    const w=wrap.clientWidth, h=wrap.clientHeight;
+    if(w>0&&h>0){
+      pCR.camera.aspect=w/h;
+      pCR.camera.updateProjectionMatrix();
+      pCR.renderer.setSize(w,h);
+    }
     pCR.setFilter(_practiceFilter());
-    renderPalette(); return;
+    renderPalette();
+    return;
   }
+
+  // Canvas needs real dimensions — wait until visible
+  if(wrap.clientWidth===0){
+    setTimeout(initPScene,150);
+    return;
+  }
+
   pStageInit=true;
   pCR = new window.CubeRenderer(canvas,{tiltX:-0.38,tiltY:0.42,fov:40,camZ:8});
   pCR.state.reset();
