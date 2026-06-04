@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script type="module" src="https://cdn.cubing.net/js/cubing/twisty"></script>
 <script src="virtual-cube.js"></script>
 <script src="script.js"></script>
 <style>
@@ -212,7 +213,7 @@ html,body{
 .privacy-body h2{font-family:var(--fd);font-size:12px;letter-spacing:2px;color:var(--w);margin:20px 0 8px;text-transform:uppercase;}
 
 /* TOAST */
-#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--w);color:var(--bg);padding:10px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;z-index:2000;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;}
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--w);color:var(--bg);padding:10px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;z-index:2000;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 @media(max-width:380px){#timer-display{font-size:48px;}.stat-value{font-size:11px;}.stat-label{font-size:8px;}}
@@ -412,46 +413,81 @@ html,body{
   </div>
 </div>
 
-<!-- VIRTUAL CUBE — inside #app so .screen CSS applies -->
+<!-- VIRTUAL CUBE -->
 <div id="screen-virtual-cube" class="screen">
-  <div class="screen-header"><span>Virtual Cube</span></div>
+  <div class="screen-header">
+    <span>Virtual Cube</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div id="vc-timer-display" style="font-family:var(--fd);font-size:18px;color:var(--w);">0.00</div>
+      <div class="header-action" onclick="showVCSettings()">⚙</div>
+    </div>
+  </div>
   <div id="vc-canvas-container">
-    <canvas id="vc-canvas"></canvas>
+    <!-- twisty-player: cubing.js handles all 3D rendering -->
+    <twisty-player
+      id="vc-twisty-player"
+      puzzle="3x3x3"
+      visualization="3D"
+      background="none"
+      control-panel="none"
+      camera-latitude="-22"
+      camera-longitude="0"
+    ></twisty-player>
+
+    <!-- History bar -->
     <div class="vc-top-bar">
       <div style="display:flex;justify-content:space-between;align-items:center;pointer-events:auto;">
         <div style="flex:1;"><div id="vc-history">No moves yet</div></div>
-        <div id="vc-timer-display" style="font-family:var(--fd);font-size:24px;color:var(--w);margin-left:15px;">0.00</div>
-      </div>
-      <div class="vc-action-row">
-        <div class="vc-icon-btn" onclick="vcUndo()"><svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcRedo()"><svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcScramble()"><svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
-        <div class="vc-icon-btn" onclick="vcReset()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
+        <div class="vc-action-row" style="margin-left:8px;">
+          <div class="vc-icon-btn" onclick="vcUndo()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></div>
+          <div class="vc-icon-btn" onclick="vcRedo()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg></div>
+          <div class="vc-icon-btn" onclick="vcScramble()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></div>
+          <div class="vc-icon-btn" onclick="vcReset()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
+        </div>
       </div>
     </div>
+
+    <!-- Move buttons -->
     <div class="vc-controls">
-      <div class="vc-btn-group vc-top"><div class="vc-btn" data-move="U">U</div></div>
+      <div class="vc-btn-group vc-top">
+        <div class="vc-btn" data-move="U">U</div>
+      </div>
       <div class="vc-middle">
         <div class="vc-btn" data-move="L">L</div>
         <div class="vc-btn" data-move="F">F</div>
         <div class="vc-btn" data-move="R">R</div>
       </div>
-      <div class="vc-btn-group vc-bottom"><div class="vc-btn" data-move="D">D</div></div>
+      <div class="vc-btn-group vc-bottom">
+        <div class="vc-btn" data-move="D">D</div>
+      </div>
     </div>
-    <div id="vc-slice-controls" class="vc-rotations" style="right:auto;left:20px;display:none;">
+
+    <!-- Slice controls -->
+    <div id="vc-slice-controls" style="display:none;">
       <div class="vc-btn" data-move="M">M</div>
       <div class="vc-btn" data-move="E">E</div>
       <div class="vc-btn" data-move="S">S</div>
     </div>
+
+    <!-- Rotation buttons -->
     <div class="vc-rotations">
       <div class="vc-btn" data-move="X">X</div>
       <div class="vc-btn" data-move="Y">Y</div>
       <div class="vc-btn" data-move="Z">Z</div>
     </div>
-    <div id="vc-popup" class="vc-popup">
-      <div class="vc-option">R</div>
-      <div class="vc-option">R'</div>
+
+    <!-- Split-plate popup -->
+    <div id="vc-split-popup">
+      <div class="vc-plate vc-plate-top">R</div>
+      <div class="vc-plate-gap"></div>
+      <div class="vc-plate vc-plate-bottom">R'</div>
     </div>
+  </div>
+
+  <!-- VC Settings panel (hidden by default) -->
+  <div id="vc-settings-panel" style="display:none;position:absolute;top:56px;right:0;left:0;background:var(--bg2);border-bottom:var(--border);z-index:50;padding:16px 20px;">
+    <div class="srow"><div class="sinfo"><div class="sname">Advanced Mode</div><div class="sdesc">Show M E S slice buttons</div></div><div class="toggle" id="tog-vc-advanced" onclick="toggleVCSetting('advanced')"><div class="tknob"></div></div></div>
+    <div class="srow"><div class="sinfo"><div class="sname">Vibration</div><div class="sdesc">Haptic feedback</div></div><div class="toggle" id="tog-vc-vibration" onclick="toggleVCSetting('vibration')"><div class="tknob"></div></div></div>
   </div>
 </div>
 
@@ -459,5 +495,11 @@ html,body{
 
 <link rel="stylesheet" href="virtual-cube.css">
 <div id="toast"></div>
+<script>
+function showVCSettings(){
+  const p=document.getElementById('vc-settings-panel');
+  if(p) p.style.display=p.style.display==='none'?'block':'none';
+}
+</script>
 </body>
 </html>

@@ -882,8 +882,14 @@ function loadSettings(){
 let toastT;
 function showToast(msg){
   const t=document.getElementById('toast'); if(!t) return;
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200);
+  t.textContent=msg;
+  t.classList.remove('show');
+  void t.offsetWidth; // force reflow so transition restarts
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>{
+    t.classList.remove('show');
+  }, 2200);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -975,7 +981,15 @@ Object.assign(window,{
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
-genScramble();
-updateStats();
-loadSettings();
+// Run after DOM fully loaded
+function appInit(){
+  genScramble();
+  updateStats();
+  loadSettings();
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', appInit);
+} else {
+  appInit();
+}
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});

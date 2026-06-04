@@ -1,113 +1,135 @@
+/* ── Virtual Cube Screen ── */
 #vc-canvas-container {
-    flex: 1;
-    width: 100%;
-    position: relative;
-    background: radial-gradient(circle at center, #1a1a1a 0%, #080808 100%);
-    overflow: hidden;
+  flex: 1; width: 100%; position: relative;
+  background: #080808; overflow: hidden;
+  display: flex; flex-direction: column;
 }
-#vc-canvas { width: 100%; height: 100%; display: block; }
+
+/* twisty-player fills the space */
+#vc-twisty-player {
+  flex: 1; width: 100%;
+  --cube-opacity: 1;
+}
 
 /* Top bar */
 .vc-top-bar {
-    position: absolute;
-    top: 10px; left: 64px; right: 10px;
-    display: flex; flex-direction: column; gap: 10px;
-    pointer-events: none; z-index: 20;
+  position: absolute; top: 10px; left: 64px; right: 10px;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none; z-index: 20;
 }
 #vc-history {
-    background: rgba(0,0,0,0.5);
-    padding: 8px 12px; border-radius: 4px;
-    font-family: var(--fd); font-size: 13px; color: var(--w);
-    letter-spacing: 1px; min-height: 36px;
-    display: flex; align-items: center; gap: 6px;
-    overflow-x: auto; white-space: nowrap;
-    pointer-events: auto; scrollbar-width: none;
-    flex-wrap: wrap; max-height: 60px;
+  background: rgba(0,0,0,0.55);
+  padding: 7px 12px; border-radius: 4px;
+  font-family: var(--fd); font-size: 12px; color: var(--w);
+  letter-spacing: 1px; min-height: 34px;
+  display: flex; align-items: center; gap: 6px;
+  overflow-x: auto; white-space: nowrap;
+  pointer-events: auto; scrollbar-width: none;
+  flex-wrap: wrap; max-height: 56px;
 }
 #vc-history::-webkit-scrollbar { display: none; }
-.vc-history-move { opacity: 0.55; font-size: 12px; }
+.vc-history-move { opacity: 0.5; font-size: 11px; }
 .vc-history-move.latest { opacity: 1; color: #00c853; font-weight: bold; }
 
-.vc-action-row {
-    display: flex; gap: 8px; pointer-events: auto;
-}
+.vc-action-row { display: flex; gap: 8px; pointer-events: auto; }
 .vc-icon-btn {
-    width: 36px; height: 36px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: var(--w);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; border-radius: 6px; transition: all 0.2s;
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--w); display: flex; align-items: center;
+  justify-content: center; cursor: pointer;
+  border-radius: 6px; transition: all 0.15s;
 }
 .vc-icon-btn:active { background: rgba(255,255,255,0.2); }
-.vc-icon-btn svg { width: 18px; height: 18px; }
+.vc-icon-btn svg { width: 17px; height: 17px; }
 
-/* Move controls overlay */
+/* ── Move buttons overlay ── */
 .vc-controls {
-    position: absolute; inset: 0;
-    pointer-events: none;
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    padding: 20px; z-index: 10;
+  position: absolute; inset: 0;
+  pointer-events: none;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  z-index: 10;
 }
 .vc-btn-group { pointer-events: auto; display: flex; gap: 14px; }
-.vc-top  { margin-bottom: 16px; }
-.vc-middle { display: flex; align-items: center; gap: 36px; margin-bottom: 16px; }
+.vc-top  { margin-bottom: 20px; }
+.vc-middle { display: flex; align-items: center; gap: 70px; margin-bottom: 20px; }
 .vc-bottom { margin-top: 4px; }
 
 .vc-btn {
-    width: 54px; height: 54px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.6);
-    border: 1.5px solid rgba(255,255,255,0.25);
-    color: rgba(255,255,255,0.8);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--fd); font-size: 16px; font-weight: 700;
-    cursor: pointer; user-select: none; pointer-events: auto;
-    transition: all 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    z-index: 10;
+  width: 54px; height: 54px; border-radius: 50%;
+  background: rgba(0,0,0,0.65);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fd); font-size: 16px; font-weight: 700;
+  cursor: pointer; user-select: none; pointer-events: auto;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent; z-index: 10;
 }
 .vc-btn:active, .vc-btn.active {
-    background: rgba(255,255,255,0.22);
-    color: #fff;
-    border-color: rgba(255,255,255,0.7);
-    transform: scale(0.92);
-    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.2); color: #fff;
+  border-color: rgba(255,255,255,0.7);
+  transform: scale(0.92);
 }
 
-/* Rotations (X Y Z) */
+/* Rotation buttons (X Y Z) */
 .vc-rotations {
-    position: absolute; bottom: 20px; right: 16px;
-    display: flex; flex-direction: column; gap: 8px;
-    pointer-events: auto; z-index: 10;
+  position: absolute; bottom: 20px; right: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  pointer-events: auto; z-index: 10;
 }
 .vc-rotations .vc-btn { width: 42px; height: 42px; font-size: 14px; }
 
 /* Slice controls */
 #vc-slice-controls {
-    position: absolute; bottom: 20px; left: 16px;
-    display: none; flex-direction: column; gap: 8px;
-    pointer-events: auto; z-index: 10;
+  position: absolute; bottom: 20px; left: 16px;
+  display: none; flex-direction: column; gap: 8px;
+  pointer-events: auto; z-index: 10;
 }
 #vc-slice-controls .vc-btn { width: 42px; height: 42px; font-size: 14px; }
 
-/* Popup — shows CW / CCW choice on hold */
-.vc-popup {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(8,8,8,0.93);
-    border: 1px solid rgba(255,255,255,0.25);
-    padding: 6px; display: none; flex-direction: column;
-    gap: 4px; z-index: 200; border-radius: 12px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
-    pointer-events: auto; min-width: 100px;
+/* ── Split-plate popup ── */
+#vc-split-popup {
+  position: absolute;
+  pointer-events: none;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 100;
+  transform: translate(-50%, -50%);
 }
-.vc-popup.show { display: flex; }
-.vc-option {
-    padding: 14px 24px; color: rgba(255,255,255,0.6);
-    font-family: var(--fd); font-size: 20px; font-weight: 700;
-    text-align: center; border-radius: 6px;
-    cursor: pointer; transition: all 0.15s;
+#vc-split-popup.show {
+  display: flex;
+  pointer-events: auto;
 }
-.vc-option:active, .vc-option.selected { background: var(--w); color: #080808; }
+
+.vc-plate {
+  width: 70px; height: 40px;
+  background: rgba(10,10,10,0.92);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fd); font-size: 16px; font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  transform: translateY(0);
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+              background 0.15s, color 0.15s;
+  user-select: none;
+}
+.vc-plate-active {
+  background: rgba(255,255,255,0.95) !important;
+  color: #080808 !important;
+  border-color: #fff;
+}
+.vc-plate-top  { transform: translateY(0); }
+.vc-plate-bottom { transform: translateY(0); }
+
+/* Gap between the two plates */
+.vc-plate-gap {
+  width: 54px; height: 54px;
+  /* This is where the button sits — plates slide away from here */
+  flex-shrink: 0;
+}
