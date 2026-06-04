@@ -626,66 +626,6 @@ function rebuildCubeStateFromSlots(){
   pCR.setFilter(_practiceFilter());
 }
 
-// ─── Build 3D mesh directly from cubeState ───────────────
-// This replaces the old slot-based mesh builder
-// cubeState is always the single source of truth
-function buildMesh(){
-  if(!cubeGroup) return;
-  while(cubeGroup.children.length) cubeGroup.remove(cubeGroup.children[0]);
-
-  const gap = 0.055;
-  const geo = new THREE.BoxGeometry(1-gap, 1-gap, 1-gap);
-  // Three.js BoxGeometry material order: +X(R), -X(L), +Y(U), -Y(D), +Z(F), -Z(B)
-  const FACE_ORDER = ['R','L','U','D','F','B'];
-
-  for(let x=-1; x<=1; x++) for(let y=-1; y<=1; y++) for(let z=-1; z<=1; z++){
-    const role = getCubieRole(x, y, z);
-    if(role === 'irrelevant'){
-      // Still render as pure black so cube looks solid
-      const mat = new THREE.MeshLambertMaterial({color:0x0a0a0a});
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, y, z);
-      mesh.userData = {x, y, z, slotId: null};
-      cubeGroup.add(mesh);
-      continue;
-    }
-
-    const mats = FACE_ORDER.map(face => {
-      // Check if this face is exterior for this cubie
-      const axis = face==='R'||face==='L' ? 'x' : face==='U'||face==='D' ? 'y' : 'z';
-      const val  = (face==='R'||face==='U'||face==='F') ? 1 : -1;
-      const pos  = axis==='x' ? x : axis==='y' ? y : z;
-      if(pos !== val) return new THREE.MeshLambertMaterial({color:0x0a0a0a}); // interior
-
-      // Get color from cubeState
-      const color = cubeState[face][getStickerIdx(face, x, y, z)];
-
-      // For stages: dim non-relevant stickers
-      let finalColor = color;
-      if(role === 'slot-empty'){
-        // Empty slot — show as darker gray
-        finalColor = '#1e1e1e';
-      } else if(role === 'center'){
-        // Centers always show their face color
-        finalColor = FACE_COLORS[face];
-      }
-      // role === 'slot' or 'cross-solved' → use cubeState color as-is
-
-      // Hide yellow on cross/f2l stages
-      if((pStage==='cross'||pStage==='f2l') && finalColor===C.Y) finalColor='#1e1e1e';
-
-      return new THREE.MeshLambertMaterial({
-        color: parseInt(finalColor.replace('#',''), 16)
-      });
-    });
-
-    const mesh = new THREE.Mesh(geo, mats);
-    mesh.position.set(x, y, z);
-    const slotDef = SLOT_DEFS[pStage]?.find(s=>s.pos.x===x&&s.pos.y===y&&s.pos.z===z);
-    mesh.userData = {x, y, z, slotId: slotDef ? slotDef.slotId : null};
-    cubeGroup.add(mesh);
-  }
-}
 
 // ═══════════════════════════════════════════════════════
 //  PRACTICE 3D — uses shared CubeRenderer from virtual-cube.js
