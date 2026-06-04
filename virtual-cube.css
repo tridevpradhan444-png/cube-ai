@@ -40,7 +40,7 @@
     cursor: pointer; border-radius: 6px; transition: all 0.2s;
 }
 .vc-icon-btn:active { background: rgba(255,255,255,0.2); }
-.vc-icon-btn svg { width: 18px; height: 18px; fill: currentColor; stroke: currentColor; }
+.vc-icon-btn svg { width: 18px; height: 18px; }
 
 /* Move controls overlay */
 .vc-controls {

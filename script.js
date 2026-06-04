@@ -658,7 +658,7 @@ function initPScene(){
 
   // Canvas needs real dimensions — wait until visible
   if(wrap.clientWidth===0){
-    setTimeout(initPScene,150);
+    setTimeout(initPScene,200);
     return;
   }
 

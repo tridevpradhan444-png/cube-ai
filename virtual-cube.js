@@ -136,7 +136,7 @@ class CubeState {
 class CubeRenderer {
   constructor(canvas, opts={}){
     this.canvas   = canvas;
-    this.opts     = Object.assign({ tiltX:-0.35, tiltY:0.3, fov:32, camZ:11 }, opts);
+    this.opts     = Object.assign({ tiltX:-0.38, tiltY:0.0, fov:30, camZ:13 }, opts);
     this.state    = new CubeState();
     this.scene    = null;
     this.camera   = null;
@@ -150,8 +150,9 @@ class CubeRenderer {
   }
 
   _init(){
-    const w = this.canvas.parentElement.clientWidth  || window.innerWidth;
-    const h = this.canvas.parentElement.clientHeight || 400;
+    const parent = this.canvas.parentElement;
+    const w = (parent && parent.clientWidth > 0) ? parent.clientWidth : window.innerWidth;
+    const h = (parent && parent.clientHeight > 0) ? parent.clientHeight : 280;
 
     this.scene    = new THREE.Scene();
     this.scene.background = new THREE.Color(0x080808);
@@ -188,9 +189,11 @@ class CubeRenderer {
   }
 
   _applyTilt(){
-    const qX=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),this.opts.tiltX);
-    const qY=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),this.opts.tiltY);
-    this.rootGroup.quaternion.copy(qY.multiply(qX));
+    // Store yaw (Y rotation) separately so X/Y/Z moves don't break the tilt
+    if(this._yaw === undefined) this._yaw = this.opts.tiltY;
+    const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), this.opts.tiltX);
+    const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), this._yaw);
+    this.rootGroup.quaternion.copy(qX.clone().premultiply(qY));
   }
 
   // Build 27 cubies — black body + colored sticker quads
@@ -273,15 +276,28 @@ class CubeRenderer {
     const prime = mv.includes("'");
     const double= mv.includes('2');
 
-    // Whole cube rotations — rotate rootGroup
+    // Whole cube rotations — rotate rootGroup but preserve tilt
     if(['X','Y','Z'].includes(base)){
+      // For Y rotation: update yaw and reapply tilt
+      // For X/Z: just animate visually then snap back to tilt
       const axis  = base==='X'?new THREE.Vector3(1,0,0)
                   : base==='Y'?new THREE.Vector3(0,1,0)
                   :              new THREE.Vector3(0,0,1);
       const angle = double?Math.PI : prime?Math.PI/2 : -Math.PI/2;
-      const startQ= this.rootGroup.quaternion.clone();
-      const endQ  = new THREE.Quaternion().setFromAxisAngle(axis,angle).multiply(startQ);
+
+      if(base==='Y'){
+        // Track yaw so tilt is preserved
+        if(this._yaw===undefined) this._yaw=this.opts.tiltY;
+        this._yaw += angle;
+      }
+
+      const startQ = this.rootGroup.quaternion.clone();
+      const deltaQ = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+      const endQ   = deltaQ.clone().multiply(startQ);
+
       this._tweenQ(this.rootGroup, startQ, endQ, duration, ()=>{
+        // After animation, reapply proper tilt to avoid drift
+        this._applyTilt();
         this.isMoving=false; onDone&&onDone();
       });
       return;
@@ -318,7 +334,6 @@ class CubeRenderer {
         const p = new THREE.Vector3(c.x,c.y,c.z).applyQuaternion(rotQ);
         c.x=Math.round(p.x); c.y=Math.round(p.y); c.z=Math.round(p.z);
         c.group.position.set(c.x,c.y,c.z);
-        c.group.quaternion.identity();
       });
       this.cubeGroup.remove(pivot);
       // Redraw colors from state — fixes any visual drift
@@ -370,7 +385,7 @@ class VirtualCube {
     this.canvas    = document.getElementById('vc-canvas');
     if(!this.container||!this.canvas) return;
 
-    this.cr = new CubeRenderer(this.canvas, { tiltX:-0.35, tiltY:0.3, fov:32, camZ:11 });
+    this.cr = new CubeRenderer(this.canvas, { tiltX:-0.38, tiltY:0.0, fov:30, camZ:13 });
     this.history   = [];
     this.redoStack = [];
     this.queue     = [];
@@ -485,7 +500,7 @@ class VirtualCube {
     this._updateHist();
     const td=document.getElementById('vc-timer-display');
     if(td){td.textContent='0.00';td.style.color='var(--w)';}
-    if(typeof showToast==='function') showToast('Reset');
+
   }
 
   _startTimer(){
