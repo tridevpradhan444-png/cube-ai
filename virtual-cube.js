@@ -111,31 +111,34 @@ class VirtualCubeController {
     const move = btn.dataset.move;
     if (!move) return;
 
-    this._holding  = true;
     this._holdBtn  = btn;
     this._holdMove = move;
     this._startX   = pointer.clientX;
     this._startY   = pointer.clientY;
-    this._selected = 'normal'; // default
+    this._selected = 'normal';
+    this._holding  = false; // not confirmed as hold yet
+    this._isHoldMode = false;
 
-    // Show discs immediately on press
-    this._showDiscs(btn, move);
     btn.classList.add('active');
 
-    // Check double tap
+    // Check double tap first
     const now = Date.now();
     if (move === this._lastTapBtn && now - this._lastTap < 300) {
-      // Double tap
       this._lastTap = 0; this._lastTapBtn = '';
-      clearTimeout(this._tapTimer);
-      this._hideDiscs();
+      clearTimeout(this._holdTimer);
       btn.classList.remove('active');
-      this._holding = false;
       this._execMove(move + '2');
       return;
     }
     this._lastTap = now;
     this._lastTapBtn = move;
+
+    // After 200ms of holding → show discs
+    this._holdTimer = setTimeout(() => {
+      this._isHoldMode = true;
+      this._holding = true;
+      this._showDiscs(btn, move);
+    }, 200);
   }
 
   _onDrag(pointer) {
@@ -172,16 +175,28 @@ class VirtualCubeController {
   }
 
   _onUp(pointer) {
-    if (!this._holding) return;
-    this._holding = false;
-
+    clearTimeout(this._holdTimer);
     const move = this._holdMove;
-    let toExec = this._resolveMove(move, this._selected);
+    const btn  = this._holdBtn;
 
+    if (!move) { this._holding = false; return; }
+
+    btn && btn.classList.remove('active');
+
+    if (!this._isHoldMode) {
+      // Quick tap — just execute normal move
+      this._holding = false;
+      this._isHoldMode = false;
+      this._execMove(move);
+      return;
+    }
+
+    // Hold mode — execute selected disc
+    this._holding = false;
+    this._isHoldMode = false;
+    const toExec = this._resolveMove(move, this._selected || 'normal');
     this._hideDiscs();
-    this._holdBtn && this._holdBtn.classList.remove('active');
     this._selected = null;
-
     this._execMove(toExec);
   }
 

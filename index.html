@@ -12,7 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module" src="https://cdn.cubing.net/js/cubing/twisty"></script>
-
+<script src="virtual-cube.js"></script>
+<script src="script.js"></script>
 <style>
 :root{
   --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;
@@ -215,6 +216,14 @@ html,body{
 #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--w);color:var(--bg);padding:10px 20px;font-size:11px;letter-spacing:2px;text-transform:uppercase;font-weight:700;z-index:2000;opacity:0;transition:all 0.3s ease;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+
+/* Back button replaces hamburger on settings pages */
+#back-btn{position:fixed;top:10px;left:16px;z-index:1000;width:40px;height:40px;
+  display:none;align-items:center;justify-content:center;cursor:pointer;
+  font-size:22px;color:var(--w);}
+#back-btn.visible{display:flex;}
+#hamburger.hidden{display:none;}
+
 @media(max-width:380px){#timer-display{font-size:48px;}.stat-value{font-size:11px;}.stat-label{font-size:8px;}}
 </style>
 </head>
@@ -222,6 +231,7 @@ html,body{
 <div id="app">
 
 <!-- HAMBURGER -->
+<div id="back-btn" onclick="goBack()">←</div>
 <div id="hamburger" onclick="toggleDrawer()"><span></span><span></span><span></span></div>
 
 <!-- DRAWER -->
@@ -495,10 +505,7 @@ html,body{
 
 <!-- VC SETTINGS PAGE -->
 <div id="screen-vc-settings" class="screen">
-  <div class="screen-header" style="padding-left:64px;">
-    <span style="cursor:pointer;" onclick="showScreen('virtual-cube')">← Virtual Cube</span>
-    <span>Settings</span>
-  </div>
+  <div class="screen-header" style="padding-left:64px;"><span>Settings</span></div>
   <div class="settings-body">
     <div class="sgroup-label">Controls</div>
     <div class="srow"><div class="sinfo"><div class="sname">Advanced Mode</div><div class="sdesc">Show M E B slice buttons</div></div><div class="toggle" id="tog-vc-advanced" onclick="toggleVCSetting('advanced')"><div class="tknob"></div></div></div>
@@ -508,10 +515,7 @@ html,body{
 
 <!-- TIMER SETTINGS PAGE -->
 <div id="screen-timer-settings" class="screen">
-  <div class="screen-header" style="padding-left:64px;">
-    <span style="cursor:pointer;" onclick="showScreen('timer')">← Timer</span>
-    <span>Settings</span>
-  </div>
+  <div class="screen-header" style="padding-left:64px;"><span>Settings</span></div>
   <div class="settings-body">
     <div class="sgroup-label">Timer</div>
     <div class="srow"><div class="sinfo"><div class="sname">Inspection Time</div><div class="sdesc">15 sec WCA inspection before solve</div></div><div class="toggle" id="tog-inspection" onclick="toggleS('inspection')"><div class="tknob"></div></div></div>
@@ -526,10 +530,7 @@ html,body{
 
 <!-- PRACTICE SETTINGS PAGE -->
 <div id="screen-practice-settings" class="screen">
-  <div class="screen-header" style="padding-left:64px;">
-    <span style="cursor:pointer;" onclick="showScreen('practice')">← Practice</span>
-    <span>Settings</span>
-  </div>
+  <div class="screen-header" style="padding-left:64px;"><span>Settings</span></div>
   <div class="settings-body">
     <div class="sgroup-label">Animation</div>
     <div class="srow"><div class="sinfo"><div class="sname">Speed</div><div class="sdesc">Animation speed for moves</div></div>
@@ -546,7 +547,38 @@ html,body{
 
 <link rel="stylesheet" href="virtual-cube.css">
 <div id="toast"></div>
-  <script src="virtual-cube.js"></script>
-<script src="script.js"></script>
+<script>
+// Track navigation history for back button
+window._navHistory = ['timer'];
+const _origShowScreen = window.showScreen;
+
+// Override showScreen to track history and show/hide back button
+window.showScreen = function(name) {
+  _origShowScreen && _origShowScreen(name);
+  const isSettings = name.includes('-settings') || name === 'settings';
+  const ham = document.getElementById('hamburger');
+  const back = document.getElementById('back-btn');
+  if (isSettings) {
+    ham && ham.classList.add('hidden');
+    back && back.classList.add('visible');
+    window._navHistory.push(name);
+  } else {
+    ham && ham.classList.remove('hidden');
+    back && back.classList.remove('visible');
+    window._navHistory = [name];
+  }
+};
+
+function goBack() {
+  window._navHistory.pop(); // remove current
+  const prev = window._navHistory[window._navHistory.length - 1] || 'timer';
+  // Use original showScreen to avoid double-push
+  _origShowScreen && _origShowScreen(prev);
+  const ham = document.getElementById('hamburger');
+  const back = document.getElementById('back-btn');
+  ham && ham.classList.remove('hidden');
+  back && back.classList.remove('visible');
+}
+</script>
 </body>
 </html>
