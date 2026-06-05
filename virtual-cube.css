@@ -1,135 +1,135 @@
 /* ── Virtual Cube Screen ── */
 #vc-canvas-container {
-  flex: 1; width: 100%; position: relative;
-  background: #080808; overflow: hidden;
-  display: flex; flex-direction: column;
+  flex:1; width:100%; position:relative;
+  background:#080808; overflow:hidden;
+  display:flex; flex-direction:column;
 }
-
-/* twisty-player fills the space */
 #vc-twisty-player {
-  flex: 1; width: 100%;
-  --cube-opacity: 1;
+  flex:1; width:100%; min-height:0;
+  pointer-events:none;
 }
 
 /* Top bar */
 .vc-top-bar {
-  position: absolute; top: 10px; left: 64px; right: 10px;
-  display: flex; flex-direction: column; gap: 8px;
-  pointer-events: none; z-index: 20;
+  position:absolute; top:8px; left:60px; right:8px;
+  display:flex; flex-direction:column; gap:6px;
+  pointer-events:none; z-index:20;
 }
 #vc-history {
-  background: rgba(0,0,0,0.55);
-  padding: 7px 12px; border-radius: 4px;
-  font-family: var(--fd); font-size: 12px; color: var(--w);
-  letter-spacing: 1px; min-height: 34px;
-  display: flex; align-items: center; gap: 6px;
-  overflow-x: auto; white-space: nowrap;
-  pointer-events: auto; scrollbar-width: none;
-  flex-wrap: wrap; max-height: 56px;
+  background:rgba(0,0,0,0.6);
+  padding:6px 10px; border-radius:4px;
+  font-family:var(--fd); font-size:11px; color:var(--w);
+  letter-spacing:1px; min-height:30px;
+  display:flex; align-items:center; gap:5px;
+  overflow-x:auto; white-space:nowrap;
+  pointer-events:auto; scrollbar-width:none;
+  flex-wrap:wrap; max-height:52px;
 }
-#vc-history::-webkit-scrollbar { display: none; }
-.vc-history-move { opacity: 0.5; font-size: 11px; }
-.vc-history-move.latest { opacity: 1; color: #00c853; font-weight: bold; }
+#vc-history::-webkit-scrollbar{display:none;}
+.vc-history-move{opacity:0.5;font-size:10px;}
+.vc-history-move.latest{opacity:1;color:#00c853;font-weight:bold;}
+.vc-action-row{display:flex;gap:7px;pointer-events:auto;}
+.vc-icon-btn{
+  width:32px;height:32px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.15);
+  color:var(--w);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;border-radius:6px;
+}
+.vc-icon-btn:active{background:rgba(255,255,255,0.2);}
+.vc-icon-btn svg{width:16px;height:16px;}
 
-.vc-action-row { display: flex; gap: 8px; pointer-events: auto; }
-.vc-icon-btn {
-  width: 34px; height: 34px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: var(--w); display: flex; align-items: center;
-  justify-content: center; cursor: pointer;
-  border-radius: 6px; transition: all 0.15s;
+/* ── Move buttons layout ── */
+.vc-controls{
+  position:absolute;inset:0;
+  pointer-events:none;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  z-index:10;
 }
-.vc-icon-btn:active { background: rgba(255,255,255,0.2); }
-.vc-icon-btn svg { width: 17px; height: 17px; }
+.vc-btn-group{pointer-events:auto;display:flex;gap:14px;}
+.vc-top{margin-bottom:22px;}
+.vc-middle{display:flex;align-items:center;gap:80px;margin-bottom:22px;}
+.vc-bottom{margin-top:4px;}
 
-/* ── Move buttons overlay ── */
-.vc-controls {
-  position: absolute; inset: 0;
-  pointer-events: none;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  z-index: 10;
+.vc-btn{
+  width:54px;height:54px;border-radius:50%;
+  background:rgba(0,0,0,0.7);
+  border:1.5px solid rgba(255,255,255,0.3);
+  color:rgba(255,255,255,0.9);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:16px;font-weight:700;
+  cursor:pointer;user-select:none;pointer-events:auto;
+  transition:all 0.12s ease;
+  -webkit-tap-highlight-color:transparent;z-index:10;
 }
-.vc-btn-group { pointer-events: auto; display: flex; gap: 14px; }
-.vc-top  { margin-bottom: 20px; }
-.vc-middle { display: flex; align-items: center; gap: 70px; margin-bottom: 20px; }
-.vc-bottom { margin-top: 4px; }
-
-.vc-btn {
-  width: 54px; height: 54px; border-radius: 50%;
-  background: rgba(0,0,0,0.65);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  color: rgba(255,255,255,0.85);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--fd); font-size: 16px; font-weight: 700;
-  cursor: pointer; user-select: none; pointer-events: auto;
-  transition: all 0.15s ease;
-  -webkit-tap-highlight-color: transparent; z-index: 10;
-}
-.vc-btn:active, .vc-btn.active {
-  background: rgba(255,255,255,0.2); color: #fff;
-  border-color: rgba(255,255,255,0.7);
-  transform: scale(0.92);
+.vc-btn:active,.vc-btn.active{
+  background:rgba(255,255,255,0.22);color:#fff;
+  border-color:rgba(255,255,255,0.8);transform:scale(0.91);
 }
 
-/* Rotation buttons (X Y Z) */
-.vc-rotations {
-  position: absolute; bottom: 20px; right: 16px;
-  display: flex; flex-direction: column; gap: 8px;
-  pointer-events: auto; z-index: 10;
+/* Rotation + slice buttons */
+.vc-rotations{
+  position:absolute;bottom:16px;right:14px;
+  display:flex;flex-direction:column;gap:7px;
+  pointer-events:auto;z-index:10;
 }
-.vc-rotations .vc-btn { width: 42px; height: 42px; font-size: 14px; }
+.vc-rotations .vc-btn{width:40px;height:40px;font-size:13px;}
 
-/* Slice controls */
-#vc-slice-controls {
-  position: absolute; bottom: 20px; left: 16px;
-  display: none; flex-direction: column; gap: 8px;
-  pointer-events: auto; z-index: 10;
+#vc-slice-controls{
+  position:absolute;bottom:16px;left:14px;
+  display:none;flex-direction:column;gap:7px;
+  pointer-events:auto;z-index:10;
 }
-#vc-slice-controls .vc-btn { width: 42px; height: 42px; font-size: 14px; }
+#vc-slice-controls .vc-btn{width:40px;height:40px;font-size:13px;}
 
-/* ── Split-plate popup ── */
-#vc-split-popup {
-  position: absolute;
-  pointer-events: none;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  z-index: 100;
-  transform: translate(-50%, -50%);
+/* ── Disc popup ── */
+#vc-disc-popup{
+  position:absolute;
+  display:none;
+  pointer-events:none;
+  z-index:100;
+  transform:translate(-50%,-50%);
 }
-#vc-split-popup.show {
-  display: flex;
-  pointer-events: auto;
+#vc-disc-popup.show{
+  display:block;
+  pointer-events:auto;
 }
 
-.vc-plate {
-  width: 70px; height: 40px;
-  background: rgba(10,10,10,0.92);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--fd); font-size: 16px; font-weight: 700;
-  color: rgba(255,255,255,0.7);
-  cursor: pointer;
-  transform: translateY(0);
-  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
-              background 0.15s, color 0.15s;
-  user-select: none;
+/* Center placeholder (where the button sits) */
+#vc-disc-center{
+  position:absolute;
+  width:54px;height:54px;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:rgba(255,255,255,0.15);
+  border:1.5px solid rgba(255,255,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:16px;font-weight:700;
+  color:#fff;
 }
-.vc-plate-active {
-  background: rgba(255,255,255,0.95) !important;
-  color: #080808 !important;
-  border-color: #fff;
-}
-.vc-plate-top  { transform: translateY(0); }
-.vc-plate-bottom { transform: translateY(0); }
 
-/* Gap between the two plates */
-.vc-plate-gap {
-  width: 54px; height: 54px;
-  /* This is where the button sits — plates slide away from here */
-  flex-shrink: 0;
+/* Individual disc plates */
+.vc-disc{
+  position:absolute;
+  width:54px;height:54px;border-radius:50%;
+  background:rgba(8,8,8,0.88);
+  border:1.5px solid rgba(255,255,255,0.25);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--fd);font-size:14px;font-weight:700;
+  color:rgba(255,255,255,0.7);
+  transform:translate(-50%,-50%); /* start at center */
+  transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+             background 0.15s,color 0.15s;
+  cursor:pointer;
 }
+.vc-disc-active{
+  background:rgba(255,255,255,0.92)!important;
+  color:#080808!important;
+  border-color:#fff;
+}
+
+/* Disc positions (set by JS translateX/Y) */
+#vc-disc-top    { top:0;left:0; }
+#vc-disc-bottom { top:0;left:0; }
+#vc-disc-left   { top:0;left:0; }
+#vc-disc-right  { top:0;left:0; }
