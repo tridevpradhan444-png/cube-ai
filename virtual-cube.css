@@ -83,53 +83,70 @@
 }
 #vc-slice-controls .vc-btn{width:40px;height:40px;font-size:13px;}
 
-/* ── Disc popup ── */
+/* ═══════════════════════════════
+   DISC POPUP
+   Two discs slide out from button
+   Like your drawing — proper circles
+   ═══════════════════════════════ */
 #vc-disc-popup{
   position:absolute;
   display:none;
-  pointer-events:none;
-  z-index:100;
+  z-index:200;
+  /* Centered on button via JS left/top */
   transform:translate(-50%,-50%);
+  pointer-events:none;
+  width:0;height:0; /* zero size — children positioned absolutely */
 }
 #vc-disc-popup.show{
   display:block;
   pointer-events:auto;
 }
 
-/* Center placeholder (where the button sits) */
+/* Center button ghost — shows current button label */
 #vc-disc-center{
   position:absolute;
   width:54px;height:54px;border-radius:50%;
+  left:0;top:0;
   transform:translate(-50%,-50%);
-  background:rgba(255,255,255,0.15);
-  border:1.5px solid rgba(255,255,255,0.4);
+  background:rgba(255,255,255,0.18);
+  border:2px solid rgba(255,255,255,0.5);
   display:flex;align-items:center;justify-content:center;
   font-family:var(--fd);font-size:16px;font-weight:700;
-  color:#fff;
+  color:#fff;pointer-events:none;
+  z-index:1;
 }
 
-/* Individual disc plates */
+/* Disc plates — start at center, animate outward */
 .vc-disc{
   position:absolute;
   width:54px;height:54px;border-radius:50%;
-  background:rgba(8,8,8,0.88);
-  border:1.5px solid rgba(255,255,255,0.25);
+  left:0;top:0;
+  /* Start at center of button */
+  transform:translate(-50%,-50%);
+  background:rgba(12,12,12,0.92);
+  border:2px solid rgba(255,255,255,0.3);
   display:flex;align-items:center;justify-content:center;
-  font-family:var(--fd);font-size:14px;font-weight:700;
-  color:rgba(255,255,255,0.7);
-  transform:translate(-50%,-50%); /* start at center */
-  transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
-             background 0.15s,color 0.15s;
+  font-family:var(--fd);font-size:15px;font-weight:700;
+  color:rgba(255,255,255,0.8);
   cursor:pointer;
-}
-.vc-disc-active{
-  background:rgba(255,255,255,0.92)!important;
-  color:#080808!important;
-  border-color:#fff;
+  /* Spring animation outward */
+  transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),
+             background 0.12s ease,
+             border-color 0.12s ease,
+             color 0.12s ease;
+  z-index:2;
+  -webkit-tap-highlight-color:transparent;
 }
 
-/* Disc positions (set by JS translateX/Y) */
-#vc-disc-top    { top:0;left:0; }
-#vc-disc-bottom { top:0;left:0; }
-#vc-disc-left   { top:0;left:0; }
-#vc-disc-right  { top:0;left:0; }
+/* Active/selected disc — highlighted white */
+.vc-disc-active{
+  background:rgba(255,255,255,0.95) !important;
+  color:#080808 !important;
+  border-color:#fff !important;
+  transform:translate(-50%,-50%) scale(1.08) !important;
+}
+
+/* When popup hidden — all discs back to center */
+#vc-disc-popup:not(.show) .vc-disc{
+  transform:translate(-50%,-50%) !important;
+}

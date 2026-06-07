@@ -67,11 +67,16 @@ class VirtualCubeController {
   }
 
   _setupPlayer() {
-    // Set initial camera position: yellow top, green front, white bottom tilted toward viewer
-    this.player.cameraLatitude  = -22;
+    // Green facing user, yellow on top, white bottom, slight tilt toward viewer
+    // latitude: -25 tilts cube so white/bottom faces slightly toward viewer
+    // longitude: 0 means green faces straight at you
+    this.player.cameraLatitude  = -25;
     this.player.cameraLongitude = 0;
-    this.player.cameraLatitudeLimits  = { min: -45, max: 5 };
-    // Prevent drag on twisty-player itself — we handle it
+    // Prevent vertical flip — keep cube right-side up
+    try {
+      this.player.cameraLatitudeLimits = { min:-45, max:0 };
+      this.player.cameraLongitudeLimits = { min:-120, max:120 };
+    } catch(e) {}
     this.player.style.pointerEvents = 'none';
   }
 
@@ -241,71 +246,77 @@ class VirtualCubeController {
     const popup = document.getElementById('vc-disc-popup');
     if (!popup) return;
 
-    const isVertical = ['R','L','M','X'].includes(move);
+    const DISC_DIST = 68; // px — distance discs travel from center
 
-    // Set labels
     const MAP = {
-      'R': { top:'R',  bottom:"R'", left:'', right:'' },
-      'L': { top:"L'", bottom:'L',  left:'', right:'' },
-      'M': { top:'M',  bottom:"M'", left:'', right:'' },
-      'X': { top:"X'", bottom:'X',  left:'', right:'' },
-      'U': { top:'',   bottom:'',   right:'U',  left:"U'" },
-      'F': { top:'',   bottom:'',   right:'F',  left:"F'" },
-      'D': { top:'',   bottom:'',   right:'D',  left:"D'" },
-      'B': { top:'',   bottom:'',   right:'B',  left:"B'" },
-      'Y': { top:'',   bottom:'',   right:'Y',  left:"Y'" },
-      'Z': { top:'',   bottom:'',   right:'Z',  left:"Z'" },
-      'E': { top:'',   bottom:'',   right:'E',  left:"E'" },
+      'R': { top:'R',  bottom:"R'", left:null, right:null },
+      'L': { top:"L'", bottom:'L',  left:null, right:null },
+      'M': { top:'M',  bottom:"M'", left:null, right:null },
+      'X': { top:"X'", bottom:'X',  left:null, right:null },
+      'U': { top:null, bottom:null,  left:"U'", right:'U'  },
+      'F': { top:null, bottom:null,  left:"F'", right:'F'  },
+      'D': { top:null, bottom:null,  left:"D'", right:'D'  },
+      'B': { top:null, bottom:null,  left:"B'", right:'B'  },
+      'Y': { top:null, bottom:null,  left:"Y'", right:'Y'  },
+      'Z': { top:null, bottom:null,  left:"Z'", right:'Z'  },
+      'E': { top:null, bottom:null,  left:"E'", right:'E'  },
     };
-    const labels = MAP[move] || { top:move, bottom:move+"'", left:'', right:'' };
+    const labels = MAP[move] || { top:move+"'", bottom:move, left:null, right:null };
 
     const topEl = document.getElementById('vc-disc-top');
     const botEl = document.getElementById('vc-disc-bottom');
     const lftEl = document.getElementById('vc-disc-left');
     const rgtEl = document.getElementById('vc-disc-right');
-    const btnEl = document.getElementById('vc-disc-center');
+    const ctrEl = document.getElementById('vc-disc-center');
 
-    if (topEl) topEl.textContent = labels.top;
-    if (botEl) botEl.textContent = labels.bottom;
-    if (lftEl) lftEl.textContent = labels.left;
-    if (rgtEl) rgtEl.textContent = labels.right;
-    if (btnEl) btnEl.textContent = move;
+    // Set center label
+    if (ctrEl) ctrEl.textContent = move;
 
-    // Show relevant discs
-    if (topEl) topEl.style.display = labels.top ? 'flex' : 'none';
-    if (botEl) botEl.style.display = labels.bottom ? 'flex' : 'none';
-    if (lftEl) lftEl.style.display = labels.left ? 'flex' : 'none';
-    if (rgtEl) rgtEl.style.display = labels.right ? 'flex' : 'none';
+    // Reset all discs to center first (no transition)
+    [topEl,botEl,lftEl,rgtEl].forEach(el => {
+      if (!el) return;
+      el.style.transition = 'none';
+      el.style.transform  = 'translate(-50%,-50%)';
+      el.classList.remove('vc-disc-active');
+    });
 
-    // Position popup over button
-    const rect = btn.getBoundingClientRect();
+    // Set labels and visibility
+    if (topEl) { topEl.textContent = labels.top||''; topEl.style.display = labels.top ? 'flex':'none'; }
+    if (botEl) { botEl.textContent = labels.bottom||''; botEl.style.display = labels.bottom ? 'flex':'none'; }
+    if (lftEl) { lftEl.textContent = labels.left||''; lftEl.style.display = labels.left ? 'flex':'none'; }
+    if (rgtEl) { rgtEl.textContent = labels.right||''; rgtEl.style.display = labels.right ? 'flex':'none'; }
+
+    // Position popup centered on button
+    const rect  = btn.getBoundingClientRect();
     const cRect = this.container.getBoundingClientRect();
-    const cx = rect.left - cRect.left + rect.width / 2;
-    const cy = rect.top  - cRect.top  + rect.height / 2;
-
-    popup.style.left = cx + 'px';
-    popup.style.top  = cy + 'px';
+    popup.style.left = (rect.left - cRect.left + rect.width  / 2) + 'px';
+    popup.style.top  = (rect.top  - cRect.top  + rect.height / 2) + 'px';
     popup.classList.add('show');
 
-    // Animate discs out
+    // Animate discs outward (re-enable transition after reset)
     requestAnimationFrame(() => {
-      if (topEl && labels.top)    topEl.style.transform = 'translateY(-60px)';
-      if (botEl && labels.bottom) botEl.style.transform = 'translateY(60px)';
-      if (lftEl && labels.left)   lftEl.style.transform = 'translateX(-60px)';
-      if (rgtEl && labels.right)  rgtEl.style.transform = 'translateX(60px)';
+      requestAnimationFrame(() => {
+        const T = `translate(-50%,-50%)`;
+        if (topEl && labels.top)    { topEl.style.transition=''; topEl.style.transform=`${T} translateY(-${DISC_DIST}px)`; }
+        if (botEl && labels.bottom) { botEl.style.transition=''; botEl.style.transform=`${T} translateY(${DISC_DIST}px)`; }
+        if (lftEl && labels.left)   { lftEl.style.transition=''; lftEl.style.transform=`${T} translateX(-${DISC_DIST}px)`; }
+        if (rgtEl && labels.right)  { rgtEl.style.transition=''; rgtEl.style.transform=`${T} translateX(${DISC_DIST}px)`; }
+      });
     });
   }
 
   _hideDiscs() {
     const popup = document.getElementById('vc-disc-popup');
     if (!popup) return;
-
+    const T = `translate(-50%,-50%)`;
     ['vc-disc-top','vc-disc-bottom','vc-disc-left','vc-disc-right'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) { el.style.transform = 'translate(0,0)'; el.classList.remove('vc-disc-active'); }
+      if (!el) return;
+      el.style.transition = 'transform 0.18s ease-in, background 0.12s, color 0.12s';
+      el.style.transform  = T;
+      el.classList.remove('vc-disc-active');
     });
-
-    setTimeout(() => popup.classList.remove('show'), 220);
+    setTimeout(() => popup.classList.remove('show'), 200);
   }
 
   // ── Execute move ─────────────────────────────────────
@@ -379,7 +390,7 @@ class VirtualCubeController {
     this._updateHistory();
     this._resetTimer();
     // Reset camera to default
-    try { this.player.cameraLatitude=-22; this.player.cameraLongitude=0; } catch(e){}
+    try { this.player.cameraLatitude=-25; this.player.cameraLongitude=0; } catch(e){}
   }
 
   _startTimer() {
