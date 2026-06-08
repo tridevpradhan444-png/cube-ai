@@ -67,17 +67,86 @@ class VirtualCubeController {
   }
 
   _setupPlayer() {
-    // Green facing user, yellow on top, white bottom, slight tilt toward viewer
-    // latitude: -25 tilts cube so white/bottom faces slightly toward viewer
-    // longitude: 0 means green faces straight at you
     this.player.cameraLatitude  = -25;
     this.player.cameraLongitude = 0;
-    // Prevent vertical flip — keep cube right-side up
-    try {
-      this.player.cameraLatitudeLimits = { min:-45, max:0 };
-      this.player.cameraLongitudeLimits = { min:-120, max:120 };
-    } catch(e) {}
     this.player.style.pointerEvents = 'none';
+    // Allow drag on container but snap back
+    this._isDragging = false;
+    this._dragStartX = 0;
+    this._dragStartY = 0;
+    this._dragLon    = 0;
+    this._dragLat    = -25;
+    this._initDrag();
+  }
+
+  _initDrag() {
+    const c = this.container;
+    c.addEventListener('touchstart', e=>{
+      if(e.target.closest('.vc-btn,.vc-icon-btn')) return;
+      this._isDragging = true;
+      this._dragStartX = e.touches[0].clientX;
+      this._dragStartY = e.touches[0].clientY;
+    },{passive:true});
+
+    c.addEventListener('touchmove', e=>{
+      if(!this._isDragging) return;
+      const dx = e.touches[0].clientX - this._dragStartX;
+      const dy = e.touches[0].clientY - this._dragStartY;
+      const newLon = this._dragLon + dx * 0.4;
+      const newLat = Math.max(-45, Math.min(0, this._dragLat + dy * 0.25));
+      try{
+        this.player.cameraLongitude = newLon;
+        this.player.cameraLatitude  = newLat;
+      }catch(e){}
+    },{passive:true});
+
+    c.addEventListener('touchend', e=>{
+      if(!this._isDragging) return;
+      this._isDragging = false;
+      // Snap back to default position with smooth transition
+      this._snapToDefault();
+    });
+
+    // Mouse drag
+    c.addEventListener('mousedown', e=>{
+      if(e.target.closest('.vc-btn,.vc-icon-btn')) return;
+      this._isDragging = true;
+      this._dragStartX = e.clientX;
+      this._dragStartY = e.clientY;
+    });
+    window.addEventListener('mousemove', e=>{
+      if(!this._isDragging) return;
+      const dx = e.clientX - this._dragStartX;
+      const dy = e.clientY - this._dragStartY;
+      try{
+        this.player.cameraLongitude = this._dragLon + dx * 0.4;
+        this.player.cameraLatitude  = Math.max(-45,Math.min(0, this._dragLat + dy * 0.25));
+      }catch(e){}
+    });
+    window.addEventListener('mouseup', e=>{
+      if(!this._isDragging) return;
+      this._isDragging = false;
+      this._snapToDefault();
+    });
+  }
+
+  _snapToDefault() {
+    // Animate back to default lat/lon
+    const startLon = this.player.cameraLongitude || 0;
+    const startLat = this.player.cameraLatitude  || -25;
+    const endLon   = this._dragLon; // snap to current base (changes with Y rotation)
+    const endLat   = -25;
+    const dur = 400, t0 = Date.now();
+    const snap = () => {
+      const p = Math.min((Date.now()-t0)/dur, 1);
+      const e = 1 - Math.pow(1-p, 3); // ease out cubic
+      try{
+        this.player.cameraLongitude = startLon + (endLon - startLon) * e;
+        this.player.cameraLatitude  = startLat + (endLat - startLat) * e;
+      }catch(err){}
+      if(p < 1) requestAnimationFrame(snap);
+    };
+    requestAnimationFrame(snap);
   }
 
   _initButtons() {
@@ -116,21 +185,22 @@ class VirtualCubeController {
     const move = btn.dataset.move;
     if (!move) return;
 
-    this._holdBtn  = btn;
-    this._holdMove = move;
-    this._startX   = pointer.clientX;
-    this._startY   = pointer.clientY;
-    this._selected = 'normal';
-    this._holding  = false; // not confirmed as hold yet
-    this._isHoldMode = false;
+    this._holdBtn    = btn;
+    this._holdMove   = move;
+    this._startX     = pointer.clientX;
+    this._startY     = pointer.clientY;
+    this._selected   = 'normal';
+    this._holding    = true;
+    this._isHoldMode = true; // always show discs on press
 
     btn.classList.add('active');
 
-    // Check double tap first
+    // Check double tap
     const now = Date.now();
     if (move === this._lastTapBtn && now - this._lastTap < 300) {
       this._lastTap = 0; this._lastTapBtn = '';
-      clearTimeout(this._holdTimer);
+      this._holding = false; this._isHoldMode = false;
+      this._hideDiscs();
       btn.classList.remove('active');
       this._execMove(move + '2');
       return;
@@ -138,12 +208,8 @@ class VirtualCubeController {
     this._lastTap = now;
     this._lastTapBtn = move;
 
-    // After 200ms of holding → show discs
-    this._holdTimer = setTimeout(() => {
-      this._isHoldMode = true;
-      this._holding = true;
-      this._showDiscs(btn, move);
-    }, 200);
+    // Show discs immediately on every press
+    this._showDiscs(btn, move);
   }
 
   _onDrag(pointer) {
@@ -180,28 +246,20 @@ class VirtualCubeController {
   }
 
   _onUp(pointer) {
-    clearTimeout(this._holdTimer);
     const move = this._holdMove;
     const btn  = this._holdBtn;
-
-    if (!move) { this._holding = false; return; }
+    if (!move) { this._holding=false; return; }
 
     btn && btn.classList.remove('active');
-
-    if (!this._isHoldMode) {
-      // Quick tap — just execute normal move
-      this._holding = false;
-      this._isHoldMode = false;
-      this._execMove(move);
-      return;
-    }
-
-    // Hold mode — execute selected disc
-    this._holding = false;
+    this._holding    = false;
     this._isHoldMode = false;
+
+    // Execute based on where finger released
     const toExec = this._resolveMove(move, this._selected || 'normal');
     this._hideDiscs();
     this._selected = null;
+    this._holdMove = '';
+    this._holdBtn  = null;
     this._execMove(toExec);
   }
 

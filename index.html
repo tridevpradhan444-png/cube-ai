@@ -12,7 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script type="module" src="https://cdn.cubing.net/js/cubing/twisty"></script>
-
+<script src="virtual-cube.js"></script>
+<script src="script.js"></script>
 <style>
 :root{
   --bg:#080808;--bg2:#111111;--bg3:#1a1a1a;--bg4:#222222;
@@ -217,9 +218,9 @@ html,body{
 
 
 /* Back button replaces hamburger on settings pages */
-#back-btn{position:fixed;top:10px;left:16px;z-index:1000;width:40px;height:40px;
+#back-btn{position:fixed;top:0;left:0;z-index:1000;width:64px;height:56px;
   display:none;align-items:center;justify-content:center;cursor:pointer;
-  font-size:22px;color:var(--w);}
+  font-size:28px;color:var(--w);font-weight:300;}
 #back-btn.visible{display:flex;}
 #hamburger.hidden{display:none;}
 
@@ -475,7 +476,7 @@ html,body{
     <div id="vc-slice-controls" style="display:none;">
       <div class="vc-btn" data-move="M">M</div>
       <div class="vc-btn" data-move="E">E</div>
-      <div class="vc-btn" data-move="S">S</div>
+      <div class="vc-btn" data-move="B">B</div>
     </div>
 
     <!-- Rotation buttons -->
@@ -546,8 +547,6 @@ html,body{
 
 <link rel="stylesheet" href="virtual-cube.css">
 <div id="toast"></div>
-  <script src="virtual-cube.js"></script>
-<script src="script.js"></script>
 <script>
 // Track navigation history for back button
 window._navHistory = ['timer'];
