@@ -67,7 +67,7 @@ class VirtualCubeController {
   }
 
   _setupPlayer() {
-    this.player.cameraLatitude  = -25;
+    this.player.cameraLatitude  = 25;
     this.player.cameraLongitude = 0;
     this.player.style.pointerEvents = 'none';
     // Allow drag on container but snap back
@@ -75,7 +75,7 @@ class VirtualCubeController {
     this._dragStartX = 0;
     this._dragStartY = 0;
     this._dragLon    = 0;
-    this._dragLat    = -25;
+    this._dragLat    = 25;
     this._initDrag();
   }
 
@@ -93,7 +93,7 @@ class VirtualCubeController {
       const dx = e.touches[0].clientX - this._dragStartX;
       const dy = e.touches[0].clientY - this._dragStartY;
       const newLon = this._dragLon + dx * 0.4;
-      const newLat = Math.max(-45, Math.min(0, this._dragLat + dy * 0.25));
+      const newLat = Math.max(5, Math.min(60, this._dragLat + dy * -0.25));
       try{
         this.player.cameraLongitude = newLon;
         this.player.cameraLatitude  = newLat;
@@ -135,7 +135,7 @@ class VirtualCubeController {
     const startLon = this.player.cameraLongitude || 0;
     const startLat = this.player.cameraLatitude  || -25;
     const endLon   = this._dragLon; // snap to current base (changes with Y rotation)
-    const endLat   = -25;
+    const endLat   = 25;
     const dur = 400, t0 = Date.now();
     const snap = () => {
       const p = Math.min((Date.now()-t0)/dur, 1);
@@ -445,10 +445,11 @@ class VirtualCubeController {
     try { this.player.alg = ''; } catch(e){}
     this.history=[]; this.redoStack=[];
     this.faceMapper.reset();
+    this._dragLon = 0;
     this._updateHistory();
     this._resetTimer();
-    // Reset camera to default
-    try { this.player.cameraLatitude=-25; this.player.cameraLongitude=0; } catch(e){}
+    // Smoothly snap camera back to default
+    this._snapToDefault();
   }
 
   _startTimer() {
